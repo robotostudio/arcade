@@ -4,6 +4,7 @@ import { useEffect, useMemo } from 'react'
 import { MeshBasicMaterial } from 'three'
 import { type CanvasDraw, displayFont, useLiveryCanvas } from '@/world/Display'
 import { livery } from '@/world/livery'
+import { DECAL } from '@/world/look/psx-material'
 
 // Canvas textures drawn in the Livery (issue 12): VT323 at integer px, colours from the table.
 // Each redraws once the font resolves and whenever the ?livery=1 panel repaints.
@@ -11,7 +12,8 @@ type Draw = CanvasDraw
 
 function useLiveryCanvasMat(draw: Draw, w: number, h: number, transparent = false) {
   const sign = useLiveryCanvas(w, h, draw)
-  const mat = useMemo(() => new MeshBasicMaterial({ map: sign.texture, transparent }), [sign, transparent])
+  // Every one of these lies on a snapped box face, so it takes the decal offset (see DECAL).
+  const mat = useMemo(() => new MeshBasicMaterial({ map: sign.texture, transparent, ...DECAL }), [sign, transparent])
   useEffect(() => () => mat.dispose(), [mat])
   return mat
 }

@@ -1,4 +1,5 @@
 import { LIVERY, accentMaterial, bodyMaterial, litMaterial, unlitMaterial } from '@/world/livery'
+import { DECAL } from '@/world/look/psx-material'
 
 // Claw materials on the Livery factory (issue 12). The cabinet shell takes bodyMaterial /
 // accentMaterial directly in Cabinet.tsx; these are the colours the mechanism, pit and prizes own.
@@ -15,7 +16,7 @@ export const CLAW_MATS = {
   aimRing: unlitMaterial(LIVERY.claw, { transparent: true, depthWrite: false }),
   aimLock: unlitMaterial(LIVERY.text, { transparent: true, depthWrite: false }),
   // pit and chute
-  pitFloor: litMaterial('#1a1c22'),
+  pitFloor: litMaterial('#1a1c22', DECAL), // lies on the base box top
   hole: unlitMaterial('#171535'), // the chute opening: a true dark, no lighting
   rim: accentMaterial('claw'), // lit rim around the chute hole: the target
   // prizes

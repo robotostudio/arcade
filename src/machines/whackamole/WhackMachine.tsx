@@ -5,6 +5,7 @@ import { useFrame, type ThreeEvent } from '@react-three/fiber'
 import { Group, Material, MathUtils, Vector3 } from 'three'
 import { sfx } from '@/arcade/sfx'
 import { Display, useDisplay } from '@/world/Display'
+import { DECAL } from '@/world/look/psx-material'
 import { bodyMaterial, litMaterial, unlitMaterial } from '@/world/livery'
 import type { MachineProps } from '../types'
 import { usePrompt } from '../prompt'
@@ -22,7 +23,7 @@ const DECK_TILT = 0.2
 // mallet, the hole rims, the hit ring) go through litMaterial / unlitMaterial so they take the snap.
 const MOLE = {
   // Biased toward the camera: 8 mm over the deck, the PSX vertex snap let the cream deck flicker through.
-  hole: litMaterial('#291f32', { polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4 }),
+  hole: litMaterial('#291f32', DECAL),
   rim: litMaterial('#bd6b31'),
   fur: litMaterial('#a97658', { flatShading: true }),
   ear: litMaterial('#d5a17a', { flatShading: true }),

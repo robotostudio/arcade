@@ -170,7 +170,7 @@ export function PrizePit({ seed, count, reset = 0 }: { seed: number; count: numb
     <group>
       <PitColliders />
       {/* visible pit floor */}
-      <mesh position={[0, CLAW.baseH + 0.002, 0]} rotation={[-Math.PI / 2, 0, 0]} material={CLAW_MATS.pitFloor}>
+      <mesh position={[0, CLAW.baseH + 0.01, 0]} rotation={[-Math.PI / 2, 0, 0]} material={CLAW_MATS.pitFloor}>
         <planeGeometry args={[CLAW.cabinet.w - 0.2, CLAW.cabinet.d - 0.2]} />
       </mesh>
       <PrizeSet key={reset} seed={seed} count={count} />

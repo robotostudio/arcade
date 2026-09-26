@@ -101,7 +101,7 @@ export function Cabinet({ display }: { display: DisplayHandle }) {
       <mesh position={[0, towerH + marqueeH / 2, backZ + 0.18]} material={SKEE_MATS.cabinetDark}>
         <boxGeometry args={[W + 0.1, marqueeH, 0.36]} />
       </mesh>
-      <mesh position={[0, towerH + marqueeH / 2, backZ + 0.365]} material={sign}>
+      <mesh position={[0, towerH + marqueeH / 2, backZ + 0.37]} material={sign}>
         <planeGeometry args={[W - 0.04, marqueeH - 0.06]} />
       </mesh>
       <mesh position={[0, towerH + marqueeH + 0.02, backZ + 0.18]} material={SKEE_MATS.trim}>
