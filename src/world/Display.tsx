@@ -128,7 +128,8 @@ export function Display({ handle, width = 1.8, position, rotation, frame = true 
   return (
     <group position={position} rotation={rotation}>
       {frame && <mesh position={[0, 0, -0.07]} material={bodyMaterial('frame')}><boxGeometry args={[width + border * 2, height + border * 2, 0.14]} /></mesh>}
-      <mesh position={[0, 0, 0.001]}><planeGeometry args={[width, height]} /><meshBasicMaterial map={handle.texture} /></mesh>
+      {/* 2 cm proud of the frame: the frame's vertex snap jitters its depth, and from a close, steep camera 1 mm loses. */}
+      <mesh position={[0, 0, 0.02]}><planeGeometry args={[width, height]} /><meshBasicMaterial map={handle.texture} /></mesh>
     </group>
   )
 }

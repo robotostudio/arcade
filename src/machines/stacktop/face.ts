@@ -35,6 +35,8 @@ const CW = BODY_W * PX // 512
 const CH = (BODY_H - FACE_Y0) * PX // 1024
 
 const px = (x: number) => (x + BODY_W / 2) * PX
+// A hex scaled toward black, so an unlit fill sits where a lit cream panel would.
+const dim = (hex: string, k: number) => `#${[1, 3, 5].map((i) => Math.round(parseInt(hex.slice(i, i + 2), 16) * k).toString(16).padStart(2, '0')).join('')}`
 const py = (y: number) => (BODY_H - y) * PX
 
 function banner(ctx: CanvasRenderingContext2D, text: string, x0: number, x1: number, y0: number, y1: number) {
@@ -55,7 +57,7 @@ export function drawFace(ctx: CanvasRenderingContext2D) {
   const t = livery()
 
   // Cream flanks with columns of dots, Accent and dark by turns.
-  ctx.fillStyle = t.panel
+  ctx.fillStyle = dim(t.panel, 0.55) // the face is unlit; full cream would cross the bloom threshold
   ctx.fillRect(0, 0, CW, CH)
   for (const cx of [-(GLASS_X + (BODY_W / 2 - GLASS_X) / 2), GLASS_X + (BODY_W / 2 - GLASS_X) / 2]) {
     for (let y = GRID_Y + 0.1; y < GRID_TOP; y += CELL) {
