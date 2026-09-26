@@ -86,7 +86,6 @@ const CSS = `
 .pz-legend button:hover { filter:brightness(1.25); }
 .pz-tickets { white-space:nowrap; text-transform:uppercase; background:${SHELL.surface}; border:1px solid ${SHELL.edge}; padding:6px 14px; }
 .pz-tickets b { font-size:40px; margin-right:.3em; }
-.pz-claimed { font-size:40px; text-transform:uppercase; color:var(--tier); transform:rotate(-8deg); background:${SHELL.surface}; border:2px solid var(--tier); padding:4px 12px; }
 .pz-btnlabels { display:flex; gap:0; text-transform:uppercase; }
 .pz-btnlabels span { width:152px; text-align:center; }
 .pz-btnlabels span.go { color:${TIER_HEX.gold}; }
@@ -129,7 +128,6 @@ export function PrizeSelector({ onClose }: PrizeSelectorProps) {
 function PrizeScreen({ texture, index }: { texture: THREE.Texture; index: number }) {
   const sprite = useRef<THREE.Mesh>(null)
   const pop = useRef(0)
-  const claimed = useStore((s) => s.claimed.includes(ITEMS[index].id))
   // A three-step pop when the picture changes, the way a PS1 menu snaps between skaters.
   useEffect(() => {
     pop.current = 1
@@ -159,11 +157,6 @@ function PrizeScreen({ texture, index }: { texture: THREE.Texture; index: number
           <boxGeometry args={[0.08, 0.8, 0.08]} />
         </mesh>
       ))}
-      {claimed && (
-        <Html transform distanceFactor={PX_PER_UNIT} position={[size / 2 - 0.55, size / 2 - 0.35, depth / 2 + 0.03]} style={{ pointerEvents: 'none' }}>
-          <div className="pz" style={{ ['--tier' as string]: TIER_HEX[ITEMS[index].tier] }}><div className="pz-claimed">Claimed</div></div>
-        </Html>
-      )}
     </group>
   )
 }
@@ -202,17 +195,15 @@ function CounterButtons() {
   const tickets = useArcade((s) => s.tickets)
   const selectedId = useStore((s) => s.selected)
   const applied = useStore((s) => s.applied)
-  const claimed = useStore((s) => s.claimed)
   const { apply, claim } = useStore.getState()
   const item = itemById(selectedId) ?? ITEMS[0]
   const max = maxApplicable(item, tickets)
-  const isClaimed = claimed.includes(item.id)
-  const canClaim = !isClaimed && applied > 0 && applied <= max
+  const canClaim = applied > 0 && applied <= max
   return (
     <group position={[BUTTON_GROUP_X, BUTTON_Y, BUTTON_Z]}>
-      <ArcadeButton x={BUTTON_X[0]} radius={0.2} idle={MAT.panel} hot={MAT.panelHot} enabled={applied > 0 && !isClaimed} onPress={() => apply(applied - 1)} label="Ticket off" />
+      <ArcadeButton x={BUTTON_X[0]} radius={0.2} idle={MAT.panel} hot={MAT.panelHot} enabled={applied > 0} onPress={() => apply(applied - 1)} label="Ticket off" />
       <ArcadeButton x={BUTTON_X[1]} radius={0.3} idle={MAT.accept} hot={MAT.acceptHot} enabled={canClaim} onPress={claim} label="Accept" />
-      <ArcadeButton x={BUTTON_X[2]} radius={0.2} idle={MAT.panel} hot={MAT.panelHot} enabled={applied < max && !isClaimed} onPress={() => apply(applied + 1)} label="Ticket on" />
+      <ArcadeButton x={BUTTON_X[2]} radius={0.2} idle={MAT.panel} hot={MAT.panelHot} enabled={applied < max} onPress={() => apply(applied + 1)} label="Ticket on" />
       <Html transform distanceFactor={PX_PER_UNIT} position={[0, 0.015, 0.42]} rotation={[-Math.PI / 2, 0, 0]} style={{ pointerEvents: 'none' }}>
         <div className="pz pz-btnlabels">
           <span>− Ticket</span>
@@ -269,12 +260,10 @@ function DetailsPanel() {
   const tickets = useArcade((s) => s.tickets)
   const selectedId = useStore((s) => s.selected)
   const applied = useStore((s) => s.applied)
-  const claimed = useStore((s) => s.claimed)
   const item = itemById(selectedId) ?? ITEMS[0]
   const max = maxApplicable(item, tickets)
   const visibleApplied = Math.min(applied, max)
   const off = creditGbp(item, visibleApplied)
-  const isClaimed = claimed.includes(item.id)
   const meterFill = max > 0 ? Math.round((visibleApplied / max) * SEGMENTS) : 0
   return (
     <Html transform distanceFactor={PX_PER_UNIT} position={PANEL} rotation={[0, 0.22, 0]} zIndexRange={[20, 0]}>
@@ -306,9 +295,9 @@ function DetailsPanel() {
           <span className="k">Credit (max {CREDIT.capPct}%)</span>
           <span className="v off">−{formatGbp(off)}</span>
           <span className="k">You pay</span>
-          <span className="v now">{isClaimed ? 'Claimed' : formatGbp(priceAfter(item, visibleApplied))}</span>
+          <span className="v now">{formatGbp(priceAfter(item, visibleApplied))}</span>
           <span className="pz-note">
-            {tickets === 0 ? 'No Tickets yet. Play a Machine.' : 'Apply Tickets for money off, then Accept to check out on Shopify with the credit applied. One claim per bundle.'}
+            {tickets === 0 ? 'No Tickets yet. Play a Machine.' : 'Apply Tickets for money off, then Accept to check out on Shopify with the credit applied.'}
           </span>
         </div>
       </div>

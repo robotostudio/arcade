@@ -2,7 +2,7 @@
 
 // Store counter through ArcadeCanvas (the Look, ?clean=1 to turn it off), plus the Store HUD and a dev bar.
 // Client-only (loaded by StoreHarness with ssr: false), so the persisted Ticket balance
-// and claimed list never cause a hydration mismatch.
+// never causes a hydration mismatch.
 import { CameraControls } from '@react-three/drei'
 import { useArcade } from '@/arcade/state'
 import { ArcadeCanvas } from '@/world/ArcadeCanvas'
