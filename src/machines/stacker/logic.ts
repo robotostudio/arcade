@@ -14,11 +14,22 @@ const MAX_DT_MS = 250 // a backgrounded tab must not skip the row across the gri
 
 // A row is a cell interval [start, end), end exclusive.
 export type Row = { start: number; end: number }
-export type Phase = 'idle' | 'playing' | 'over'
-export type Result = { kind: 'win' | 'lose'; rowsPlaced: number; tickets: number }
+// 'decide' only exists with Prizes: the take-or-risk pause at the Minor line.
+export type Phase = 'idle' | 'playing' | 'decide' | 'over'
+// 'minor' = the player took (or was given) the Minor Prize. Only with Prizes.
+export type Result = { kind: 'win' | 'lose' | 'minor'; rowsPlaced: number; tickets: number }
+
+// Optional prize lines (Stack to the Top). Without them the game is the plain Stacker.
+export type Prizes = {
+  minorRow: number // stacking this many rows pauses the game at the Minor line
+  payout: { perRow: number; minor: number; major: number }
+  decideMs: number // with no choice after this long, the game takes Minor
+}
 
 export type StackerState = {
   phase: Phase
+  prizes: Prizes | null
+  decideMs: number // time spent in the 'decide' pause
   placed: Row[] // placed rows, index = row number
   moving: Row // the sliding row (in attract: the row bouncing on row 0)
   dir: 1 | -1
@@ -28,8 +39,10 @@ export type StackerState = {
   version: number // bumps on any visible change so the renderer can skip idle frames
 }
 
-export type StepEvent = 'none' | 'moved' | 'attract'
-export type PressEvent = 'ignored' | 'started' | 'placed' | 'won' | 'lost'
+export type StepEvent = 'none' | 'moved' | 'attract' | 'deciding' | 'autotook'
+export type PressEvent = 'ignored' | 'started' | 'placed' | 'decide' | 'won' | 'lost'
+export type Choice = 'take' | 'risk'
+export type ChooseEvent = 'ignored' | 'took' | 'risked'
 
 // Width cap by row: 3 for rows 0-4, 2 for rows 5-9, 1 for rows 10-14.
 export function capForRow(row: number): number {
@@ -51,9 +64,11 @@ export function trim(moving: Row, below: Row): Row | null {
   return start < end ? { start, end } : null
 }
 
-export function createState(): StackerState {
+export function createState(prizes: Prizes | null = null): StackerState {
   return {
     phase: 'idle',
+    prizes,
+    decideMs: 0,
     placed: [],
     moving: { start: START_AT, end: START_AT + START_WIDTH },
     dir: 1,
@@ -73,6 +88,7 @@ export function toAttract(s: StackerState): void {
   s.dir = 1
   s.accMs = 0
   s.overMs = 0
+  s.decideMs = 0
   s.result = null
   s.version++
 }
@@ -96,6 +112,14 @@ function advance(s: StackerState): void {
 
 export function step(s: StackerState, dtMs: number): StepEvent {
   const dt = Math.min(Math.max(dtMs, 0), MAX_DT_MS)
+  if (s.phase === 'decide') {
+    s.decideMs += dt
+    if (s.prizes && s.decideMs >= s.prizes.decideMs) {
+      endRound(s, 'minor')
+      return 'autotook'
+    }
+    return 'deciding'
+  }
   if (s.phase === 'over') {
     s.overMs += dt
     if (s.overMs >= OVER_MS) {
@@ -117,9 +141,18 @@ export function step(s: StackerState, dtMs: number): StepEvent {
   return 'moved'
 }
 
+function payoutFor(s: StackerState, kind: Result['kind']): number {
+  const rows = s.placed.length
+  if (s.prizes) {
+    const p = s.prizes.payout
+    return kind === 'win' ? p.major : kind === 'minor' ? p.minor : p.perRow * rows
+  }
+  return kind === 'win' ? PAYOUT.stacker.win : PAYOUT.stacker.perRow * rows
+}
+
 function endRound(s: StackerState, kind: Result['kind']): void {
   const rowsPlaced = s.placed.length
-  const tickets = kind === 'win' ? PAYOUT.stacker.win : PAYOUT.stacker.perRow * rowsPlaced
+  const tickets = payoutFor(s, kind)
   s.phase = 'over'
   s.overMs = 0
   s.result = { kind, rowsPlaced, tickets }
@@ -128,14 +161,33 @@ function endRound(s: StackerState, kind: Result['kind']): void {
 
 // The Machine was left mid-Round (active went false): the Round ends as a loss
 // that still pays the rows placed, so onRoundEnd fires exactly once per Round.
+// Leaving during the take-or-risk pause takes Minor.
 export function forfeit(s: StackerState): boolean {
+  if (s.phase === 'decide') {
+    endRound(s, 'minor')
+    return true
+  }
   if (s.phase !== 'playing') return false
   endRound(s, 'lose')
   return true
 }
 
+// The take-or-risk choice at the Minor line. Only meaningful in 'decide'.
+export function choose(s: StackerState, choice: Choice): ChooseEvent {
+  if (s.phase !== 'decide') return 'ignored'
+  if (choice === 'take') {
+    endRound(s, 'minor')
+    return 'took'
+  }
+  s.phase = 'playing'
+  s.accMs = 0
+  s.version++
+  return 'risked'
+}
+
 export function press(s: StackerState): PressEvent {
   if (s.phase === 'over') return 'ignored' // result stays up for OVER_MS, then attract
+  if (s.phase === 'decide') return 'ignored' // only choose() leaves the pause; mashing can't pick
   if (s.phase === 'idle') {
     newRound(s)
     return 'started'
@@ -177,5 +229,13 @@ export function press(s: StackerState): PressEvent {
   s.moving.end = s.moving.start + w
   s.accMs = 0
   s.version++
+
+  // Prize lines: reaching the Minor line pauses for the take-or-risk choice.
+  // The next row is already set up above, so 'risk' just resumes.
+  if (s.prizes && next === s.prizes.minorRow) {
+    s.phase = 'decide'
+    s.decideMs = 0
+    return 'decide'
+  }
   return 'placed'
 }
