@@ -1,6 +1,10 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { DroidJukebox } from '@/jukebox/DroidJukebox'
+import { JukeboxPanel } from '@/jukebox/JukeboxPanel'
+import { useDroidAudio } from '@/jukebox/useDroidAudio'
+import { SoundtrackToggle } from './Soundtrack'
 import { useFrame, useThree } from '@react-three/fiber'
 import { MathUtils, PerspectiveCamera, Vector3 } from 'three'
 import { type MachineId, useArcade } from '@/arcade/state'
@@ -96,6 +100,8 @@ function HubView() {
 }
 
 export function Room() {
+  const player = useDroidAudio()
+  const [jukeboxOpen, setJukeboxOpen] = useState(false)
   const mode = useArcade((s) => s.mode)
   const inStore = mode.kind === 'store'
   const enter = useArcade((s) => s.enter)
@@ -125,6 +131,7 @@ export function Room() {
     <>
     <ArcadeCanvas camera={{ position: [0, 3.4, 10], fov: 55 }}>
       <RoomEnvironment />
+      <DroidJukebox position={[-3, 0, 3]} rotation={.2} player={player} onSelect={() => setJukeboxOpen(true)} />
       {IDS.map((id) => {
         const Machine = MACHINES[id]
         return <group key={id}>
@@ -148,6 +155,9 @@ export function Room() {
       Store · {tickets} Tickets
     </button>}
     {inStore && <StoreHud onClose={closeStore} />}
+    {!inStore && <button type="button" onClick={() => setJukeboxOpen(open => !open)} className="absolute right-4 top-[4.5rem] z-20 border border-cyan-200/40 bg-[#10253b]/95 px-4 py-2 font-mono text-xs text-cyan-100">{player.playing ? '♫' : '▷'} R2-D2 Jukebox</button>}
+    {!inStore && jukeboxOpen && <div className="droid-room-panel"><JukeboxPanel player={player} onClose={() => setJukeboxOpen(false)} /></div>}
+    <div className="absolute bottom-20 right-4 z-20"><SoundtrackToggle /></div>
     </>
   )
 }
