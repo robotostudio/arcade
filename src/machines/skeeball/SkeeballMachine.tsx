@@ -12,6 +12,7 @@ import {
 } from '@react-three/rapier'
 import { MathUtils, Vector3, type Group } from 'three'
 import { PAYOUT } from '@/arcade/economy'
+import { sfx } from '@/arcade/sfx'
 import type { MachineProps } from '@/machines/types'
 import { Board } from './Board'
 import { Cabinet } from './Cabinet'
@@ -306,6 +307,9 @@ export function SkeeballMachine({ position, rotation, active, onRoundEnd }: Mach
     g.score += value
     g.scored = true
     g.overHole = value
+    // Higher rings ring higher: 10 → level 1, 100 → level 10.
+    if (value > 0) sfx.hit(value / 10)
+    else sfx.miss()
   }, [])
 
   useEffect(() => {
@@ -327,6 +331,7 @@ export function SkeeballMachine({ position, rotation, active, onRoundEnd }: Mach
     if (g.phase === 'aim') {
       g.aim = SKEE.aimAmp * Math.sin(t * SKEE.aimOmega)
       if (press) {
+        sfx.click()
         g.phase = 'power'
         g.powerT = t
       }
@@ -342,6 +347,7 @@ export function SkeeballMachine({ position, rotation, active, onRoundEnd }: Mach
           body.setLinvel({ x: _dir.x, y: _dir.y + hop, z: _dir.z }, true)
           body.setAngvel(ZERO, true)
         }
+        sfx.launch()
         g.balls += 1
         g.scored = false
         g.lastThrow = 0
@@ -380,7 +386,7 @@ export function SkeeballMachine({ position, rotation, active, onRoundEnd }: Mach
       const settled = g.scored && t > g.scoredAt + SKEE.afterScore
       const timedOut = t > g.flightUntil
       if (settled || timedOut) {
-        if (timedOut && !g.scored) g.lastThrow = 0
+        if (timedOut && !g.scored) { g.lastThrow = 0; sfx.miss() }
         resetBall(ball.current)
         if (g.balls >= SKEE.balls) {
           g.phase = 'result'
@@ -398,6 +404,7 @@ export function SkeeballMachine({ position, rotation, active, onRoundEnd }: Mach
     } else if (g.phase === 'result') {
       if (t > g.resultUntil) g.phase = 'idle'
     } else if (press) {
+      sfx.start()
       beginRound(g)
     }
 
