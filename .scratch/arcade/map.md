@@ -10,7 +10,15 @@ A low-poly 3D arcade running in the browser at a public Vercel URL: one diorama 
 
 - **Hackathon: quick beats reliable.** Deadline 2026-09-26, three hours from kickoff (about 13:40 BST / 12:40 UTC). No tests, no CI beyond the Vercel build, no backend, no Blender. Cut scope before cutting pace; the cut order is in PLAN.md.
 - **Execution override**: sessions build as tickets resolve, not plan-only.
-- Three devs async in three roles, one branch each: **World** (`world`), **Machines** (`machines`), **Store** (`store`). Each issue file carries a `Role:` line. Folder ownership and the shared state contract are in PLAN.md.
+- Three devs async in three roles, one branch each. Each issue file carries a `Role:` line. Folder ownership and the shared state contract are in PLAN.md.
+
+| Role | Branch | Dev |
+|---|---|---|
+| World | `world` | |
+| Machines | `machines` | |
+| Store | `store` | |
+
+  Devs: sne, daniel, jono. Claim a role via the first-session prompt in AGENTS.md.
 - Decided by Jono at charting (2026-09-26): browser 3D web app (React Three Fiber on Next.js, Vercel); Roboto Studio brand and R&D piece; Machines are playable; diorama navigation; Skeeball is a two-stage input (sweeping aim arrow, then power); the Store is a 3D counter in the Room, not a 2D route; Items are Roboto merch and services; no external reference art.
 - Standing stack (revocable if a ticket proves it wrong): Next.js App Router, TypeScript, pnpm, `@react-three/fiber`, `@react-three/drei`, `@react-three/rapier`, zustand, Tailwind for the HUD; Vercel project `arcade` on the roboto team. Procedural primitive geometry with flat shading. Tickets in `localStorage`.
 - Glossary lives in [CONTEXT.md](../../CONTEXT.md).
