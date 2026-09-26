@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo } from 'react'
 import { MeshBasicMaterial } from 'three'
-import { type CanvasDraw, displayFont, liveryCanvas } from '@/world/Display'
+import { type CanvasDraw, displayFont, useLiveryCanvas } from '@/world/Display'
 import { livery } from '@/world/livery'
 
 // Canvas textures drawn in the Livery (issue 12): VT323 at integer px, colours from the table.
@@ -10,11 +10,9 @@ import { livery } from '@/world/livery'
 type Draw = CanvasDraw
 
 function useLiveryCanvasMat(draw: Draw, w: number, h: number, transparent = false) {
-  const { sign, mat } = useMemo(() => {
-    const sign = liveryCanvas(w, h, draw)
-    return { sign, mat: new MeshBasicMaterial({ map: sign.texture, transparent }) }
-  }, [w, h, transparent, draw])
-  useEffect(() => () => { sign.dispose(); mat.dispose() }, [sign, mat])
+  const sign = useLiveryCanvas(w, h, draw)
+  const mat = useMemo(() => new MeshBasicMaterial({ map: sign.texture, transparent }), [sign, transparent])
+  useEffect(() => () => mat.dispose(), [mat])
   return mat
 }
 

@@ -4,9 +4,8 @@
 // row 10. One plane, one draw call. Text is VT323 at integer px, drawn again once the
 // font has loaded and whenever the Livery table changes. World layout constants live
 // here too so the texture and the 3D grid agree.
-import type { CanvasTexture } from 'three'
 import { H, W } from './logic'
-import { displayFont, liveryCanvas } from '@/world/Display'
+import { displayFont, useLiveryCanvas } from '@/world/Display'
 import { livery } from '@/world/livery'
 
 export const BODY_W = 2.0
@@ -104,10 +103,7 @@ export function drawFace(ctx: CanvasRenderingContext2D) {
   ctx.fillText('STACK TO THE TOP', CW / 2, py((MARQUEE_Y[0] + MARQUEE_Y[1]) / 2) + 2)
 }
 
-export type FaceHandle = { texture: CanvasTexture; dispose: () => void }
-
-// The face texture, repainted when VT323 arrives and whenever the Livery table changes.
-export function createFaceTexture(): FaceHandle | null {
-  if (typeof document === 'undefined') return null
-  return liveryCanvas(CW, CH, (ctx) => drawFace(ctx))
+// The face texture, drawn again once VT323 loads and whenever the Livery table changes.
+export function useFaceTexture() {
+  return useLiveryCanvas(CW, CH, drawFace).texture
 }

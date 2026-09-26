@@ -31,7 +31,7 @@ import { paintGrid, type GridLayout } from './grid'
 import type { StackerHud } from './stackerHud'
 import { useStackTopHud } from './hud'
 import { cellColors, materials } from './materials'
-import { BODY_D, BODY_H, BODY_W, BOX, CELL, FACE_Y0, FACE_Z, MARQUEE_Y, MINOR_ROW, createFaceTexture, rowY } from './face'
+import { BODY_D, BODY_H, BODY_W, BOX, CELL, FACE_Y0, FACE_Z, MARQUEE_Y, MINOR_ROW, rowY, useFaceTexture } from './face'
 
 export const DECIDE_MS = 8000
 export const PRIZES: Prizes = { minorRow: MINOR_ROW, payout: PAYOUT.stacktop, decideMs: DECIDE_MS }
@@ -108,15 +108,9 @@ export function StackTop({ position, rotation, active, onRoundEnd, onPrompt }: M
   onRoundEndRef.current = onRoundEnd
   const display = useDisplay({ accent: 'stacktop', title: 'STACK TO THE TOP' })
 
-  const face = useMemo(() => createFaceTexture(), [])
-  const faceMaterial = useMemo(() => new MeshBasicMaterial({ map: face?.texture ?? null }), [face])
-  useEffect(
-    () => () => {
-      face?.dispose()
-      faceMaterial.dispose()
-    },
-    [face, faceMaterial],
-  )
+  const faceTexture = useFaceTexture()
+  const faceMaterial = useMemo(() => new MeshBasicMaterial({ map: faceTexture }), [faceTexture])
+  useEffect(() => () => faceMaterial.dispose(), [faceMaterial])
 
   // Every way a Round ends goes through here, so onRoundEnd fires exactly once per Round.
   const report = useRef((s: StackerState) => {

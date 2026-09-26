@@ -7,7 +7,7 @@
 //   const display = useDisplay({ accent: 'skeeball', title: 'SKEEBALL' })
 //   useFrame(() => display.show({ headline: `BALL ${n} / 9`, footer: `SCORE ${score}` }))
 //   <Display handle={display} position={[0, 1.8, -.8]} width={1.8} />
-import { useEffect, useMemo } from 'react'
+import { useCallback, useEffect, useMemo, useRef } from 'react'
 import { CanvasTexture, NearestFilter, SRGBColorSpace } from 'three'
 import { type AccentKey, bodyMaterial, livery, useLivery } from './livery'
 
@@ -78,10 +78,12 @@ function draw(ctx: CanvasRenderingContext2D, accent: AccentKey, title: string, c
 }
 
 export type CanvasDraw = (ctx: CanvasRenderingContext2D, w: number, h: number) => void
-export type LiveryCanvas = { canvas: HTMLCanvasElement; texture: CanvasTexture; redraw: () => void; dispose: () => void }
+export type LiveryCanvas = { canvas: HTMLCanvasElement; texture: CanvasTexture; redraw: () => void; attach: () => () => void; dispose: () => void }
 
-// Any canvas texture drawn in the Livery: NearestFilter, sRGB, drawn now, again once VT323 has loaded,
-// and (unless `repaint` is off) whenever the ?livery=1 panel changes a colour. Dispose stops all of that.
+// Any canvas texture drawn in the Livery: NearestFilter, sRGB, drawn once now. `attach` draws again once
+// VT323 has loaded and (unless `repaint` is off) whenever the ?livery=1 panel changes a colour; it returns
+// the detach. Attaching lives in an effect (see useLiveryCanvas) so StrictMode's unmount-remount in dev
+// re-attaches instead of leaving a dead subscription.
 export function liveryCanvas(width: number, height: number, draw: CanvasDraw, repaint = true): LiveryCanvas {
   const canvas = document.createElement('canvas')
   canvas.width = width
@@ -92,36 +94,46 @@ export function liveryCanvas(width: number, height: number, draw: CanvasDraw, re
   texture.magFilter = NearestFilter
   texture.generateMipmaps = false
   texture.colorSpace = SRGBColorSpace
-  let alive = true
-  const redraw = () => { if (!alive) return; draw(ctx, width, height); texture.needsUpdate = true }
+  const redraw = () => { draw(ctx, width, height); texture.needsUpdate = true }
   redraw()
-  loadDisplayFont().then(redraw)
-  const unsubscribe = repaint ? useLivery.subscribe(redraw) : () => {}
-  return { canvas, texture, redraw, dispose: () => { alive = false; unsubscribe(); texture.dispose() } }
-}
-
-export function createDisplay(accent: AccentKey, title: string): DisplayHandle {
-  let content: DisplayContent = {}
-  let key = ''
-  const screen = liveryCanvas(W, H, (ctx) => draw(ctx, accent, title, content))
   return {
-    texture: screen.texture,
-    redraw: screen.redraw,
-    show: (next) => {
-      const nextKey = JSON.stringify(next)
-      if (nextKey === key) return
-      key = nextKey
-      content = next
-      screen.redraw()
+    canvas,
+    texture,
+    redraw,
+    attach: () => {
+      loadDisplayFont().then(redraw)
+      return repaint ? useLivery.subscribe(redraw) : () => {}
     },
-    dispose: screen.dispose,
+    dispose: () => texture.dispose(),
   }
 }
 
+// `draw` must be stable (module-level or memoised): a new function makes a new canvas.
+export function useLiveryCanvas(width: number, height: number, draw: CanvasDraw, repaint = true): LiveryCanvas {
+  const lc = useMemo(() => liveryCanvas(width, height, draw, repaint), [width, height, draw, repaint])
+  useEffect(() => lc.attach(), [lc])
+  useEffect(() => () => lc.dispose(), [lc])
+  return lc
+}
+
 export function useDisplay({ accent, title }: { accent: AccentKey; title: string }): DisplayHandle {
-  const handle = useMemo(() => createDisplay(accent, title), [accent, title])
-  useEffect(() => () => handle.dispose(), [handle])
-  return handle
+  const shown = useRef({ content: {} as DisplayContent, key: '' })
+  const drawScreen = useCallback<CanvasDraw>((ctx) => draw(ctx, accent, title, shown.current.content), [accent, title])
+  const screen = useLiveryCanvas(W, H, drawScreen)
+  return useMemo(
+    () => ({
+      texture: screen.texture,
+      redraw: screen.redraw,
+      show: (next) => {
+        const key = JSON.stringify(next)
+        if (key === shown.current.key) return
+        shown.current = { content: next, key }
+        screen.redraw()
+      },
+      dispose: screen.dispose,
+    }),
+    [screen],
+  )
 }
 
 type DisplayProps = {
