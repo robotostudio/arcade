@@ -1,7 +1,7 @@
 # 09 Look: PSX canvas wrapper and CRT overlay
 
 Type: task
-Status: open
+Status: resolved
 Role: Jono
 Slot: T+0:25 to 0:40 (before the Claw; time-box 15 minutes)
 Blocked by: 01
@@ -31,3 +31,31 @@ If step 2 does not fit, it moves to the 1:00 checkpoint (Jono, 10 minutes, after
 Answer records: what landed in step 1 and step 2, the `LOOK` constants as shipped, the preview URL, and any surprise from `dpr` below 1 (pointer picking, `CameraControls`, drei `Html` scaling).
 
 ## Comments
+
+## Answer
+
+Both steps landed (commit 0216676 on `jono`).
+
+**Step 1**
+- `src/world/ArcadeCanvas.tsx` (client): `ArcadeCanvas({ children, camera? })`, default camera `[0, 7, 12]` fov 45. Canvas with `dpr={LOOK.dpr}`, `flat`, `gl={{ antialias: false }}`, `style={{ position: 'absolute', inset: 0, imageRendering: 'pixelated' }}`, no `shadows`. Inside: void background, fog, dim cold `hemisphereLight`, blue-grey `directionalLight` (no castShadow), then children.
+- The `.crt` overlay is rendered by `ArcadeCanvas` itself as a sibling after the Canvas (not in `page.tsx`), so every dev harness gets it without extra wiring. CSS lives in `src/world/look/crt.css` (imported by ArcadeCanvas), `pointer-events: none`, 4px scanline pitch on 2dppx screens. HUD text rendered after the canvas in a page sits above it.
+- `?clean=1`: read from `window.location.search` in a `useEffect` (no `useSearchParams`, so no Suspense boundary). Sets `dpr [1, 1.5]`, `imageRendering: auto`, skips the dither composer, hides the overlay.
+- `Room.tsx` is scene-only inside `ArcadeCanvas`; `CameraControls` stays there. Placeholder boxes and floor use shared Lambert palette materials, no flatShading, no shadows. `RoomCanvas.tsx` and `page.tsx` unchanged.
+- `body` background `#050406`, text bone `#d8cfc0`; `antialiased` dropped from `layout.tsx`.
+
+**Step 2**
+- `postprocessing@6.39.5` + `@react-three/postprocessing@3.1.2` added.
+- `src/world/look/Dither.tsx` (recipe section 4) mounted as `<EffectComposer multisampling={0}><Dither levels={LOOK.ditherLevels} /></EffectComposer>`, last child of the Canvas, skipped under `?clean=1`.
+- `src/world/look/psx-material.ts`: `psxify(material, affine?)` with `SNAP` built from `LOOK.snap`.
+- `src/world/palette.ts`: `COLORS` (void, floor, stone, slate, steel, bone, amber, oxblood) and `MATERIALS`, one shared `psxify(new MeshLambertMaterial({ color }))` per colour.
+
+**LOOK as shipped** (`src/world/look/constants.ts`)
+```ts
+void: '#050406', dpr: 0.35, cleanDpr: [1, 1.5], snap: [160, 120], ditherLevels: 32, fog: [6, 18],
+hemi: { sky: '#3a4560', ground: '#1a1410', intensity: 0.6 },
+moon: { color: '#9aa8c0', intensity: 0.8, position: [6, 10, 6] },
+```
+
+**Surprises from dpr < 1**: none seen at build time (`pnpm typecheck` and `pnpm build` clean). Not yet eyeballed in a browser: pointer picking and CameraControls use CSS pixels so should be unaffected; drei `Html` is banned by the look rules anyway.
+
+Preview URL: pending merge to main.
