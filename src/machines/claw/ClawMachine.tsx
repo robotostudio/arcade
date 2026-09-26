@@ -4,6 +4,7 @@ import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { Physics } from '@react-three/rapier'
 import { Color, Group, Vector3 } from 'three'
+import { sfx } from '@/arcade/sfx'
 import type { MachineProps } from '@/machines/types'
 import { CLAW } from './constants'
 import { initialClawState, stepClaw, type ClawGrabSense, type ClawPhase, type ClawState } from './clawLogic'
@@ -179,8 +180,12 @@ function ClawController({
         heldId.current = grab.id
       }
     }
+    if (prev.phase === 'closing' && next.phase === 'rising') {
+      if (next.holding) sfx.grab()
+      else sfx.miss()
+    }
     // slip or release: back to dynamic
-    if (!prev.slipped && next.slipped) letGo(true)
+    if (!prev.slipped && next.slipped) { letGo(true); sfx.slip() }
     else if (next.phase === 'releasing' && prev.phase !== 'releasing') letGo(false)
     // carry the held prize under the mouth
     if (heldId.current !== null && origin) {
@@ -197,7 +202,10 @@ function ClawController({
         b.setNextKinematicTranslation(v)
       }
     }
-    if (next.phase === 'descending' && prev.phase !== 'descending') scoredAtDrop.current = scoredRef.current
+    if (next.phase === 'descending' && prev.phase !== 'descending') {
+      scoredAtDrop.current = scoredRef.current
+      sfx.launch()
+    }
     if (next.result && heldId.current !== null) letGo(false)
     // Round end, exactly once per round, deferred until the head is home so a dropped prize has
     // had time to fall in. Pays only when the chute sensor caught a prize this round.
@@ -259,6 +267,7 @@ export function ClawMachine({ position, rotation, active, onRoundEnd }: MachineP
   const scoredRef = useRef(0)
   const registry = useMemo(() => createPrizeRegistry(), [])
   const onScore = useCallback(() => {
+    sfx.hit(5)
     scoredRef.current += 1
   }, [])
   // Let the seeded stack settle once even if the machine mounts inactive, then honour the
