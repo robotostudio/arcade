@@ -22,7 +22,7 @@ A low-poly 3D arcade running in the browser at a public Vercel URL: one diorama 
 - Decided by Jono at charting (2026-09-26): browser 3D web app (React Three Fiber on Next.js, Vercel); Roboto Studio brand and R&D piece; Machines are playable; diorama navigation; Skeeball is a two-stage input (sweeping aim arrow, then power); the Store is a 3D counter in the Room, not a 2D route; Items are Roboto merch and services; no external asset files.
 - **Look, decided by Jono at T+0:15 (2026-09-26)**: a PS1-era demake in the Bloodborne PSX register (black void, gaslamp gloom, vertex wobble, 15-bit dither, scanlines). Reference frames in `docs/research/refs/`, recipe in [docs/research/psx-look.md](../../docs/research/psx-look.md). This revises the charting-time "no external reference art" line: four screenshots are the look target; still no asset files. The crunch is load-bearing: it hides procedural geometry, so nobody polishes edges.
 - Standing stack (revocable if a ticket proves it wrong): Next.js App Router, TypeScript, pnpm, `@react-three/fiber`, `@react-three/drei`, `@react-three/rapier`, zustand, Tailwind for the HUD; Vercel project `arcade` on the roboto team; from T+0:25 also `postprocessing` + `@react-three/postprocessing` for the look. Procedural primitive geometry, Lambert (Gouraud) lit, under the PSX look. Tickets in `localStorage`.
-- Glossary lives in [CONTEXT.md](../../CONTEXT.md).
+- Glossary lives in [CONTEXT.md](../../CONTEXT.md). Open gaps in the plan, with proposed resolutions and owners: [handoff.md](./handoff.md).
 - Feedback: at each PLAN.md checkpoint, play the other roles' previews and append a three-line **Keep / Change / Cut** comment under `## Comments` in their issue file. Owner decides.
 
 ## Decisions so far
