@@ -9,6 +9,7 @@ import { StoreCounter } from '@/store/StoreCounter'
 import { StoreHud } from '@/store/StoreHud'
 import { ArcadeCanvas } from './ArcadeCanvas'
 import { RoomEnvironment } from './room-environment'
+import { SoundtrackToggle } from './Soundtrack'
 
 import { WhackMachine, DOCK as WHACK_DOCK } from '@/machines/whackamole'
 import { ClawMachine, DOCK as CLAW_DOCK } from '@/machines/claw'
@@ -181,7 +182,15 @@ export function Room() {
     {!inStore && mode.kind === 'room' && <button ref={storeButton} type="button" inert={!introDone} onClick={openStore} className={`${hud} absolute bottom-6 left-1/2 z-10 -translate-x-1/2 border border-[#ffe099]/60 bg-[#242044]/95 px-4 py-3 font-mono text-xs uppercase tracking-widest text-[#ffe099] hover:bg-[#393366] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#ffe099]`}>
       Store · {tickets} Tickets
     </button>}
-    {inStore && <StoreHud onClose={closeStore} />}
+    <div className={`${hud} absolute right-4 top-4 z-40 flex items-center gap-2`}>
+      {inStore && (
+        <button type="button" onClick={closeStore} className="border border-[#ffe099]/60 bg-[#242044]/95 px-4 py-3 font-mono text-xs uppercase tracking-widest text-[#ffe099] hover:bg-[#393366] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#ffe099]">
+          Back · Esc
+        </button>
+      )}
+      <SoundtrackToggle />
+    </div>
+    {inStore && <StoreHud />}
     </>
   )
 }

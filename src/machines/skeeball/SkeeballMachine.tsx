@@ -63,10 +63,10 @@ function ticketsFor(score: number) {
 
 const HUD_CSS = `
 .sk { position:absolute; inset:0; pointer-events:none; font-family: Impact, "Arial Black", "Helvetica Neue", Arial, sans-serif; color:#fff6d0; text-transform:uppercase; letter-spacing:0.04em; }
-.sk-pills { position:absolute; right:16px; top:16px; display:flex; gap:6px; }
+.sk-pills { position:absolute; right:72px; top:16px; display:flex; gap:6px; }
 .sk-pill { border-radius:999px; padding:4px 12px; font-size:13px; line-height:1; background:#111; border:2px solid #f2c230; color:#f2c230; box-shadow: 3px 3px 0 #7a1020; }
 .sk-pill.on { background:#f2c230; color:#3a0a10; }
-.sk-tiles { position:absolute; right:16px; top:52px; display:flex; gap:4px; align-items:flex-end; }
+.sk-tiles { position:absolute; right:72px; top:52px; display:flex; gap:4px; align-items:flex-end; }
 .sk-tile { min-width:30px; height:40px; display:grid; place-items:center; font-size:26px; background:#f2c230; color:#3a0a10; border:3px solid #7a1020; box-shadow: 0 4px 0 #3a0a10; }
 .sk-tiles small { font-size:11px; color:#f2c230; margin-right:6px; align-self:center; }
 .sk-prompt { position:absolute; left:50%; bottom:36px; transform:translateX(-50%); font-size:22px; white-space:nowrap; text-shadow: 2px 2px 0 #7a1020; }

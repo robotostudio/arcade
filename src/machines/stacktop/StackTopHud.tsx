@@ -18,7 +18,7 @@ const CSS = `
 .stt-pill { border-radius:999px; padding:4px 12px; font-size:13px; line-height:1; background:#111; border:2px solid #f2c230; color:#f2c230; box-shadow: 3px 3px 0 #7a1020; }
 .stt-pill.on { background:#f2c230; color:#3a0a10; }
 .stt-badge { width:34px; height:34px; border-radius:50%; background:#7a1020; border:2px solid #fff6d0; display:grid; place-items:center; font-size:14px; box-shadow: 3px 3px 0 #1b3f9c; }
-.stt-tiles { position:absolute; right:16px; top:16px; display:flex; gap:4px; align-items:flex-end; }
+.stt-tiles { position:absolute; right:72px; top:16px; display:flex; gap:4px; align-items:flex-end; }
 .stt-tile { min-width:30px; height:40px; display:grid; place-items:center; font-size:26px; background:#f2c230; color:#3a0a10; border:3px solid #7a1020; box-shadow: 0 4px 0 #3a0a10; }
 .stt-tiles small { font-size:11px; color:#f2c230; margin-right:6px; align-self:center; }
 .stt-prompt { position:absolute; left:50%; bottom:40px; transform:translateX(-50%); font-size:22px; white-space:nowrap; text-shadow: 2px 2px 0 #7a1020; }
