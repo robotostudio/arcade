@@ -33,6 +33,17 @@ const MOLE = {
   head: litMaterial('#ec627b', { flatShading: true }),
 }
 
+// The mallet swings from the player's hand like a real one: the grip sits above and in front of
+// the hovered hole, and at rotation 0 the head's flat face lands on the hole centre. It rests
+// cocked back by MALLET_REST, a hit kicks it down, and it bounces off the strike pose.
+const GRIP: [number, number] = [.72, .45] // [y, z] of the pivot above the hovered hole
+const REACH: [number, number] = [-.42, -.45] // [y, z] from the grip to the head centre on a strike
+const REACH_LEN = Math.hypot(REACH[0], REACH[1])
+const HANDLE_TILT = Math.atan2(REACH[1], REACH[0]) // turns the handle's +Y along the reach
+const HANDLE_LEN = .7
+const HANDLE_MID = 1 - HANDLE_LEN / 2 / REACH_LEN // from the head back past the grip
+const MALLET_REST = .32
+
 const FOOTER = '9 HOLES / 30 SECONDS / 5 TICKETS A HIT'
 
 // One prompt string per phase for the Shell: the real key and the verb. Space only starts a Round
@@ -67,7 +78,7 @@ export function WhackMachine({ position, rotation, active, onRoundEnd, onPrompt 
   const moles = useRef<(Group | null)[]>([])
   const rings = useRef<(Group | null)[]>([])
   const mallet = useRef<Group>(null)
-  const malletBody = useRef({ x: 0, z: 0, vx: 0, vz: 0, ang: 0.15, av: 0 })
+  const malletBody = useRef({ x: 0, z: 0, vx: 0, vz: 0, ang: MALLET_REST, av: 0 })
   const motions = useRef<MoleMotion[]>(Array.from({ length: 9 }, stillMole))
   const wasUp = useRef(Array<boolean>(9).fill(false))
   const shake = useRef(0)
@@ -136,10 +147,12 @@ export function WhackMachine({ position, rotation, active, onRoundEnd, onPrompt 
     hammer.vz += ((hz - hammer.z) * 68 - hammer.vz * 12) * dt
     hammer.x += hammer.vx * dt
     hammer.z += hammer.vz * dt
-    hammer.av += ((0.15 - hammer.ang) * 62 - hammer.av * 8) * dt
+    hammer.av += ((MALLET_REST - hammer.ang) * 62 - hammer.av * 8) * dt
     hammer.ang += hammer.av * dt
+    // The head stops on the hole and bounces back rather than swinging through the deck.
+    if (hammer.ang < 0) { hammer.ang = 0; if (hammer.av < 0) hammer.av *= -.3 }
     if (mallet.current) {
-      mallet.current.position.set(hammer.x, 0.22, hammer.z)
+      mallet.current.position.set(hammer.x, GRIP[0], hammer.z + GRIP[1])
       mallet.current.rotation.x = hammer.ang
     }
     const headline = !active ? 'STEP RIGHT UP!' : s.phase === 'idle' ? 'SPACE / CLICK TO START' : s.phase === 'countdown' ? `READY... ${Math.ceil(WHACK.countdown - s.elapsed)}` : s.phase === 'result' ? `+${s.whacks * WHACK.perWhack} TICKETS!` : `${Math.ceil(WHACK.duration - s.elapsed).toString().padStart(2, '0')} SEC     ${s.whacks.toString().padStart(2, '0')} WHACKS`
@@ -183,8 +196,8 @@ export function WhackMachine({ position, rotation, active, onRoundEnd, onPrompt 
         </group>
       </group>)}
       <group ref={mallet} visible={active}>
-        <mesh position={[0, .2, 0]} rotation={[0, 0, Math.PI / 2]} material={MOLE.head}><cylinderGeometry args={[.1, .11, .34, 8]} /></mesh>
-        <mesh position={[0, .34, .3]} rotation={[1.15, 0, 0]} material={MOLE.handle}><cylinderGeometry args={[.03, .04, .46, 8]} /></mesh>
+        <mesh position={[0, REACH[0], REACH[1]]} rotation={[HANDLE_TILT + Math.PI / 2, 0, 0]} material={MOLE.head}><cylinderGeometry args={[.11, .11, .3, 8]} /></mesh>
+        <mesh position={[0, REACH[0] * HANDLE_MID, REACH[1] * HANDLE_MID]} rotation={[HANDLE_TILT, 0, 0]} material={MOLE.handle}><cylinderGeometry args={[.03, .04, HANDLE_LEN, 8]} /></mesh>
       </group>
       {/* A single board-plane raycast keeps rising meshes out of hit resolution. */}
       <mesh position={[0, .025, 0]} rotation={[-Math.PI / 2, 0, 0]} onPointerMove={e => { const h = pointToHole(e); if (h >= 0) input.hovered.current = h }} onPointerDown={e => { const h = pointToHole(e); if (h >= 0) input.hit(h) }}>

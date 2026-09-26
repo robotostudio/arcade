@@ -29,15 +29,29 @@ function dockPoint(id: HubId, point: readonly number[]) {
   return new Vector3(point[0], point[1], point[2]).multiplyScalar(STATION_SCALE[id]).applyAxisAngle(Y_AXIS, STATION_ROTATIONS[id]).add(new Vector3(...STATIONS[id]))
 }
 
-// Each cabinet faces the shared viewing point on the open side of the hub.
+// The hub is a ring of cabinets around the player, like a game's hub room: the player stands at
+// HUB_SPOT and every cabinet sits ARC_RADIUS away, turned to face them. Moving the mouse turns the
+// head across the arc. The inner pair leave a gap for the FLEEKADE sign; the Store is behind.
+const HUB_SPOT = [0, 1.5] as const // [x, z]
+const ARC_RADIUS = 5
+const ARC_ANGLE = { whackamole: -72, claw: -30, skeeball: 27, stacktop: 72 } as const // degrees right of straight ahead; the Claw is the widest, so it sits further out
+const onArc = (degrees: number) => {
+  const a = MathUtils.degToRad(degrees)
+  return [HUB_SPOT[0] + Math.sin(a) * ARC_RADIUS, 0, HUB_SPOT[1] - Math.cos(a) * ARC_RADIUS] as const
+}
 export const STATIONS = {
-  whackamole: [-6.3, 0, .2] as const,
-  claw: [-4.35, 0, -1.7] as const,
-  skeeball: [2.3, 0, -1.9] as const,
-  stacktop: [6.3, 0, .2] as const,
+  whackamole: onArc(ARC_ANGLE.whackamole),
+  claw: onArc(ARC_ANGLE.claw),
+  skeeball: onArc(ARC_ANGLE.skeeball),
+  stacktop: onArc(ARC_ANGLE.stacktop),
   store: [0, 0, 13.6] as const, // behind the hub camera; the Store button spins round to face it
 }
-export const STATION_ROTATIONS = { whackamole: .55, claw: .2, skeeball: -.42, stacktop: -.55 } as const
+export const STATION_ROTATIONS = {
+  whackamole: -MathUtils.degToRad(ARC_ANGLE.whackamole),
+  claw: -MathUtils.degToRad(ARC_ANGLE.claw),
+  skeeball: -MathUtils.degToRad(ARC_ANGLE.skeeball),
+  stacktop: -MathUtils.degToRad(ARC_ANGLE.stacktop),
+}
 // One hero scale for the hub: each cabinet's marquee tops out in the Claw's 3.6-4 m band and
 // play surfaces sit near one waist height. Physics machines (Claw, Skeeball) are built to size
 // in their own constants; only the physics-free cabinets are scaled here.
@@ -58,8 +72,12 @@ function endRound(id: MachineId, amount: number) {
 const INTRO_EYE = new Vector3(0, 7.5, 21)
 const SIGN_EYE = new Vector3(0.35, 4.35, 0.15)
 const SIGN_LOOK = new Vector3(0, 3.7, -6.6)
-const HUB_EYE = new Vector3(0, 3.4, 10)
-const HUB_LOOK = new Vector3(0, 1.5, -1)
+// Hub eye: just behind the player's spot at head height, looking across the arc.
+const HUB_EYE = new Vector3(HUB_SPOT[0], 2.9, HUB_SPOT[1] + 3)
+const HUB_LOOK = new Vector3(HUB_SPOT[0], 1.7, HUB_SPOT[1] - ARC_RADIUS)
+// How far the mouse turns the head: full left/right looks this far round the arc.
+const PAN_YAW = MathUtils.degToRad(44)
+const LOOK_DISTANCE = HUB_EYE.distanceTo(HUB_LOOK)
 const SIGN_HOLD = 2.2
 const SIGN_TRAVEL = 2.7
 
@@ -141,9 +159,9 @@ function HubView() {
 
   useEffect(() => {
     if (camera instanceof PerspectiveCamera) {
-      // Keep all four stations visible on portrait screens; outer cabinets frame the foreground.
+      // An ~80 degree horizontal view on any screen; the mouse pan reaches the outer cabinets.
       const aspect = size.width / size.height
-      camera.fov = MathUtils.clamp(MathUtils.radToDeg(2 * Math.atan(8.2 / (10 * aspect))), 48, 106)
+      camera.fov = MathUtils.clamp(MathUtils.radToDeg(2 * Math.atan(Math.tan(MathUtils.degToRad(40)) / aspect)), 48, 100)
       camera.updateProjectionMatrix()
     }
   }, [camera, size.width, size.height])
@@ -196,15 +214,18 @@ function HubView() {
     // is a half turn rather than a walk across the room.
     yaw.current = MathUtils.damp(yaw.current, inStore ? Math.PI : 0, 3, dt)
     const spin = yaw.current / Math.PI
-    const x = eye?.x ?? (inStore ? 0 : pan.current * .65)
-    const y = eye?.y ?? (inStore ? 2.7 : 3.4)
-    const z = eye?.z ?? (inStore ? 6.6 : 10 - Math.abs(pan.current) * .08)
+    const x = eye?.x ?? (inStore ? 0 : HUB_EYE.x + pan.current * .25)
+    const y = eye?.y ?? (inStore ? 2.7 : HUB_EYE.y)
+    const z = eye?.z ?? (inStore ? 6.6 : HUB_EYE.z)
     const glide = landing ? 1.8 : 4
     camera.position.set(MathUtils.damp(camera.position.x, x, glide, dt), MathUtils.damp(camera.position.y, y, glide, dt), MathUtils.damp(camera.position.z, z, glide, dt))
     // Facing the store, aim a touch left (world +x) so the details panel beside the prize screen is centred.
-    const lookX = look?.x ?? camera.position.x + Math.sin(yaw.current) * 11 + pan.current * .4 * (1 - spin) + .5 * spin
-    const lookY = look?.y ?? (inStore ? 1.9 : 1.5)
-    const lookZ = look?.z ?? camera.position.z - Math.cos(yaw.current) * 11
+    // The mouse turns the head round the arc; facing the store it has no pull.
+    const heading = yaw.current + pan.current * PAN_YAW * (1 - spin)
+    const reach = MathUtils.lerp(LOOK_DISTANCE, 11, spin) // the Store framing predates the arc
+    const lookX = look?.x ?? camera.position.x + Math.sin(heading) * reach + .5 * spin
+    const lookY = look?.y ?? (inStore ? 1.9 : HUB_LOOK.y)
+    const lookZ = look?.z ?? camera.position.z - Math.cos(heading) * reach
     const lambda = landing ? 3 : play ? 4 : 8
     target.current.x = MathUtils.damp(target.current.x, lookX, lambda, dt)
     target.current.y = MathUtils.damp(target.current.y, lookY, lambda, dt)
@@ -252,7 +273,7 @@ export function Room() {
 
   return (
     <>
-    <ArcadeCanvas camera={{ position: [0, 3.4, 10], fov: 55 }}>
+    <ArcadeCanvas camera={{ position: [HUB_EYE.x, HUB_EYE.y, HUB_EYE.z], fov: 55 }}>
       <RoomEnvironment />
       {IDS.map((id) => {
         const Machine = MACHINES[id]
