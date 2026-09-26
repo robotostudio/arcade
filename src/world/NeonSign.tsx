@@ -64,7 +64,7 @@ export function NeonSign() {
     ctx.font = 'bold 78px monospace'
     ctx.textAlign = 'center'
     ctx.textBaseline = 'middle'
-    ctx.fillText('EST. 1996   ·   OPEN LATE', 700, 80)
+    ctx.fillText('EST. 2021   ·   OPEN LATE', 700, 80)
     const map = new CanvasTexture(canvas)
     map.colorSpace = SRGBColorSpace
     return map
