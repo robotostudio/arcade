@@ -303,16 +303,26 @@ function Lane() {
   )
 }
 
-// Power column on the right deck. Lit from the frame loop, not React state.
-function PowerLeds({ leds }: { leds: RefObject<Group | null> }) {
+// Power gauge standing on the right deck, tipped back to face the player. Lit from
+// the frame loop, not React state.
+function PowerLeds({ leds, bars }: { leds: RefObject<Group | null>; bars: RefObject<Group | null> }) {
   const { width, y0, startZ } = SKEE.lane
+  const h = LEDS * 0.075 + 0.06
   return (
-    <group ref={leds} position={[width / 2 + 0.2, y0 + 0.1, startZ - 0.12]} visible={false}>
-      {Array.from({ length: LEDS }, (_, i) => (
-        <mesh key={i} position={[0, i * 0.075, 0]} material={SKEE_MATS.ledOff}>
-          <sphereGeometry args={[0.032, 8, 6]} />
-        </mesh>
-      ))}
+    <group ref={leds} position={[width / 2 + 0.2, y0 + 0.03, startZ - 0.16]} rotation={[-0.45, -0.15, 0]} visible={false}>
+      <mesh position={[0, h / 2, -0.02]} material={SKEE_MATS.cabinetMid}>
+        <boxGeometry args={[0.17, h, 0.03]} />
+      </mesh>
+      <mesh position={[0, h / 2, -0.03]} material={SKEE_MATS.trim}>
+        <boxGeometry args={[0.2, h + 0.03, 0.02]} />
+      </mesh>
+      <group ref={bars}>
+        {Array.from({ length: LEDS }, (_, i) => (
+          <mesh key={i} position={[0, 0.06 + i * 0.075, 0]} material={SKEE_MATS.ledOff}>
+            <boxGeometry args={[0.12, 0.055, 0.012]} />
+          </mesh>
+        ))}
+      </group>
     </group>
   )
 }
@@ -360,6 +370,7 @@ export function SkeeballMachine({ position, rotation, active, onRoundEnd }: Mach
   const root = useRef<Group>(null)
   const arrow = useRef<Group>(null)
   const leds = useRef<Group>(null)
+  const bars = useRef<Group>(null)
   const trail = useRef<Group>(null)
   const game = useRef<Game>(freshGame())
   const onRoundEndRef = useRef(onRoundEnd)
@@ -514,12 +525,10 @@ export function SkeeballMachine({ position, rotation, active, onRoundEnd }: Mach
       trail.current.visible = winding
       trail.current.rotation.y = -g.aim
     }
-    if (leds.current) {
-      leds.current.visible = winding
-      leds.current.children.forEach((led, i) => {
-        ;(led as Mesh).material = g.power > (i + 0.15) / LEDS ? SKEE_MATS.ledOn : SKEE_MATS.ledOff
-      })
-    }
+    if (leds.current) leds.current.visible = winding
+    bars.current?.children.forEach((bar, i) => {
+      ;(bar as Mesh).material = g.power > (i + 0.15) / LEDS ? SKEE_MATS.ledRamp[i] : SKEE_MATS.ledOff
+    })
 
     const ballN = g.phase === 'aim' || g.phase === 'power' || g.phase === 'swing' ? g.balls + 1 : Math.max(1, g.balls)
     const lit = g.scored && g.lastThrow > 0 ? g.lastThrow : 0
@@ -596,7 +605,7 @@ export function SkeeballMachine({ position, rotation, active, onRoundEnd }: Mach
         </mesh>
       </group>
 
-      <PowerLeds leds={leds} />
+      <PowerLeds leds={leds} bars={bars} />
 
       {active ? (
         <Html fullscreen style={{ pointerEvents: 'none' }} zIndexRange={[30, 10]}>

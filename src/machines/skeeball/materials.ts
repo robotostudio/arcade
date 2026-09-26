@@ -24,8 +24,9 @@ export const SKEE_MATS = {
   glowDim: basic('#8ec0ff'),
   dot: basic('#8ec0ff'),
   dotAlt: basic('#f4f7ff'),
-  ledOff: basic('#4a1010'),
-  ledOn: basic('#f2c230'),
+  ledOff: basic('#1c0b0e'),
+  // Power bars light cool to hot, bottom to top.
+  ledRamp: ['#8ec0ff', '#8ec0ff', '#f4f7ff', '#f2c230', '#f2c230', '#ffa033', '#ff6a3a', '#ff3a2a'].map(basic),
   ring10: basic('#d41c1c'),
   ring20: basic('#8ec0ff'),
   ring30: basic('#f4f7ff'),
