@@ -12,6 +12,7 @@ export type GridLayout = {
 
 export type GridColors = { placed: Color; moving: Color; gold: Color; miss: Color }
 
+const HIDDEN_DEPTH = .4 // behind the face plane, inside the cabinet body
 const dummy = new Object3D() // reused for every setMatrixAt, never allocated per frame
 
 function inRow(r: Row, c: number) {
@@ -34,8 +35,10 @@ export function paintGrid(mesh: InstancedMesh, s: StackerState, layout: GridLayo
         if (s.phase !== 'over') color = colors.moving
         else if (lost) color = colors.miss
       }
-      dummy.position.set((c - (W - 1) / 2) * layout.cell, layout.rowY(r), layout.z)
-      dummy.scale.setScalar(color ? 1 : 0)
+      // Hidden cells keep full size and tuck behind the face into the body. Scaled to 0 they
+      // went degenerate under the PSX vertex snap and smeared one huge red wedge over the glass.
+      dummy.position.set((c - (W - 1) / 2) * layout.cell, layout.rowY(r), color ? layout.z : layout.z - HIDDEN_DEPTH)
+      dummy.scale.setScalar(1)
       dummy.updateMatrix()
       mesh.setMatrixAt(i, dummy.matrix)
       mesh.setColorAt(i, color ?? colors.placed)
