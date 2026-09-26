@@ -37,7 +37,7 @@ function texture(kind: 'carpet' | 'sign', title = '', subtitle = '') {
   }
   const map = new CanvasTexture(canvas)
   map.colorSpace = SRGBColorSpace
-  if (kind === 'carpet') { map.wrapS = map.wrapT = RepeatWrapping; map.repeat.set(4, 3.6) }
+  if (kind === 'carpet') { map.wrapS = map.wrapT = RepeatWrapping; map.repeat.set(4, 5.3) }
   return map
 }
 
@@ -70,7 +70,7 @@ export function RoomEnvironment() {
   const carpet = useMemo(() => texture('carpet'), [])
   useEffect(() => () => carpet.dispose(), [carpet])
   return <group>
-    <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -.015, 0]}><planeGeometry args={[19, 17]} /><meshLambertMaterial map={carpet} /></mesh>
+    <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -.015, 4]}><planeGeometry args={[19, 25]} /><meshLambertMaterial map={carpet} /></mesh>
     <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -.01, 0]}>
       <ringGeometry args={[3.22, 3.7, 64]} />
       <meshLambertMaterial color="#393453" />
@@ -83,32 +83,27 @@ export function RoomEnvironment() {
       <ringGeometry args={[3.59, 3.65, 64]} />
       <meshLambertMaterial color="#7d9caa" />
     </mesh>
-    <Block at={[0, -.23, 0]} size={[19.3, .4, 17.3]} color="#544377" />
-    <Block at={[0, 5.4, .5]} size={[19, .18, 15]} color="#777589" />
-    {[-7.1, -4.7, -2.3, .1, 2.5, 4.9, 7.3].map(x => <Block key={x} at={[x, 5.298, .5]} size={[.025, .012, 15]} color="#565567" />)}
-    {[-4.6, -2.2, .2, 2.6, 5].map(z => <Block key={z} at={[0, 5.297, z]} size={[19, .012, .025]} color="#565567" />)}
-    <Block at={[-4.25, 2.65, -7]} size={[10.5, 5.3, .22]} color="#8884a8" />
-    <Block at={[6.35, 2.65, -7]} size={[6.3, 5.3, .22]} color="#8884a8" />
-    <Block at={[2.1, 4.25, -7]} size={[2.2, 2.1, .22]} color="#8884a8" />
-    <Block at={[.94, 1.6, -6.87]} size={[.12, 3.2, .16]} color="#bbb2bd" />
-    <Block at={[3.26, 1.6, -6.87]} size={[.12, 3.2, .16]} color="#bbb2bd" />
-    <Block at={[2.1, 3.18, -6.87]} size={[2.44, .12, .16]} color="#bbb2bd" />
-    <Block at={[.98, 1.6, -9]} size={[.12, 3.2, 4]} color="#55576e" />
-    <Block at={[3.22, 1.6, -9]} size={[.12, 3.2, 4]} color="#626079" />
-    <Block at={[2.1, 1.6, -11]} size={[2.3, 3.2, .16]} color="#373b53" />
-    <mesh rotation={[-Math.PI / 2, 0, 0]} position={[2.1, -.014, -9]}><planeGeometry args={[2.3, 4]} /><meshLambertMaterial map={carpet} /></mesh>
-    <Block at={[2.1, 3.15, -9.6]} size={[1.2, .06, .45]} color="#bddac9" glow />
-    <pointLight position={[2.1, 2.7, -9.5]} color="#b2d2c8" intensity={3} distance={4} />
-    <Block at={[-9.4, 2.65, 0]} size={[.22, 5.3, 14]} color="#718f9c" />
+    <Block at={[0, -.23, 4]} size={[19.3, .4, 25.3]} color="#544377" />
+    <Block at={[0, 5.4, 4.5]} size={[19, .18, 23]} color="#777589" />
+    {[-7.1, -4.7, -2.3, .1, 2.5, 4.9, 7.3].map(x => <Block key={x} at={[x, 5.298, 4.5]} size={[.025, .012, 23]} color="#565567" />)}
+    {[-4.6, -2.2, .2, 2.6, 5, 7.4, 9.8, 12.2, 14.6].map(z => <Block key={z} at={[0, 5.297, z]} size={[19, .012, .025]} color="#565567" />)}
+    <Block at={[0, 2.65, -7]} size={[19, 5.3, .22]} color="#8884a8" />
+    <Block at={[-9.4, 2.65, 4.5]} size={[.22, 5.3, 23]} color="#718f9c" />
+    <Block at={[9.4, 2.65, 11]} size={[.22, 5.3, 10]} color="#827f9f" />
+    <Block at={[0, 2.65, 16.4]} size={[19, 5.3, .22]} color="#8884a8" />
+    <Block at={[0, 4.8, 16.2]} size={[18.8, .06, .1]} color="#5faaaa" glow />
+    <Block at={[0, 5.06, 10]} size={[2.95, .13, 1.05]} color="#646475" />
+    <Block at={[0, 4.98, 10]} size={[2.7, .04, .85]} color="#8d96ac" glow />
+    <pointLight position={[0, 4.4, 10]} color="#afbde8" intensity={3} distance={10} decay={2} />
     <Block at={[9.4, 2.65, -3]} size={[.22, 5.3, 8]} color="#827f9f" />
-    {[[-4.25, 10.4], [6.35, 6.1]].map(([x, width]) => <group key={x}>
+    {[[0, 18.8]].map(([x, width]) => <group key={x}>
       {[.3, 1.25].map(y => <Block key={y} at={[x, y, -6.85]} size={[width, .09, .08]} color="#bd829e" />)}
       <Block at={[x, .7, -6.82]} size={[width, .85, .08]} color="#48445f" />
     </group>)}
     <Block at={[0, 4.8, -6.8]} size={[18.8, .06, .1]} color="#5faaaa" glow />
-    <Block at={[-9.22, 4.8, 0]} size={[.08, .06, 14]} color="#ad638f" glow />
-    <Block at={[-9.22, 1.25, 0]} size={[.08, .12, 14]} color="#f896b8" />
-    <Sign at={[-3.7, 3.85, -6.7]} title="ROBOTO ARCADE" subtitle="EST. 1996 • OPEN LATE" width={6.4} />
+    <Block at={[-9.22, 4.8, 4.5]} size={[.08, .06, 23]} color="#ad638f" glow />
+    <Block at={[-9.22, 1.25, 4.5]} size={[.08, .12, 23]} color="#f896b8" />
+    <Sign at={[0, 3.9, -6.7]} title="FLEEKADE" subtitle="EST. 1996 • OPEN LATE" width={8.8} />
     {[-7.7, -6.3, -4.9].map((x, i) => <Cabinet key={x} at={[x, 0, -5.65]} color={['#dc719e', '#5da6b4', '#9e82cd'][i]} title={['ORBIT', 'NOVA', 'RUSH'][i]} />)}
     {[-.5, 1].map((z, i) => <Cabinet key={z} at={[-8.5, 0, z]} rotation={Math.PI / 2} color={['#a786d1', '#da8599', '#68b8b7'][i]} title="PLAY" />)}
     {[-5, 0, 5].map((x, i) => <group key={x}>
