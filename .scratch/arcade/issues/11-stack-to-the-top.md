@@ -16,7 +16,7 @@ Payouts: 1 Ticket per row placed on a miss (before the Minor line or after riski
 
 ## For Jono: Room slot
 
-`MachineId` now includes `'stacktop'` (`src/arcade/state.ts`, Sne's one line). The Machine is `StackTop` from `src/machines/stacktop/StackTop.tsx` with the shared `MachineProps`; footprint about 2.2 wide x 1.1 deep x 4.6 tall, player at +z, dock `[0, 2.9, 6.6]` looking at `[0, 2.45, 0]`. It needs a fourth station in the Room and `onRoundEnd` wired to `awardTickets('stacktop', n)`. Its HUD is `StackTopHud` in the same folder (client-only; reads `useStackTopHud`).
+`MachineId` now includes `'stacktop'` (`src/arcade/state.ts`, Sne's one line). The Machine is `StackTop` from `src/machines/stacktop/StackTop.tsx` with the shared `MachineProps`; footprint about 2.2 wide x 1.1 deep x 4.6 tall, player at +z, dock `[0, 2.9, 6.6]` looking at `[0, 2.45, 0]`. It now stands in the Room at `STATIONS.stacktop` (right of Skeeball) with a click-to-play mode wired in `Room.tsx`; Jono owns the final slot and `onRoundEnd` wired to `awardTickets('stacktop', n)`. Its HUD is `StackTopHud` in the same folder (client-only; reads `useStackTopHud`).
 
 ## Answer
 
