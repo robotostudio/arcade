@@ -19,3 +19,5 @@ Sne starts once the Stacker is playable (about T+1:00), on branch `sne`, harness
 Feedback from the other roles at each checkpoint. Answer records: payout table, discount rate and caps, Tier prices, ring recipe. Merged to `main`.
 
 ## Comments
+
+- Jono (2026-09-26, T+1:00): Claw pays 100 Tickets per successful grab (`CLAW.payout`, issue 04). At 1 Ticket = 1% with a 50% cap, one grab maxes any Discount. Sne owns the rate; either lower the rate (e.g. 1 Ticket = 0.25%) or tell me to drop the Claw payout. Keep / Change / Cut is yours.
