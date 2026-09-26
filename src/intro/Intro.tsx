@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import '@/world/look/crt.css'
 import { drawGate, PAGES, type PageEnv } from './pages'
 import { createSound, type IntroSound } from './sound'
-import { INTRO_SEEN_KEY, useIntro } from './store'
+import { INTRO_SEEN_KEY, SIGN_INTRO_KEY, useIntro } from './store'
 import { H, vhs, W } from './vhs'
 
 // The Fleekade intro: a late-90s console boot as captured off a worn VHS tape. It plays once per
@@ -27,7 +27,14 @@ export function Intro() {
   useEffect(() => {
     const param = new URLSearchParams(window.location.search).get('intro')
     let seen = false
-    try { seen = sessionStorage.getItem(INTRO_SEEN_KEY) === '1' } catch {}
+    let signSeen = false
+    try {
+      seen = sessionStorage.getItem(INTRO_SEEN_KEY) === '1'
+      signSeen = sessionStorage.getItem(SIGN_INTRO_KEY) === '1'
+    } catch {}
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    const playSign = !reduced && (param === '1' || (param !== '0' && !signSeen))
+    useIntro.getState().armSignIntro(playSign)
     if (param === '0' || (seen && param !== '1')) useIntro.getState().finish()
     else useIntro.getState().start()
   }, [])
