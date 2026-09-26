@@ -18,7 +18,6 @@ import { WhackMachine, DOCK as WHACK_DOCK } from '@/machines/whackamole'
 import { ClawMachine, DOCK as CLAW_DOCK } from '@/machines/claw'
 import { SkeeballMachine, DOCK as SKEE_DOCK } from '@/machines/skeeball'
 import { StackTop, DOCK as TOP_DOCK } from '@/machines/stacktop/StackTop'
-import { StackTopHud } from '@/machines/stacktop/StackTopHud'
 
 const MACHINES = { whackamole: WhackMachine, claw: ClawMachine, skeeball: SkeeballMachine, stacktop: StackTop }
 type HubId = keyof typeof MACHINES
@@ -194,7 +193,6 @@ export function Room() {
       <HubView />
       <ReadySignal />
     </ArcadeCanvas>
-    {mode.kind === 'play' && mode.machine === 'stacktop' && <StackTopHud />}
     {mode.kind === 'play' && mode.machine in MACHINES && <Shell accent={mode.machine as HubId} prompt={prompts[mode.machine] ?? ''} />}
     {!inStore && mode.kind === 'room' && <button ref={storeButton} type="button" inert={!introDone} onClick={openStore} style={{ background: SHELL.surface, color: SHELL.text, borderColor: SHELL.edge }} className={`${hud} vt absolute bottom-6 left-1/2 z-10 -translate-x-1/2 border px-5 py-2 text-[28px] leading-none hover:brightness-125 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#fff4d7]`}>
       Store · {tickets} Tickets
