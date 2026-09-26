@@ -13,7 +13,7 @@ type ArcadeCanvasProps = {
 }
 
 // The one Canvas every page and dev harness mounts (issue 09): low-res dpr, no AA, no tone mapping,
-// no shadows, void background + fog, dim cold lights, dither pass, CRT DOM overlay.
+// no shadows, lavender fog, soft fluorescent fill, dither pass, restrained CRT overlay.
 // ?clean=1 skips the crunch (dpr [1, 1.5], no dither, no overlay) so a bug can be ruled in or out.
 export function ArcadeCanvas({ children, camera }: ArcadeCanvasProps) {
   const [clean, setClean] = useState(false)

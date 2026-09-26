@@ -27,6 +27,8 @@ A low-poly 3D arcade running in the browser at a public Vercel URL: one diorama 
 
 ## Decisions so far
 
+- [03 World visual revision](issues/03-art-direction-room-camera-hud.md): user requested nostalgic stylized arcade with liminal empty space, superseding the Bloodborne gloom. Jono built the surrounding world; playable machine/store integration remains open.
+
 <!-- one line per resolved ticket: [title](issues/NN-slug.md): gist -->
 - [01 Scaffold and hello-room](issues/01-scaffold-and-hello-room.md): live at https://arcade-beta-eight.vercel.app (Vercel `arcade` on roboto, `prj_0c3y5Z3dsJdpPhIFWose9I6uZ3oJ`, GitHub connected, `main` = production; team-scoped and preview URLs need a Vercel login). Next 16.3.6 + pins from 02, state stub + `MachineProps` in place, placeholder Room with `STATIONS` slots. Gotcha: `agentRules: false` in next.config or `next dev` edits AGENTS.md.
 - [02 Research: physics and rendering recipe](issues/02-research-physics-and-rendering.md): pins next 16.3.6 / react 19.3 / three 0.186.1 / fiber 9.8.1 / drei 10.7.9 / rapier 2.2.0; Claw fakes the grip (kinematic claw, sensor snap, setBodyType, scripted slip), Skeeball is a real rapier ball with cuboid ramp + sensor rings, Stacker has no physics (interval trim, one instancedMesh); flat-shaded palette with hemisphere + one shadow directional, `shadows="percentage"`, dpr [1, 1.5], drei CameraControls `setLookAt(..., true)` for the fly-to, `enabled={false}` in Play mode. Details: docs/research/r3f-physics-recipe.md.
