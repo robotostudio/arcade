@@ -1,0 +1,7 @@
+Turn this photo into a clean e-commerce product photo of ONLY the garment in the photo.
+
+Isolate the clothing piece: remove the table, floor, hanger, plant, feet, chairs, people and everything else. Show the single garment alone, laid flat (flat lay), front facing, upright (collar at the top, hem at the bottom, sleeves spread slightly), centred and filling most of the square frame, on a seamless plain pure white (#ffffff) studio background with only a very soft, faint natural drop shadow under the garment.
+
+Faithfully keep the garment's real colours, cut, patches, prints, patterns, textures, stitching and any lettering exactly as they are in the photo; do not invent, add, remove or change any details.
+
+Style: professional photorealistic product photography for an online vintage clothing store, soft even studio lighting, sharp focus, high resolution, true-to-life colour, square 1:1 crop, no text, no captions, no watermark, no borders, no props, no mannequin, no model, no pixelation.

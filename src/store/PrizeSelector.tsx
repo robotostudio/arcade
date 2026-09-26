@@ -20,7 +20,8 @@ import { CREDIT, creditGbp } from '@/arcade/economy'
 import { accentMaterial, bodyMaterial, flatMaterial, litMaterial, unlitMaterial } from '@/world/livery'
 import { SHELL } from '@/world/Shell'
 import { GRADE_LABEL, ITEMS, STAT_KEYS, STAT_LABEL, TIER_HEX, itemAfter, itemById, pricePerPiece } from './items'
-import { PRIZE_URLS, configurePrizeTextures } from './prizeTextures'
+import { usePrizeUrls } from './catalogue'
+import { configurePrizeTextures } from './prizeTextures'
 import { formatGbp, maxApplicable, priceAfter, useStore } from './state'
 
 type Vec3 = [number, number, number]
@@ -111,7 +112,7 @@ export function PrizeSelector({ onClose }: PrizeSelectorProps) {
   const index = ITEMS.findIndex((i) => i.id === item.id)
 
   // Usually already fetched and resident: the Room warms these up while the hub idles (prizeTextures.tsx).
-  const textures = useTexture(PRIZE_URLS, configurePrizeTextures)
+  const textures = useTexture(usePrizeUrls(), configurePrizeTextures)
 
   return (
     <group>

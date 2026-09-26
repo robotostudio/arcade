@@ -10,9 +10,7 @@
 import { useRef } from 'react'
 import { useFrame, useLoader } from '@react-three/fiber'
 import { NearestFilter, SRGBColorSpace, TextureLoader, type Texture } from 'three'
-import { ITEMS } from './items'
-
-export const PRIZE_URLS = ITEMS.map((i) => `/store/items/${i.image}`)
+import { usePrizeUrls } from './catalogue'
 
 // Nearest both ways: the sprite is a pixel-art still behind the PS1 crunch, so no mipmaps.
 export function configurePrizeTextures(textures: Texture[]) {
@@ -26,7 +24,7 @@ export function configurePrizeTextures(textures: Texture[]) {
 }
 
 export function PrizeTextureWarmup() {
-  const textures = useLoader(TextureLoader, PRIZE_URLS)
+  const textures = useLoader(TextureLoader, usePrizeUrls())
   const next = useRef(0)
   useFrame(({ gl }) => {
     if (next.current >= textures.length) return
