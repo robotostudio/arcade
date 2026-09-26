@@ -7,7 +7,7 @@
 import { create } from 'zustand'
 import { createJSONStorage, persist } from 'zustand/middleware'
 
-export type MachineId = 'claw' | 'stacker' | 'skeeball' | 'stacktop' | 'whackamole'
+export type MachineId = 'claw' | 'skeeball' | 'stacktop' | 'whackamole'
 export type Mode = { kind: 'room' } | { kind: 'play'; machine: MachineId } | { kind: 'store' }
 
 export type ArcadeState = {
