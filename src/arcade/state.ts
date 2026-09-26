@@ -22,6 +22,9 @@ export type ArcadeState = {
   lastRound: { machine: MachineId; tickets: number } | null
   clearLastRound: () => void
   resetTickets: () => void
+  // Issue 12: the prompt each Machine last supplied for its phase; the Shell shows the active one.
+  prompts: Partial<Record<MachineId, string>>
+  setPrompt: (machine: MachineId, prompt: string) => void
 }
 
 export const useArcade = create<ArcadeState>()(
@@ -46,6 +49,8 @@ export const useArcade = create<ArcadeState>()(
       },
       clearLastRound: () => set({ lastRound: null }),
       resetTickets: () => set({ tickets: 0, lastRound: null }),
+      prompts: {},
+      setPrompt: (machine, prompt) => set((s) => (s.prompts[machine] === prompt ? s : { prompts: { ...s.prompts, [machine]: prompt } })),
     }),
     {
       name: 'arcade:tickets',

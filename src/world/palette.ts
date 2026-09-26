@@ -4,7 +4,7 @@ import { psxify } from './look/psx-material'
 // Shared palette (first cut, issue 09). One material instance per colour, reused by every mesh.
 // Sne owns this in Phase 2.
 export const COLORS = {
-  void: '#050406',
+  void: '#171535', // the Void is indigo, same as LOOK.void; never black
   floor: '#1c1f26',
   stone: '#2e3440',
   slate: '#48505e',
