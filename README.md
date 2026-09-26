@@ -8,4 +8,11 @@ Hackathon build, 2026-09-26, three devs, three hours. **Quick beats reliable.**
 - Glossary: [CONTEXT.md](./CONTEXT.md)
 - Issues and map: [.scratch/arcade/](./.scratch/arcade/)
 
-Stack: Next.js App Router, TypeScript, pnpm, `@react-three/fiber`, `@react-three/drei`, `@react-three/rapier`, zustand, Tailwind. Deployed to Vercel (`arcade`, roboto team).
+**Live: https://arcade-beta-eight.vercel.app**
+
+Stack: Next.js App Router, TypeScript, pnpm, `@react-three/fiber`, `@react-three/drei`, `@react-three/rapier`, zustand, Tailwind. Deployed to Vercel (`arcade`, roboto team); every push to `main` goes to production.
+
+```sh
+pnpm install
+pnpm dev
+```
