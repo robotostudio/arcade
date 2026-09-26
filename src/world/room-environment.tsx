@@ -109,12 +109,8 @@ export function RoomEnvironment() {
     <Block at={[-9.22, 4.8, 0]} size={[.08, .06, 14]} color="#ad638f" glow />
     <Block at={[-9.22, 1.25, 0]} size={[.08, .12, 14]} color="#f896b8" />
     <Sign at={[-3.7, 3.85, -6.7]} title="ROBOTO ARCADE" subtitle="EST. 1996 • OPEN LATE" width={6.4} />
-    <Sign at={[6.5, 2.95, -6.7]} title="PRIZES" subtitle="PLAY / WIN / REPEAT" width={3} />
     {[-7.7, -6.3, -4.9].map((x, i) => <Cabinet key={x} at={[x, 0, -5.65]} color={['#dc719e', '#5da6b4', '#9e82cd'][i]} title={['ORBIT', 'NOVA', 'RUSH'][i]} />)}
     {[-.5, 1].map((z, i) => <Cabinet key={z} at={[-8.5, 0, z]} rotation={Math.PI / 2} color={['#a786d1', '#da8599', '#68b8b7'][i]} title="PLAY" />)}
-    <Block at={[6.4, .65, -5.55]} size={[3.8, 1.3, 1.1]} color="#db87a9" />
-    <Block at={[6.4, 1.35, -5.55]} size={[4, .15, 1.3]} color="#f8dbaa" />
-    {[1.85, 2.45].map(y => <group key={y}><Block at={[6.4, y, -6.45]} size={[3.9, .1, .6]} color="#efc5a5" />{[5.1, 5.75, 6.4, 7.05, 7.7].map((x, i) => <mesh key={x} position={[x, y + .24, -6.4]}><icosahedronGeometry args={[.22, 0]} /><meshLambertMaterial color={['#fca1c3', '#8ae0d3', '#ffe099'][i % 3]} /></mesh>)}</group>)}
     {[-5, 0, 5].map((x, i) => <group key={x}>
       <Block at={[x, 5.06, -3]} size={[2.95, .13, 1.05]} color="#646475" />
       <Block at={[x, 4.98, -3]} size={[2.7, .04, .85]} color={i === 1 ? '#303444' : '#8d96ac'} glow />

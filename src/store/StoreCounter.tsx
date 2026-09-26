@@ -19,6 +19,7 @@ export type StoreCounterProps = {
   position: Vec3
   rotation?: Vec3
   onSelect?: (id: Item['id']) => void
+  onOpen?: () => void
 }
 
 // Counter and shelf layout, in counter-local units.
@@ -47,9 +48,20 @@ const PLACED = (['white', 'blue', 'gold'] as Tier[]).flatMap((tier) =>
   })),
 )
 
-export function StoreCounter({ position, rotation, onSelect }: StoreCounterProps) {
+export function StoreCounter({ position, rotation, onSelect, onOpen }: StoreCounterProps) {
+  const [hovered, setHovered] = useState(false)
+  useCursor(hovered && !!onOpen)
   return (
-    <group position={position} rotation={rotation}>
+    <group
+      position={position}
+      rotation={rotation}
+      onClick={(event) => {
+        event.stopPropagation()
+        onOpen?.()
+      }}
+      onPointerOver={() => setHovered(true)}
+      onPointerOut={() => setHovered(false)}
+    >
       {/* Counter body and top slab */}
       <mesh position={[0, BODY.h / 2, 0]} material={MAT.body}>
         <boxGeometry args={[BODY.w, BODY.h, BODY.d]} />
@@ -66,7 +78,10 @@ export function StoreCounter({ position, rotation, onSelect }: StoreCounterProps
       <Sign />
 
       {PLACED.map(({ item, position: p, phase }) => (
-        <ItemSlot key={item.id} item={item} position={p} phase={phase} onSelect={onSelect} />
+        <ItemSlot key={item.id} item={item} position={p} phase={phase} onSelect={(id) => {
+          onSelect?.(id)
+          onOpen?.()
+        }} />
       ))}
     </group>
   )
@@ -96,6 +111,14 @@ function ShelfUnit() {
   )
 }
 
+const STORE_GLYPHS = [
+  ['111', '100', '111', '001', '111'],
+  ['111', '010', '010', '010', '010'],
+  ['111', '101', '101', '101', '111'],
+  ['110', '101', '110', '101', '101'],
+  ['111', '100', '110', '100', '111'],
+]
+
 function Sign() {
   return (
     <group position={[0, SIGN_Y, SHELF_Z + 0.1]}>
@@ -108,10 +131,14 @@ function Sign() {
       <mesh material={MAT.sign}>
         <boxGeometry args={[2.8, 0.42, 0.08]} />
       </mesh>
-      {/* A stripe of Roboto blue standing in for lettering */}
-      <mesh position={[0, 0, 0.045]} material={MAT.signText}>
-        <boxGeometry args={[2.2, 0.12, 0.02]} />
-      </mesh>
+      {/* Pixel lettering uses geometry so the sign needs no font download. */}
+      {STORE_GLYPHS.map((rows, letter) => rows.flatMap((row, y) =>
+        [...row].flatMap((pixel, x) => pixel === '1' ? (
+          <mesh key={`${letter}-${y}-${x}`} position={[(letter * 4 + x - 9) * 0.095, (2 - y) * 0.06, 0.055]} material={MAT.signText}>
+            <boxGeometry args={[0.08, 0.05, 0.02]} />
+          </mesh>
+        ) : []),
+      ))}
     </group>
   )
 }

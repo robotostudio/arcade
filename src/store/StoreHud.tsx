@@ -11,7 +11,7 @@ import { formatGbp, maxApplicable, priceAfter, useStore } from './state'
 const box = 'border border-white/25 bg-black/80'
 const label = 'text-[10px] uppercase tracking-[0.2em] text-white/50'
 
-export function StoreHud() {
+export function StoreHud({ onClose }: { onClose?: () => void }) {
   const tickets = useArcade((s) => s.tickets)
   const selectedId = useStore((s) => s.selected)
   const applied = useStore((s) => s.applied)
@@ -21,8 +21,10 @@ export function StoreHud() {
 
   const item = itemById(selectedId)
   const max = item ? maxApplicable(item, tickets) : 0
-  const pct = item ? discountPct(item.tier, applied) : 0
-  const canClaim = !!item && applied > 0 && applied <= tickets
+  const visibleApplied = Math.min(applied, max)
+  const pct = item ? discountPct(item.tier, visibleApplied) : 0
+  const isClaimed = !!item && claimed.includes(item.id)
+  const canClaim = !!item && !isClaimed && Number.isInteger(applied) && applied > 0 && applied <= max
 
   return (
     <aside className="absolute right-3 top-3 bottom-3 z-10 flex w-80 max-w-[calc(100vw-1.5rem)] flex-col gap-2 font-mono text-xs text-white/90">
@@ -32,7 +34,13 @@ export function StoreHud() {
           <span className={label}>Tickets </span>
           {tickets}
         </span>
+        {onClose && (
+          <button type="button" onClick={onClose} aria-label="Close store" className="border border-white/30 px-2 py-1 hover:bg-white/10">
+            Close
+          </button>
+        )}
       </div>
+      <p className={`${box} px-3 py-2 text-[10px] leading-relaxed text-white/60`}>Demo prizes. Apply Tickets for a discount, then claim once per Item. No real orders.</p>
 
       <div className={`${box} min-h-0 flex-1 overflow-y-auto`}>
         {TIERS.map((tier) => (
@@ -69,6 +77,7 @@ export function StoreHud() {
         ))}
       </div>
 
+      {!item && <p className={`${box} px-3 py-3 text-white/70`}>Choose a prize above or click an Item on the counter to spend your Tickets.</p>}
       {item && (
         <div className={`${box} flex flex-col gap-2 px-3 py-3`}>
           <div className="flex items-baseline gap-2">
@@ -82,7 +91,7 @@ export function StoreHud() {
             <span className={`${label} flex justify-between`}>
               <span>Tickets applied</span>
               <span className="tabular-nums text-white/80">
-                {applied} / {max}
+                {visibleApplied} / {max}
               </span>
             </span>
             <input
@@ -90,8 +99,8 @@ export function StoreHud() {
               min={0}
               max={max}
               step={1}
-              value={Math.min(applied, max)}
-              disabled={max === 0}
+              value={visibleApplied}
+              disabled={max === 0 || isClaimed}
               onChange={(e) => apply(Number(e.target.value))}
               className="w-full accent-[#3d7bff]"
             />
@@ -104,7 +113,7 @@ export function StoreHud() {
             </div>
             <div className="bg-black px-2 py-1">
               <div className={label}>Price after</div>
-              <div>{formatGbp(priceAfter(item, applied))}</div>
+              <div>{formatGbp(priceAfter(item, visibleApplied))}</div>
             </div>
           </div>
 
@@ -112,7 +121,7 @@ export function StoreHud() {
             <button
               type="button"
               onClick={applyMax}
-              disabled={max === 0}
+              disabled={max === 0 || isClaimed}
               className="border border-white/40 px-3 py-1 uppercase tracking-widest hover:bg-white/10 disabled:opacity-30"
             >
               Max
@@ -123,7 +132,7 @@ export function StoreHud() {
               disabled={!canClaim}
               className="flex-1 border border-[#f2c14e] bg-[#f2c14e]/10 px-3 py-1 uppercase tracking-widest text-[#f2c14e] hover:bg-[#f2c14e]/25 disabled:opacity-30"
             >
-              Claim
+              {isClaimed ? 'Claimed' : 'Claim discount'}
             </button>
           </div>
           {tickets === 0 && <p className={label}>No Tickets yet. Play a Machine.</p>}
