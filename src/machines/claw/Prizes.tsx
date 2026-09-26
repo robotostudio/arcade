@@ -14,7 +14,7 @@ import { MATERIALS } from '@/world/palette'
 import { CLAW_MATS, PRIZE_MATS } from './materials'
 
 type Kind = 'blob' | 'can' | 'crate'
-type PrizeSpec = { id: number; kind: Kind; pos: [number, number, number]; rotY: number; mat: number }
+type PrizeSpec = { id: number; kind: Kind; pos: [number, number, number]; rotY: number; mat: number; heavy: boolean }
 
 const KINDS: Kind[] = ['blob', 'can', 'crate']
 
@@ -43,6 +43,9 @@ function layout(seed: number, count: number): PrizeSpec[] {
       if (Math.hypot(x - cx, z - cz) >= 0.45 + 0.1) cells.push([x, z])
     }
   const out: PrizeSpec[] = []
+  // Heavy prizes: dark crates the claw can lift but never keep. Spread through the pile.
+  const heavyIds = new Set<number>()
+  while (heavyIds.size < Math.min(CLAW.heavyCount, count)) heavyIds.add(Math.floor(rng() * count))
   const jx = ((x1 - x0) / cols) * 0.2
   const jz = ((z1 - z0) / rows) * 0.2
   for (let i = 0; i < count; i++) {
@@ -58,13 +61,10 @@ function layout(seed: number, count: number): PrizeSpec[] {
       z = cz + (z - cz) * k
     }
     const y = CLAW.baseH + 0.3 + layer * 0.5 + rng() * 0.08
-    out.push({
-      id: i,
-      kind: KINDS[Math.floor(rng() * KINDS.length)],
-      pos: [x, y, z],
-      rotY: rng() * Math.PI * 2,
-      mat: Math.floor(rng() * PRIZE_MATS.length),
-    })
+    const heavy = heavyIds.has(i)
+    const kind = KINDS[Math.floor(rng() * KINDS.length)]
+    const mat = Math.floor(rng() * PRIZE_MATS.length)
+    out.push({ id: i, kind: heavy ? 'crate' : kind, pos: [x, y, z], rotY: rng() * Math.PI * 2, mat, heavy })
   }
   return out
 }
@@ -72,13 +72,13 @@ function layout(seed: number, count: number): PrizeSpec[] {
 function Prize({ spec }: { spec: PrizeSpec }) {
   const ref = useRef<RapierRigidBody>(null!)
   const registry = usePrizeRegistry()
-  const mat = PRIZE_MATS[spec.mat]
+  const mat = spec.heavy ? CLAW_MATS.heavy : PRIZE_MATS[spec.mat]
   useEffect(() => {
     const body = ref.current
     if (!body) return
-    registry.register(spec.id, body)
+    registry.register(spec.id, body, spec.heavy)
     return () => registry.unregister(spec.id, body)
-  }, [spec.id, registry])
+  }, [spec.id, spec.heavy, registry])
 
   return (
     <RigidBody
@@ -119,10 +119,16 @@ function Prize({ spec }: { spec: PrizeSpec }) {
       )}
       {spec.kind === 'crate' && (
         <>
-          <CuboidCollider args={[0.17, 0.17, 0.17]} mass={0.3} friction={0.8} />
+          <CuboidCollider args={[0.17, 0.17, 0.17]} mass={spec.heavy ? 0.9 : 0.3} friction={0.8} />
           <mesh material={mat}>
             <boxGeometry args={[0.34, 0.34, 0.34]} />
           </mesh>
+          {spec.heavy && (
+            /* riveted band so the heavy crates read as iron, not just dark */
+            <mesh material={MATERIALS.steel}>
+              <boxGeometry args={[0.36, 0.06, 0.36]} />
+            </mesh>
+          )}
         </>
       )}
     </RigidBody>

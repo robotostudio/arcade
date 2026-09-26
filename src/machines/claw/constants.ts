@@ -7,7 +7,9 @@ export const CLAW = {
   homeXZ: [0, 0],
   homeY: 3.1,
   floorY: 1.3, // lowest head y; mouth (head - 0.25) = 1.05, level with resting prize centres
-  speed: 1.0,
+  speed: 1.4, // m/s while a key is held: crosses the pit in about 1.5 s
+  tapNudge: 0.12, // m per key tap, glided in at nudgeSpeed
+  nudgeSpeed: 1.8, // m/s
   dropSpeed: 2.0,
   riseSpeed: 1.3, // m/s
   closeTime: 0.45,
@@ -15,7 +17,13 @@ export const CLAW = {
   chuteXZ: [-1.0, 0.75],
   chuteSize: [0.55, 0.3, 0.55], // chute sensor centre (x,z) and box size; chute sits at pit floor front-left
   grabRadius: 0.22,
-  slipChancePerSecond: 0.15, // rolled per frame during rise and carry
+  reach: 0.26, // a prize centre within this of the mouth gets grabbed (grabRadius + fingers)
+  // Odds are decided at close time, not by a per-frame roll, so a miss is legible: the prize
+  // lifts, dangles, and drops back into the pile during the rise.
+  holdChance: { centred: 0.6, edge: 0.1 }, // P(hold) for a dead-centre grab and one at the reach limit; linear between
+  slipWindow: [0.15, 1.8], // s after the grab in which a failed grab lets go (rise is ~1.4 s)
+  heavyCount: 3, // dark crates: the claw always drops them a moment into the rise
+  heavySlipWindow: [0.25, 0.6],
   payout: 100,
   prizeCount: 14,
 } as const

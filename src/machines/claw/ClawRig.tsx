@@ -1,68 +1,43 @@
 'use client'
 
-import { useMemo, useRef } from 'react'
+import { useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
-import {
-  BallCollider,
-  RigidBody,
-  type IntersectionEnterPayload,
-  type IntersectionExitPayload,
-  type RapierRigidBody,
-} from '@react-three/rapier'
-import { Group, Mesh, Vector3 } from 'three'
+import { Group, Mesh } from 'three'
 import { MATERIALS } from '@/world/palette'
 import { CLAW } from './constants'
 import { CLAW_MATS } from './materials'
 
-/** Machine-local head pose, written by the controller every frame (no React re-render). */
-export type ClawPose = { x: number; y: number; z: number; grip: number; showAim: boolean }
+/** Machine-local head pose, written by the controller every frame (no React re-render).
+ *  aimLock: a drop from here would close on a prize (the ring lights up). */
+export type ClawPose = { x: number; y: number; z: number; grip: number; showAim: boolean; aimLock: boolean }
 
-type Props = {
-  pose: React.RefObject<ClawPose>
-  onReach: (inReach: boolean, prizeId: number | null) => void
-}
+type Props = { pose: React.RefObject<ClawPose> }
 
 const STEEL = MATERIALS.slate
 const DARK_STEEL = MATERIALS.stone
 const BRASS = MATERIALS.amber
 const CABLE_TOP = CLAW.homeY + 0.5
 const RAIL_Y = CLAW.cabinet.h - 0.18
-// Constant initial position: a changing position prop makes @react-three/rapier re-teleport the body.
 const HOME: [number, number, number] = [CLAW.homeXZ[0], CLAW.homeY, CLAW.homeXZ[1]]
 const FINGER_ANGLES = [0, (2 * Math.PI) / 3, (4 * Math.PI) / 3]
 // open ~ +0.6 rad (splayed out), closed ~ -0.15 rad (tucked in)
 const tiltFor = (grip: number) => 0.6 + (-0.15 - 0.6) * grip
 
-function prizeIdOf(e: IntersectionEnterPayload | IntersectionExitPayload): number | null {
-  const ud = (e.other.rigidBodyObject?.userData ?? e.other.rigidBody?.userData) as
-    | { prize?: boolean; id?: number }
-    | undefined
-  return ud?.prize && typeof ud.id === 'number' ? ud.id : null
-}
-
-export function ClawRig({ pose, onReach }: Props) {
-  const originRef = useRef<Group>(null!)
-  const bodyRef = useRef<RapierRigidBody>(null!)
+// The head has no collider: the grab is decided by distance in the controller, so the rig is
+// pure visuals and the prizes never get squeezed by a kinematic body.
+export function ClawRig({ pose }: Props) {
+  const head = useRef<Group>(null!)
   const carriage = useRef<Mesh>(null!)
   const trolley = useRef<Mesh>(null!)
   const cable = useRef<Mesh>(null!)
-  const aim = useRef<Mesh>(null!)
+  const aim = useRef<Group>(null!)
+  const ring = useRef<Mesh>(null!)
   const fingers = useRef<(Group | null)[]>([])
-  const world = useMemo(() => new Vector3(), [])
-  const inReach = useRef(new Set<number>())
-  const onReachRef = useRef(onReach)
-  onReachRef.current = onReach
 
   useFrame(() => {
     const p = pose.current
-    const origin = originRef.current
-    if (!p || !origin) return
-    const body = bodyRef.current
-    if (body) {
-      world.set(p.x, p.y, p.z)
-      origin.localToWorld(world)
-      body.setNextKinematicTranslation(world)
-    }
+    if (!p) return
+    head.current.position.set(p.x, p.y, p.z)
     carriage.current.position.x = p.x
     trolley.current.position.set(p.x, RAIL_Y - 0.12, p.z)
     const cableLen = Math.max(0.01, CABLE_TOP - p.y)
@@ -70,6 +45,7 @@ export function ClawRig({ pose, onReach }: Props) {
     cable.current.scale.y = cableLen
     aim.current.visible = p.showAim
     aim.current.position.set(p.x, CLAW.baseH + 0.012, p.z)
+    ring.current.material = p.aimLock ? CLAW_MATS.aimLock : CLAW_MATS.aimRing
     const tilt = tiltFor(p.grip)
     for (const f of fingers.current) if (f) f.rotation.x = tilt
   })
@@ -81,7 +57,7 @@ export function ClawRig({ pose, onReach }: Props) {
   const cable0 = CABLE_TOP - CLAW.homeY
 
   return (
-    <group ref={originRef}>
+    <group>
       {/* gantry rails along x at the z bounds */}
       {[zMin - 0.1, zMax + 0.1].map((rz) => (
         <mesh key={rz} position={[0, RAIL_Y, rz]} material={DARK_STEEL}>
@@ -105,19 +81,19 @@ export function ClawRig({ pose, onReach }: Props) {
       >
         <cylinderGeometry args={[0.012, 0.012, 1, 6]} />
       </mesh>
-      {/* fake drop marker on the pit floor (not a shadow): shows where the mouth will land */}
-      <mesh
-        ref={aim}
-        position={[HOME[0], CLAW.baseH + 0.012, HOME[2]]}
-        rotation={[-Math.PI / 2, 0, 0]}
-        material={CLAW_MATS.aim}
-        renderOrder={1}
-      >
-        <circleGeometry args={[CLAW.grabRadius, 8]} />
-      </mesh>
+      {/* drop marker on the pit floor: a fake shadow disc under the head and an amber ring that
+          turns bone when the drop would reach a prize (not a shadow; there are none in this look) */}
+      <group ref={aim} position={[HOME[0], CLAW.baseH + 0.012, HOME[2]]} rotation={[-Math.PI / 2, 0, 0]}>
+        <mesh material={CLAW_MATS.aimShadow} renderOrder={1}>
+          <circleGeometry args={[CLAW.reach, 8]} />
+        </mesh>
+        <mesh ref={ring} position={[0, 0, 0.004]} material={CLAW_MATS.aimRing} renderOrder={2}>
+          <ringGeometry args={[CLAW.grabRadius - 0.04, CLAW.grabRadius, 8]} />
+        </mesh>
+      </group>
 
-      {/* kinematic head; position is driven every frame in world space */}
-      <RigidBody ref={bodyRef} type="kinematicPosition" colliders={false} position={HOME}>
+      {/* head; position is driven every frame */}
+      <group ref={head} position={HOME}>
         <mesh material={BRASS}>
           <cylinderGeometry args={[0.13, 0.16, 0.16, 8]} />
         </mesh>
@@ -144,26 +120,7 @@ export function ClawRig({ pose, onReach }: Props) {
             </group>
           </group>
         ))}
-        <BallCollider
-          args={[CLAW.grabRadius]}
-          sensor
-          position={[0, -0.25, 0]}
-          onIntersectionEnter={(e) => {
-            const id = prizeIdOf(e)
-            if (id === null) return
-            inReach.current.add(id)
-            onReachRef.current(true, id)
-          }}
-          onIntersectionExit={(e) => {
-            const id = prizeIdOf(e)
-            if (id === null) return
-            inReach.current.delete(id)
-            const next = inReach.current.values().next()
-            if (next.done) onReachRef.current(false, null)
-            else onReachRef.current(true, next.value)
-          }}
-        />
-      </RigidBody>
+      </group>
     </group>
   )
 }

@@ -6,7 +6,7 @@ import { MATERIALS } from '@/world/palette'
 import { CLAW } from './constants'
 import { CLAW_MATS } from './materials'
 
-// Rapier RigidBodyType numeric enum (0.12): 0 Dynamic, 1 Fixed, 2 KinematicPosition.
+// Rapier RigidBodyType numeric enum (compat 0.19.2): 0 Dynamic, 1 Fixed, 2 KinematicPosition.
 const FIXED = 1
 const SENSOR_HALF_H = 0.06
 
