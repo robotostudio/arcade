@@ -5,6 +5,7 @@ export type Tier = 'white' | 'blue' | 'gold'
 
 // Tickets a Round pays, per Machine.
 export const PAYOUT = {
+  whackamole: { perWhack: 5 },
   // Stacker: 10 per row reached, 150 for topping out.
   stacker: { perRow: 10, win: 150 },
   // Stack to the Top: 1 per row placed on a miss, 50 for taking Minor, 250 for topping out.

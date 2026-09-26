@@ -9,16 +9,17 @@ import { StoreHud } from '@/store/StoreHud'
 import { ArcadeCanvas } from './ArcadeCanvas'
 import { RoomEnvironment } from './room-environment'
 
+import { WhackMachine, DOCK as WHACK_DOCK } from '@/machines/whackamole'
 import { ClawMachine, DOCK as CLAW_DOCK } from '@/machines/claw'
 import { SkeeballMachine, DOCK as SKEE_DOCK } from '@/machines/skeeball'
 import { Stacker } from '@/machines/stacker/Stacker'
 import { StackTop, DOCK as TOP_DOCK } from '@/machines/stacktop/StackTop'
 import { StackTopHud } from '@/machines/stacktop/StackTopHud'
 
-const MACHINES = { claw: ClawMachine, stacker: Stacker, skeeball: SkeeballMachine, stacktop: StackTop }
-const LABELS = { claw: 'Claw', stacker: 'Stacker', skeeball: 'Skeeball', stacktop: 'Stack to the Top' }
-const HELP = { claw: 'Arrow keys move · Space drops', stacker: 'Space or click to start / stop', skeeball: 'Space or click: start, lock aim, lock power', stacktop: 'Space or click to start / stop' }
-const DOCKS = { claw: CLAW_DOCK, skeeball: SKEE_DOCK, stacktop: TOP_DOCK, stacker: { position: [0, 2.4, 4.5], target: [0, 1.6, 0] } }
+const MACHINES = { whackamole: WhackMachine, claw: ClawMachine, stacker: Stacker, skeeball: SkeeballMachine, stacktop: StackTop }
+const LABELS = { whackamole: 'Mole Patrol', claw: 'Claw', stacker: 'Stacker', skeeball: 'Skeeball', stacktop: 'Stack to the Top' }
+const HELP = { whackamole: 'Space starts · Click moles or keys 7 8 9 / 4 5 6 / 1 2 3', claw: 'Arrow keys move · Space drops', stacker: 'Space or click to start / stop', skeeball: 'Space or click: start, lock aim, lock power', stacktop: 'Space or click to start / stop' }
+const DOCKS = { whackamole: WHACK_DOCK, claw: CLAW_DOCK, skeeball: SKEE_DOCK, stacktop: TOP_DOCK, stacker: { position: [0, 2.4, 4.5], target: [0, 1.6, 0] } }
 const IDS = Object.keys(MACHINES) as MachineId[]
 const Y_AXIS = new Vector3(0, 1, 0)
 function dockPoint(id: MachineId, point: readonly number[]) {
@@ -27,13 +28,14 @@ function dockPoint(id: MachineId, point: readonly number[]) {
 
 // Each cabinet faces the shared viewing point on the open side of the hub.
 export const STATIONS = {
-  claw: [-5, 0, -1] as const,
-  stacker: [-1.8, 0, -2] as const,
-  skeeball: [1.4, 0, -2] as const,
-  stacktop: [4.6, 0, -1] as const,
+  whackamole: [-6.4, 0, 0] as const,
+  claw: [-3.2, 0, -1.4] as const,
+  stacker: [0, 0, -2] as const,
+  skeeball: [3.2, 0, -1.4] as const,
+  stacktop: [6.4, 0, 0] as const,
   store: [6.4, 0, -5.55] as const,
 }
-export const STATION_ROTATIONS = { claw: .38, stacker: .12, skeeball: -.12, stacktop: -.38 } as const
+export const STATION_ROTATIONS = { whackamole: .5, claw: .25, stacker: 0, skeeball: -.25, stacktop: -.5 } as const
 
 function HubView() {
   const { camera, gl, size } = useThree()
@@ -68,10 +70,11 @@ function HubView() {
     if (camera instanceof PerspectiveCamera) {
       // Keep the three main stations visible on portrait screens; outer cabinets frame the foreground.
       const aspect = size.width / size.height
-      camera.fov = MathUtils.clamp(MathUtils.radToDeg(2 * Math.atan(7.5 / (10 * aspect))), 48, 106)
+      const inWhack = mode.kind === 'play' && mode.machine === 'whackamole'
+      camera.fov = inWhack ? MathUtils.clamp(MathUtils.radToDeg(2 * Math.atan(1.25 / (3.2 * aspect))), 40, 80) : MathUtils.clamp(MathUtils.radToDeg(2 * Math.atan(7.5 / (10 * aspect))), 48, 106)
       camera.updateProjectionMatrix()
     }
-  }, [camera, size.width, size.height])
+  }, [camera, size.width, size.height, mode])
 
   useFrame((_, delta) => {
     pan.current = MathUtils.damp(pan.current, pointer.current, 3.5, Math.min(delta, .1))
@@ -97,7 +100,7 @@ export function Room() {
   const inStore = mode.kind === 'store'
   const enter = useArcade((s) => s.enter)
   const lastRound = useArcade((s) => s.lastRound)
-  const select = (id: MachineId) => { useArcade.getState().clearLastRound(); enter(id) }
+  const select = (id: MachineId) => { useArcade.getState().clearLastRound(); enter(id); if (document.activeElement instanceof HTMLElement) document.activeElement.blur() }
   const tickets = useArcade((s) => s.tickets)
   const openStore = useArcade((s) => s.openStore)
   const exit = useArcade((s) => s.exit)

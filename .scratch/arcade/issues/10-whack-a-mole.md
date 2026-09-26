@@ -61,3 +61,8 @@ Note each edit here under Comments.
 - Cut order if behind: attract mode, then the mallet swing (mallet becomes a static marker), then the countdown. Anything not on the harness by 13:00 is cut, not finished.
 
 ## Comments
+
+- Divya: added `whackamole` to `MachineId` and `PAYOUT.whackamole.perWhack = 5` under the agreed shared-file exception.
+- Divya: integrated the Machine, DOCK, help and selection into `Room.tsx`. Synced with main at c8c578c, preserving the newly added Stack to the Top and all other playable Machines. The arc now fits five Machines, with Mole Patrol at the left end; upstream had already removed ORBIT/NOVA.
+- Divya: implementation includes pure injected-RNG step logic, countdown, 30-second tempo ramp, pointer and numpad input, animated mallet, hit rings, attract mode, result display and partial payout on exit. Harness: `/dev/whackamole`.
+- Validation pending: dependency installation rejected the repository's pinned `@react-three/drei@10.7.9` and `@types/node@24.19.0` under the environment's minimum-release-age policy. Requested permission for those two exact versions; no dependency policy or lockfile changed.
