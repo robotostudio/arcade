@@ -3,10 +3,14 @@
 // The Store's thin DOM layer. The select screen itself is built into the counter
 // (PrizeSelector, in the scene); this only carries what has to live outside the canvas:
 // the keyboard (left/right browse, up/down Tickets, shift = 10, Enter claims; Escape is
-// the Room's), the claim toast and a Back button. Plain DOM + Tailwind.
+// the Room's), the claim toast and a Back button. Plain DOM + Tailwind, in the Shell's
+// surface and text colours and its typeface (VT323 through the `vt` class, 20 px).
 import { useEffect } from 'react'
+import { SHELL } from '@/world/Shell'
 import { ITEMS, itemAfter, itemById } from './items'
 import { useStore } from './state'
+
+const shell = { background: SHELL.surface, color: SHELL.text, borderColor: SHELL.edge } as const
 
 export function StoreHud({ onClose }: { onClose?: () => void }) {
   const toast = useStore((s) => s.toast)
@@ -38,18 +42,20 @@ export function StoreHud({ onClose }: { onClose?: () => void }) {
         <button
           type="button"
           onClick={onClose}
-          className="absolute right-4 top-4 z-10 border border-[#ffe099]/60 bg-[#242044]/95 px-4 py-3 font-mono text-xs uppercase tracking-widest text-[#ffe099] hover:bg-[#393366]"
+          style={shell}
+          className="vt absolute right-4 top-4 z-10 border px-4 py-2 text-[20px] leading-none hover:brightness-125"
         >
-          Back · Esc
+          Esc: back
         </button>
       )}
       {toast && (
         <button
           type="button"
           onClick={dismissToast}
-          className="absolute bottom-4 left-1/2 z-10 max-w-[min(90vw,44rem)] -translate-x-1/2 border border-emerald-400/60 bg-black/90 px-3 py-2 text-left font-mono text-xs text-emerald-200"
+          style={shell}
+          className="vt absolute bottom-4 left-1/2 z-10 max-w-[min(90vw,44rem)] -translate-x-1/2 border px-4 py-2 text-left text-[20px] leading-none hover:brightness-125"
         >
-          {toast} <span className="text-white/50">[x]</span>
+          {toast} <span className="opacity-50">[x]</span>
         </button>
       )}
     </>
