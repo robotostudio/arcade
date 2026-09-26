@@ -28,6 +28,8 @@ A low-poly 3D arcade running in the browser at a public Vercel URL: one diorama 
 
 ## Decisions so far
 
+- [12 Room cat, plants and dust](issues/12-room-cat-plants-and-dust.md): roaming low-poly cat waters cabinets, triggers sparks / one-second blackout / shake / small fire, then extinguishes it and grows one of two swaying plants; fine dust and haze; paused during gameplay and reduced-motion aware.
+
 - [03 Store hub integration](issues/03-art-direction-room-camera-hud.md): real Store counter is clickable in the Room, with camera docking, HUD, Close/Escape, placeholder assets and guarded local demo Discount claims. Build and browser redemption verified.
 
 - [03 World visual revision](issues/03-art-direction-room-camera-hud.md): user requested nostalgic stylized arcade with liminal empty space, superseding the Bloodborne gloom. Jono built the surrounding world; playable machine/store integration remains open.

@@ -1,8 +1,8 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useFrame, useThree } from '@react-three/fiber'
-import { MathUtils, PerspectiveCamera, Vector3 } from 'three'
+import { Group, MathUtils, PerspectiveCamera, Vector3 } from 'three'
 import { useArcade, type MachineId } from '@/arcade/state'
 import { sfx } from '@/arcade/sfx'
 import { signClock, useIntro } from '@/intro/store'
@@ -11,6 +11,7 @@ import { StoreHud } from '@/store/StoreHud'
 import { ArcadeCanvas } from './ArcadeCanvas'
 import { RoomEnvironment } from './room-environment'
 import { SoundtrackToggle } from './Soundtrack'
+import { RoomLife } from './RoomLife'
 
 import { WhackMachine, DOCK as WHACK_DOCK } from '@/machines/whackamole'
 import { ClawMachine, DOCK as CLAW_DOCK } from '@/machines/claw'
@@ -196,6 +197,13 @@ function HubView() {
 }
 
 export function Room() {
+  const whackGroup = useRef<Group>(null)
+  const clawGroup = useRef<Group>(null)
+  const skeeGroup = useRef<Group>(null)
+  const topGroup = useRef<Group>(null)
+  const cabinetGroups = useMemo(() => ({ whackamole: whackGroup, claw: clawGroup, skeeball: skeeGroup, stacktop: topGroup }), [])
+  const lifeStations = useMemo(() => IDS.map(id => ({ position: STATIONS[id], rotation: STATION_ROTATIONS[id], group: cabinetGroups[id] })), [cabinetGroups])
+  const [blackout, setBlackout] = useState(false)
   const mode = useArcade((s) => s.mode)
   const inStore = mode.kind === 'store'
   const enter = useArcade((s) => s.enter)
@@ -237,7 +245,7 @@ export function Room() {
       <RoomEnvironment />
       {IDS.map((id) => {
         const Machine = MACHINES[id]
-        return <group key={id}>
+        return <group key={id} ref={cabinetGroups[id]}>
           <Machine position={[...STATIONS[id]]} rotation={[0, STATION_ROTATIONS[id], 0]} active={mode.kind === 'play' && mode.machine === id} onRoundEnd={(amount) => endRound(id, amount)} />
           {mode.kind === 'room' && <mesh position={[STATIONS[id][0], 2, STATIONS[id][2]]} rotation={[0, STATION_ROTATIONS[id], 0]} onClick={(event) => { event.stopPropagation(); select(id) }} onPointerOver={(event) => { event.stopPropagation(); sfx.hover() }}>
             <boxGeometry args={[id === 'claw' ? 3 : 2.3, 4.5, id === 'skeeball' ? 4.5 : 2.8]} />
@@ -245,6 +253,7 @@ export function Room() {
           </mesh>}
         </group>
       })}
+      <RoomLife enabled={introDone && mode.kind === 'room'} stations={lifeStations} onBlackout={setBlackout} />
       <group scale={.85} position={[...STATIONS.store]} rotation={[0, Math.PI, 0]}>
         <StoreCounter position={[0, 0, 0]} onOpen={openStore} open={inStore} onClose={closeStore} />
       </group>
@@ -252,6 +261,7 @@ export function Room() {
       <HubView />
       <ReadySignal />
     </ArcadeCanvas>
+    <div aria-hidden="true" className="pointer-events-none absolute inset-0 z-10 bg-[#080711]" style={{ opacity: blackout && mode.kind === 'room' ? .96 : 0 }} />
     {mode.kind === 'play' && mode.machine === 'stacktop' && <StackTopHud />}
     {mode.kind === 'play' && <div className="absolute bottom-3 left-3 right-3 z-20 flex flex-wrap items-center justify-between gap-2 bg-[#242044]/95 p-3 font-mono text-xs text-white"><span>{LABELS[mode.machine]} · {HELP[mode.machine]}{lastRound?.machine === mode.machine && ` · Round complete: +${lastRound.tickets} Tickets`}</span><button onClick={exit} className="border border-white/40 px-4 py-2">Back to hub · Esc</button></div>}
     {!inStore && mode.kind === 'room' && <button ref={storeButton} type="button" inert={!introDone} onClick={openStore} className={`${hud} absolute bottom-6 left-1/2 z-10 -translate-x-1/2 border border-[#ffe099]/60 bg-[#242044]/95 px-4 py-3 font-mono text-xs uppercase tracking-widest text-[#ffe099] hover:bg-[#393366] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#ffe099]`}>
