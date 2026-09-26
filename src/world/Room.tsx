@@ -9,17 +9,18 @@ import { StoreHud } from '@/store/StoreHud'
 import { ArcadeCanvas } from './ArcadeCanvas'
 import { RoomEnvironment } from './room-environment'
 
+import { WhackMachine, DOCK as WHACK_DOCK } from '@/machines/whackamole'
 import { ClawMachine, DOCK as CLAW_DOCK } from '@/machines/claw'
 import { SkeeballMachine, DOCK as SKEE_DOCK } from '@/machines/skeeball'
 import { StackTop, DOCK as TOP_DOCK } from '@/machines/stacktop/StackTop'
 import { StackTopHud } from '@/machines/stacktop/StackTopHud'
 
 // Stack to the Top replaced the old Stacker in the hub; the harness at /dev/stacker still runs it.
-const MACHINES = { claw: ClawMachine, skeeball: SkeeballMachine, stacktop: StackTop }
+const MACHINES = { whackamole: WhackMachine, claw: ClawMachine, skeeball: SkeeballMachine, stacktop: StackTop }
 type HubId = keyof typeof MACHINES
-const LABELS = { claw: 'Claw', stacker: 'Stacker', skeeball: 'Skeeball', stacktop: 'Stack to the Top' }
-const HELP = { claw: 'Arrow keys move · Space drops', stacker: 'Space or click to start / stop', skeeball: 'Space or click: start, lock aim, lock power', stacktop: 'Space or click to start / stop' }
-const DOCKS = { claw: CLAW_DOCK, skeeball: SKEE_DOCK, stacktop: TOP_DOCK }
+const LABELS = { whackamole: 'Mole Patrol', claw: 'Claw', stacker: 'Stacker', skeeball: 'Skeeball', stacktop: 'Stack to the Top' }
+const HELP = { whackamole: 'Space starts · Click moles or keys 7 8 9 / 4 5 6 / 1 2 3', claw: 'Arrow keys move · Space drops', stacker: 'Space or click to start / stop', skeeball: 'Space or click: start, lock aim, lock power', stacktop: 'Space or click to start / stop' }
+const DOCKS = { whackamole: WHACK_DOCK, claw: CLAW_DOCK, skeeball: SKEE_DOCK, stacktop: TOP_DOCK }
 const IDS = Object.keys(MACHINES) as HubId[]
 const Y_AXIS = new Vector3(0, 1, 0)
 function dockPoint(id: HubId, point: readonly number[]) {
@@ -28,12 +29,13 @@ function dockPoint(id: HubId, point: readonly number[]) {
 
 // Each cabinet faces the shared viewing point on the open side of the hub.
 export const STATIONS = {
-  claw: [-4.2, 0, -1] as const,
-  skeeball: [0, 0, -2.2] as const,
-  stacktop: [4.2, 0, -1] as const,
+  whackamole: [-6.3, 0, .2] as const,
+  claw: [-2.1, 0, -1.7] as const,
+  skeeball: [2.1, 0, -1.7] as const,
+  stacktop: [6.3, 0, .2] as const,
   store: [0, 0, 13.6] as const, // behind the hub camera; the Store button spins round to face it
 }
-export const STATION_ROTATIONS = { claw: .38, skeeball: 0, stacktop: -.38 } as const
+export const STATION_ROTATIONS = { whackamole: .55, claw: .2, skeeball: -.2, stacktop: -.55 } as const
 
 function HubView() {
   const { camera, gl, size } = useThree()
@@ -67,9 +69,9 @@ function HubView() {
 
   useEffect(() => {
     if (camera instanceof PerspectiveCamera) {
-      // Keep the three main stations visible on portrait screens; outer cabinets frame the foreground.
+      // Keep all four stations visible on portrait screens; outer cabinets frame the foreground.
       const aspect = size.width / size.height
-      camera.fov = MathUtils.clamp(MathUtils.radToDeg(2 * Math.atan(7.5 / (10 * aspect))), 48, 106)
+      camera.fov = MathUtils.clamp(MathUtils.radToDeg(2 * Math.atan(8.2 / (10 * aspect))), 48, 106)
       camera.updateProjectionMatrix()
     }
   }, [camera, size.width, size.height])
@@ -106,7 +108,7 @@ export function Room() {
   const inStore = mode.kind === 'store'
   const enter = useArcade((s) => s.enter)
   const lastRound = useArcade((s) => s.lastRound)
-  const select = (id: HubId) => { useArcade.getState().clearLastRound(); enter(id) }
+  const select = (id: HubId) => { useArcade.getState().clearLastRound(); enter(id); if (document.activeElement instanceof HTMLElement) document.activeElement.blur() }
   const tickets = useArcade((s) => s.tickets)
   const openStore = useArcade((s) => s.openStore)
   const exit = useArcade((s) => s.exit)
