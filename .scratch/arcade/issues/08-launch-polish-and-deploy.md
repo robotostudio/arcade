@@ -1,0 +1,15 @@
+# 08 Launch polish and production deploy
+
+Type: task
+Status: open
+Role: World
+Slot: T+2:15 to 2:55
+Blocked by: 03, 04, 05, 06, 07
+
+## Question
+
+Nothing to decide. With everything merged: OG image and title, a loading state, Round-end feedback, a quick mobile sanity pass, README gets the URL, production deploy. Stop coding at T+2:55.
+
+Answer records the final URL and closes the map.
+
+## Comments
