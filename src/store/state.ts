@@ -3,6 +3,7 @@
 import { create } from 'zustand'
 import { createJSONStorage, persist } from 'zustand/middleware'
 import { useArcade } from '@/arcade/state'
+import { sfx } from '@/arcade/sfx'
 import { creditGbp, maxTicketsFor } from '@/arcade/economy'
 import { itemById, type Item } from './items'
 
@@ -40,30 +41,40 @@ export const useStore = create<StoreState>()(
       applied: 0,
       claimed: [],
       toast: null,
-      select: (id) => set({ selected: id, applied: 0 }),
+      select: (id) => {
+        if (id !== get().selected) sfx.nav()
+        set({ selected: id, applied: 0 })
+      },
       apply: (n) => {
         const item = itemById(get().selected)
         if (!item) return
         const whole = Math.round(Number.isFinite(n) ? n : 0)
-        set({ applied: Math.max(0, Math.min(whole, maxApplicable(item))) })
+        const next = Math.max(0, Math.min(whole, maxApplicable(item)))
+        if (next !== get().applied) sfx.toggle(next > get().applied)
+        else sfx.denied()
+        set({ applied: next })
       },
       applyMax: () => {
         const item = itemById(get().selected)
         if (!item) return
+        if (maxApplicable(item) !== get().applied) sfx.toggle(true)
         set({ applied: maxApplicable(item) })
       },
       claim: () => {
         const { selected, applied, claimed } = get()
         const item = itemById(selected)
-        if (!item || claimed.includes(item.id)) return
+        if (!item || claimed.includes(item.id)) { sfx.denied(); return }
         if (!Number.isInteger(applied) || applied <= 0 || applied > maxApplicable(item)) {
+          sfx.denied()
           set({ applied: 0, toast: 'Choose Tickets to apply from your current balance.' })
           return
         }
         if (!useArcade.getState().spendTickets(applied)) {
+          sfx.denied()
           set({ toast: 'Not enough Tickets. Go win a Round.' })
           return
         }
+        sfx.claim()
         const off = creditGbp(item, applied)
         set({
           claimed: claimed.includes(item.id) ? claimed : [...claimed, item.id],
@@ -71,7 +82,7 @@ export const useStore = create<StoreState>()(
           applied: 0,
         })
       },
-      dismissToast: () => set({ toast: null }),
+      dismissToast: () => { if (get().toast) sfx.click(); set({ toast: null }) },
     }),
     {
       name: 'arcade:claimed',

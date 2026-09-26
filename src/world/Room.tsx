@@ -3,7 +3,8 @@
 import { useEffect, useRef } from 'react'
 import { useFrame, useThree } from '@react-three/fiber'
 import { MathUtils, PerspectiveCamera, Vector3 } from 'three'
-import { useArcade } from '@/arcade/state'
+import { useArcade, type MachineId } from '@/arcade/state'
+import { sfx } from '@/arcade/sfx'
 import { signClock, useIntro } from '@/intro/store'
 import { StoreCounter } from '@/store/StoreCounter'
 import { StoreHud } from '@/store/StoreHud'
@@ -38,6 +39,14 @@ export const STATIONS = {
   store: [0, 0, 13.6] as const, // behind the hub camera; the Store button spins round to face it
 }
 export const STATION_ROTATIONS = { whackamole: .55, claw: .2, skeeball: -.2, stacktop: -.55 } as const
+
+// Every Round end in the hub lands here: Tickets awarded, with a fanfare or a sad trombone.
+function endRound(id: MachineId, amount: number) {
+  useArcade.getState().awardTickets(id, amount)
+  const won = useArcade.getState().lastRound?.tickets ?? 0
+  if (won > 0) sfx.win(won)
+  else sfx.lose()
+}
 
 // The intro holds the camera high and far back in the fog; on landing it is released onto the
 // neon sign, which then swings the view back to the hub.
@@ -203,6 +212,14 @@ export function Room() {
     if (!inStore && introDone) storeButton.current?.focus({ preventScroll: true })
   }, [inStore, introDone])
 
+  // One place for navigation sounds, whatever moved us: buttons, Esc, or a click in the 3D Room.
+  useEffect(() => useArcade.subscribe((s, prev) => {
+    if (s.mode.kind === prev.mode.kind) return
+    if (s.mode.kind === 'play') sfx.enter()
+    else if (s.mode.kind === 'store') sfx.openStore()
+    else sfx.back()
+  }), [])
+
   useEffect(() => {
     const keydown = (event: KeyboardEvent) => {
       if (event.key === 'Escape' && useArcade.getState().mode.kind !== 'room') {
@@ -221,8 +238,8 @@ export function Room() {
       {IDS.map((id) => {
         const Machine = MACHINES[id]
         return <group key={id}>
-          <Machine position={[...STATIONS[id]]} rotation={[0, STATION_ROTATIONS[id], 0]} active={mode.kind === 'play' && mode.machine === id} onRoundEnd={(amount) => useArcade.getState().awardTickets(id, amount)} />
-          {mode.kind === 'room' && <mesh position={[STATIONS[id][0], 2, STATIONS[id][2]]} rotation={[0, STATION_ROTATIONS[id], 0]} onClick={(event) => { event.stopPropagation(); select(id) }}>
+          <Machine position={[...STATIONS[id]]} rotation={[0, STATION_ROTATIONS[id], 0]} active={mode.kind === 'play' && mode.machine === id} onRoundEnd={(amount) => endRound(id, amount)} />
+          {mode.kind === 'room' && <mesh position={[STATIONS[id][0], 2, STATIONS[id][2]]} rotation={[0, STATION_ROTATIONS[id], 0]} onClick={(event) => { event.stopPropagation(); select(id) }} onPointerOver={(event) => { event.stopPropagation(); sfx.hover() }}>
             <boxGeometry args={[id === 'claw' ? 3 : 2.3, 4.5, id === 'skeeball' ? 4.5 : 2.8]} />
             <meshBasicMaterial transparent opacity={0} depthWrite={false} />
           </mesh>}
