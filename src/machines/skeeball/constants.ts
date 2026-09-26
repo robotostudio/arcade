@@ -3,13 +3,14 @@
 export const SKEE = {
   balls: 9,
   ballR: 0.07,
-  aimAmp: (18 * Math.PI) / 180,
-  aimOmega: 1.45,
-  powerOmega: 2.55,
-  minSpeed: 4.8,
-  maxSpeed: 8.6,
-  hop: 1.15, // extra upward m/s at full power, added after the along-ramp velocity
-  catchSpeed: 1.22,
+  aimAmp: (11 * Math.PI) / 180,
+  aimOmega: 1.35,
+  powerOmega: 2.15,
+  minSpeed: 6.6,
+  maxSpeed: 8.5,
+  hop: 2.05, // m/s of extra lift at full power, on top of the roll up the ramp
+  catchSpeed: 0.9,
+  grace: 0.22,
   flightSecs: 4.6,
   afterScore: 0.85,
   resultSecs: 2.6,

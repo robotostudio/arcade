@@ -36,10 +36,14 @@ type Game = {
   phase: Phase
   aim: number
   power: number
+  powerT: number
   score: number
   lastThrow: number
   balls: number
   overHole: number
+  touching: number[]
+  heldSince: number
+  caught: number
   scored: boolean
   scoredAt: number
   flightUntil: number
@@ -112,10 +116,14 @@ function freshGame(): Game {
     phase: 'idle',
     aim: 0,
     power: 0,
+    powerT: 0,
     score: 0,
     lastThrow: 0,
     balls: 0,
     overHole: 0,
+    touching: [],
+    heldSince: 0,
+    caught: 0,
     scored: false,
     scoredAt: 0,
     flightUntil: 0,
@@ -129,29 +137,26 @@ function beginRound(g: Game) {
   g.phase = 'aim'
   g.aim = 0
   g.power = 0
+  g.powerT = 0
   g.score = 0
   g.lastThrow = 0
   g.balls = 0
   g.overHole = 0
+  g.touching = []
+  g.heldSince = 0
+  g.caught = 0
   g.scored = false
   g.scoredAt = 0
   g.reported = false
   g.needsReset = true
 }
 
-function resetBall(body: RapierRigidBody | null) {
-  if (!body) return
-  body.setTranslation(SPAWN, true)
-  body.setLinvel(ZERO, true)
-  body.setAngvel(ZERO, true)
-}
-
-function nearestRest(px: number, py: number, pz: number) {
+function holeUnder(px: number, py: number, pz: number) {
   let best = 0
-  let bestD = 0.2 * 0.2
+  let bestD = 0.18 * 0.18
   for (const hole of HOLES) {
     const [hx, hy, hz] = onBoard(hole.x, hole.s, 0)
-    const d = (px - hx) ** 2 + (py - hy) ** 2 * 0.35 + (pz - hz) ** 2
+    const d = (px - hx) ** 2 + (py - hy) ** 2 * 0.2 + (pz - hz) ** 2
     if (d < bestD) {
       bestD = d
       best = hole.value
@@ -160,19 +165,11 @@ function nearestRest(px: number, py: number, pz: number) {
   return best
 }
 
-function nearestHole(value: number, px: number, pz: number) {
-  let best = HOLES[0]
-  let bestD = Number.POSITIVE_INFINITY
-  for (const hole of HOLES) {
-    if (hole.value !== value) continue
-    const [hx, , hz] = onBoard(hole.x, hole.s, 0)
-    const d = (px - hx) ** 2 + (pz - hz) ** 2
-    if (d < bestD) {
-      bestD = d
-      best = hole
-    }
-  }
-  return best
+function resetBall(body: RapierRigidBody | null) {
+  if (!body) return
+  body.setTranslation(SPAWN, true)
+  body.setLinvel(ZERO, true)
+  body.setAngvel(ZERO, true)
 }
 
 function Lane() {
@@ -202,7 +199,7 @@ function Lane() {
       <RigidBody type="fixed" position={center} rotation={[theta, 0, 0]} colliders={false}>
         <CuboidCollider
           args={[width / 2, thick / 2, length / 2]}
-          friction={0.18}
+          friction={0.08}
           frictionCombineRule={CoefficientCombineRule.Min}
           restitution={0.05}
         />
@@ -212,14 +209,14 @@ function Lane() {
         <boxGeometry args={[BOARD.width, BOARD.thick, boardLen]} />
       </mesh>
       <RigidBody type="fixed" position={boardCenter} rotation={[bTheta, 0, 0]} colliders={false}>
-        <CuboidCollider args={[BOARD.width / 2, bh, boardLen / 2]} friction={0.72} restitution={0.02} />
+        <CuboidCollider args={[BOARD.width / 2, bh, boardLen / 2]} friction={0.42} restitution={0.05} />
       </RigidBody>
 
       <mesh position={[0, end.y + 0.03, end.z]} material={SKEE_MATS.woodDark}>
         <boxGeometry args={[width + 0.05, 0.05, 0.07]} />
       </mesh>
       <RigidBody type="fixed" position={[0, end.y + 0.03, end.z]} colliders={false}>
-        <CuboidCollider args={[(width + 0.05) / 2, 0.025, 0.032]} friction={0.2} restitution={0.12} />
+        <CuboidCollider args={[(width + 0.05) / 2, 0.025, 0.032]} friction={0.15} restitution={0.42} />
       </RigidBody>
 
       {([-railX, railX] as const).map((x) => (
@@ -292,10 +289,14 @@ export function SkeeballMachine({ position, rotation, active, onRoundEnd }: Mach
   const readPress = useSkeeballPress(active)
   const [hud, setHud] = useState({ phase: 'idle' as Phase, score: 0, ball: 1, last: 0, lit: 0, power: 0 })
 
-  const onOver = useCallback((value: number) => {
+  const onHole = useCallback((value: number, inside: boolean) => {
     const g = game.current
-    if (g.phase !== 'flight' || g.scored || value <= g.overHole) return
-    g.overHole = value
+    if (g.phase !== 'flight' || g.scored) return
+    if (inside) {
+      if (!g.touching.includes(value)) g.touching.push(value)
+    } else {
+      g.touching = g.touching.filter((v) => v !== value)
+    }
   }, [])
 
   const finishThrow = useCallback((value: number) => {
@@ -325,19 +326,19 @@ export function SkeeballMachine({ position, rotation, active, onRoundEnd }: Mach
 
     if (g.phase === 'aim') {
       g.aim = SKEE.aimAmp * Math.sin(t * SKEE.aimOmega)
-      if (press) g.phase = 'power'
+      if (press) {
+        g.phase = 'power'
+        g.powerT = t
+      }
     } else if (g.phase === 'power') {
-      g.power = 0.5 + 0.5 * Math.sin(t * SKEE.powerOmega)
+      g.power = 0.5 - 0.5 * Math.cos((t - g.powerT) * SKEE.powerOmega)
       if (press) {
         const body = ball.current
         if (body) {
           const speed = MathUtils.lerp(SKEE.minSpeed, SKEE.maxSpeed, g.power)
           const theta = rampTheta()
-          const hop = 0.35 + g.power * SKEE.hop
-          _dir
-            .set(Math.sin(g.aim) * 0.55, Math.sin(theta), -Math.cos(theta) * Math.cos(g.aim))
-            .normalize()
-            .multiplyScalar(speed)
+          const hop = 0.85 + g.power * 0.9
+          _dir.set(Math.sin(g.aim), Math.sin(theta), -Math.cos(theta) * Math.cos(g.aim)).normalize().multiplyScalar(speed)
           body.setLinvel({ x: _dir.x, y: _dir.y + hop, z: _dir.z }, true)
           body.setAngvel(ZERO, true)
         }
@@ -345,6 +346,9 @@ export function SkeeballMachine({ position, rotation, active, onRoundEnd }: Mach
         g.scored = false
         g.lastThrow = 0
         g.overHole = 0
+        g.touching = []
+        g.heldSince = 0
+        g.caught = 0
         g.scoredAt = 0
         g.flightUntil = t + SKEE.flightSecs
         g.phase = 'flight'
@@ -355,22 +359,22 @@ export function SkeeballMachine({ position, rotation, active, onRoundEnd }: Mach
         const vel = body.linvel()
         const pos = body.translation()
         const speed = Math.hypot(vel.x, vel.y, vel.z)
-        const lipZ = lip().z
-        const onFace = pos.z < lipZ + 0.04 && pos.y > lip().y - 0.2
-        if (onFace && speed < 2.2) {
-          const near = nearestRest(pos.x, pos.y, pos.z)
-          if (near > g.overHole) g.overHole = near
+        const sensed = g.touching.length ? Math.max(...g.touching) : 0
+        const pastLip = pos.z < lip().z + 0.02
+        // Only rings past the lip count. A bounce on the ramp must not lock the 10.
+        if (pastLip && sensed && vel.z < -0.15) g.overHole = Math.max(g.overHole, sensed)
+        const here = sensed || (pastLip && vel.z > -0.05 && speed < 2.8 ? holeUnder(pos.x, pos.y, pos.z) : 0)
+        if (!g.caught && pastLip && vel.z > 0.08 && (g.overHole || here)) {
+          g.caught = Math.max(g.overHole, here)
+          g.heldSince = t
         }
-        if (g.overHole > 0 && speed < 2.6 && speed > SKEE.catchSpeed) {
-          const hole = nearestHole(g.overHole, pos.x, pos.z)
-          const [hx, hy, hz] = onBoard(hole.x, hole.s, 0.04)
-          body.applyImpulse({ x: (hx - pos.x) * 0.12, y: (hy - pos.y) * 0.04, z: (hz - pos.z) * 0.12 }, true)
-        }
-        const settledIn = g.overHole > 0 && speed < SKEE.catchSpeed
-        const dead = speed < 0.28 && t > g.flightUntil - SKEE.flightSecs + 0.7
-        if (settledIn) finishThrow(g.overHole)
-        else if (pos.y < 0.34) finishThrow(g.overHole)
-        else if (dead) finishThrow(g.overHole)
+        if (g.caught) {
+          body.setLinvel(ZERO, true)
+          body.setAngvel(ZERO, true)
+          if (t > g.heldSince + SKEE.grace) finishThrow(g.caught)
+        } else if (pos.y < 0.34) finishThrow(g.overHole)
+        else if (pos.z > lip().z + 0.55 && vel.z > 0.45 && t > g.flightUntil - SKEE.flightSecs + 0.85) finishThrow(g.overHole)
+        else if (speed < 0.35 && t > g.flightUntil - SKEE.flightSecs + 1) finishThrow(Math.max(g.overHole, here))
       }
       if (g.scored && g.scoredAt === 0) g.scoredAt = t
       const settled = g.scored && t > g.scoredAt + SKEE.afterScore
@@ -436,7 +440,7 @@ export function SkeeballMachine({ position, rotation, active, onRoundEnd }: Mach
         : hud.phase === 'flight'
           ? hud.last > 0
             ? `+${hud.last}`
-            : 'Rolling'
+            : 'In the air'
           : hud.phase === 'idle'
             ? 'Space to start'
             : ''
@@ -445,19 +449,19 @@ export function SkeeballMachine({ position, rotation, active, onRoundEnd }: Mach
     <group position={position} rotation={rotation} name="skeeball">
       <Cabinet />
       <ReturnBalls />
-      <Physics gravity={[0, -7.4, 0]} timeStep={1 / 60} paused={!active}>
+      <Physics gravity={[0, -9.81, 0]} timeStep={1 / 60} paused={!active}>
         <Lane />
-        <Board onOver={onOver} lit={hud.lit} />
+        <Board onHole={onHole} lit={hud.lit} />
         <RigidBody
           ref={ball}
           type="dynamic"
           colliders="ball"
           position={[SPAWN.x, SPAWN.y, SPAWN.z]}
           ccd
-          restitution={0.12}
-          friction={0.55}
-          linearDamping={0.22}
-          angularDamping={0.4}
+          restitution={0.22}
+          friction={0.35}
+          linearDamping={0.05}
+          angularDamping={0.12}
           canSleep={false}
           userData={{ ball: true }}
         >

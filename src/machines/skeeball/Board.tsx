@@ -5,7 +5,7 @@ import { HOLES, boardTheta, onBoard, type Hole } from './constants'
 import { SKEE_MATS } from './materials'
 import { useLabelMat } from './textures'
 
-function Cup({ hole, lit, onOver }: { hole: Hole; lit: number; onOver: (value: number) => void }) {
+function Cup({ hole, lit, onHole }: { hole: Hole; lit: number; onHole: (value: number, inside: boolean) => void }) {
   const tilt = boardTheta()
   const [x, y, z] = onBoard(hole.x, hole.s, 0.012)
   const hot = lit === hole.value
@@ -25,11 +25,15 @@ function Cup({ hole, lit, onOver }: { hole: Hole; lit: number; onOver: (value: n
       </mesh>
       <RigidBody type="fixed" colliders={false}>
         <CylinderCollider
-          args={[0.14, hole.r * 0.95]}
+          args={[0.2, hole.r * 1.2]}
           sensor
           onIntersectionEnter={(e) => {
             const ud = e.other.rigidBodyObject?.userData as { ball?: boolean } | undefined
-            if (ud?.ball) onOver(hole.value)
+            if (ud?.ball) onHole(hole.value, true)
+          }}
+          onIntersectionExit={(e) => {
+            const ud = e.other.rigidBodyObject?.userData as { ball?: boolean } | undefined
+            if (ud?.ball) onHole(hole.value, false)
           }}
         />
       </RigidBody>
@@ -58,12 +62,12 @@ function FlankDots() {
   return <>{dots}</>
 }
 
-export function Board({ onOver, lit }: { onOver: (value: number) => void; lit: number }) {
+export function Board({ onHole, lit }: { onHole: (value: number, inside: boolean) => void; lit: number }) {
   return (
     <group>
       <FlankDots />
       {HOLES.map((hole) => (
-        <Cup key={`${hole.value}:${hole.x}`} hole={hole} lit={lit} onOver={onOver} />
+        <Cup key={`${hole.value}:${hole.x}`} hole={hole} lit={lit} onHole={onHole} />
       ))}
     </group>
   )
