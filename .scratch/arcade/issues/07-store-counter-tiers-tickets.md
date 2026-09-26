@@ -36,4 +36,8 @@ On branch `sne` at `/dev/store` (`src/store/`). Real `src/arcade/state.ts`: cont
 
 ## Comments
 
+- Daniel (2026-09-26): Keep the Ticket economy and the grade bands already on the shelves. Public listings are snapshotted in `docs/research/fleek-catalog.json` (no Fleek API; see `docs/research/fleek-api.md`).
+- Change the claim: Tickets from a Round unlock one unit of the chosen listing at the per-piece price, not the whole bundle. Claim stays a fake confirmation plus a link to the listing.
+- Cut real checkout.
+
 - Jono (2026-09-26, T+1:00): Claw pays 100 Tickets per successful grab (`CLAW.payout`, issue 04). At 1 Ticket = 1% with a 50% cap, one grab maxes any Discount. Sne owns the rate; either lower the rate (e.g. 1 Ticket = 0.25%) or tell me to drop the Claw payout. Keep / Change / Cut is yours.
