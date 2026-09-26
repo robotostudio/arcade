@@ -16,7 +16,7 @@ import { useFrame, type ThreeEvent } from '@react-three/fiber'
 import * as THREE from 'three'
 import { useArcade } from '@/arcade/state'
 import { CREDIT, creditGbp } from '@/arcade/economy'
-import { accentMaterial, bodyMaterial, litMaterial, livery, unlitMaterial } from '@/world/livery'
+import { accentMaterial, bodyMaterial, flatMaterial, litMaterial, unlitMaterial } from '@/world/livery'
 import { SHELL } from '@/world/Shell'
 import { GRADE_LABEL, ITEMS, STAT_KEYS, STAT_LABEL, TIER_HEX, itemAfter, itemById, pricePerPiece } from './items'
 import { PRIZE_URLS, configurePrizeTextures } from './prizeTextures'
@@ -40,7 +40,7 @@ const PX_PER_UNIT = 2.5 // drei Html distanceFactor: 400 / 2.5 = 160 css px per 
 const MAT = {
   frame: bodyMaterial('frame'),
   trim: bodyMaterial('trim'),
-  screen: unlitMaterial(livery().screen),
+  screen: flatMaterial('screen'),
   panel: bodyMaterial('panel'),
   panelHot: accentMaterial('panel'),
   accept: litMaterial(TIER_HEX.gold),

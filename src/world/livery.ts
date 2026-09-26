@@ -59,7 +59,7 @@ export function mutedHex(key: AccentKey, table: LiveryTable = livery()): string 
   return `#${scratch.set(table[key]).lerp(new Color(table.plinth), MUTE).getHexString()}`
 }
 
-type Kind = 'body' | 'accent' | 'muted'
+type Kind = 'body' | 'accent' | 'flat' | 'muted'
 type Entry = { material: MeshLambertMaterial | MeshBasicMaterial; key: LiveryColorKey; kind: Kind }
 const registry: Entry[] = []
 const cache = new Map<string, MeshLambertMaterial | MeshBasicMaterial>()
@@ -76,7 +76,7 @@ function register(kind: Kind, key: LiveryColorKey) {
   const id = `${kind}:${key}`
   const hit = cache.get(id)
   if (hit) return hit
-  const material = psxify(kind === 'accent' ? new MeshBasicMaterial() : new MeshLambertMaterial())
+  const material = psxify(kind === 'accent' || kind === 'flat' ? new MeshBasicMaterial() : new MeshLambertMaterial())
   const entry = { material, key, kind }
   paint(entry, livery())
   registry.push(entry)
@@ -92,6 +92,11 @@ export function bodyMaterial(key: LiveryColorKey): MeshLambertMaterial {
 // Unlit part in a Livery colour, brightened by `glow` so the bloom lifts it: marquees, lamps, edge strips.
 export function accentMaterial(key: LiveryColorKey): MeshBasicMaterial {
   return register('accent', key) as MeshBasicMaterial
+}
+
+// Unlit part in a Livery colour without the glow: dark screens, shadow slots. Repaints live like the others.
+export function flatMaterial(key: LiveryColorKey): MeshBasicMaterial {
+  return register('flat', key) as MeshBasicMaterial
 }
 
 // Lit body in a muted Accent, for the decorative cabinets.
