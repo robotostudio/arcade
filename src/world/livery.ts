@@ -16,7 +16,7 @@ export const LIVERY = {
   text: '#fff4d7',
   whackamole: '#d66b27',
   skeeball: '#2d6ce6',
-  stacktop: '#ee5fa0',
+  stacktop: '#cf4585',
   claw: '#2ec4b0',
   glow: 1,
 }

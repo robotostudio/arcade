@@ -78,7 +78,7 @@ function drawSign(ctx: CanvasRenderingContext2D, w: number, h: number) {
   ctx.textBaseline = 'middle'
   ctx.fillStyle = t.skeeball
   ctx.font = displayFont(104)
-  ctx.fillText('SKEE-BALL', w / 2, 116)
+  ctx.fillText('SKEEBALL', w / 2, 116)
   ctx.fillStyle = t.text
   ctx.font = displayFont(40)
   ctx.fillText('9 BALLS', w / 2, 188)
