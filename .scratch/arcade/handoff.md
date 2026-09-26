@@ -10,7 +10,6 @@ Read after PLAN.md and the map. This is the state of play plus the gaps in the p
 
 ## Gaps, blocking now (fold into issue 09 as rules)
 
-1. **No harness page template.** Every issue names `src/app/dev/<machine>/page.tsx` but nothing defines it. Proposal: issue 09 ships `src/world/Harness.tsx` = `ArcadeCanvas` + `<Physics>` + a floor + the Machine at the origin with `active` always true + `onRoundEnd` logged to a corner readout. A harness page is then five lines.
 2. **Who renders `<Physics>`: decided by the Claw (T+0:40).** Each physics Machine wraps its own `<Physics timeStep={1/60} paused={!active}>` inside its root group; **the Room and the Harness mount none.** Separate rapier worlds are fine because Machines never interact, and `paused` makes Room mode cheap. Skeeball copies this. Stacker has no physics at all.
 3. **Camera docks per Machine.** Daniel's fly-to needs a dock per station; Machines are built blind to the camera by people who know their cabinet's shape. Rule: each Machine module exports `DOCK: { offset: [x, y, z]; look: [x, y, z] }` relative to its `position`, cabinet facing +z; Daniel's camera composes `STATIONS[id] + DOCK`. Envelope: a cabinet fits the placeholder box (2 wide, 3 tall, 2 deep).
 4. **Selecting a Machine and Escape.** Nobody owns the click. Rule: the Room wraps each Machine in `<group onClick={() => enter(id)}>` in Room mode; Machines ignore all pointer and keyboard input while `active` is false and never bind Escape (Daniel's world listener does, calling `exit()`).
