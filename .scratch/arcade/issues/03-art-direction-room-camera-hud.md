@@ -21,3 +21,15 @@ Machines never touch the camera. Each physics Machine owns its own `<Physics pau
 Answer records: the palette, the tuned look constants (dpr, snap grid, dither levels, fog range, scanline pitch), camera dock positions per station, the interaction rules, and the deployed URL at checkpoint 2.
 
 ## Comments
+
+### World visual pass — Jono, 2026-09-26
+
+User-directed change supersedes the earlier Bloodborne gloom: stylized nostalgic arcade with a liminal, after-hours atmosphere. Built procedural cosmic carpet, pastel wall panels and trim, fluorescent fixtures, decorative cabinets, prize display, seating, and recessed corridor. Interior camera framing keeps empty carpet prominent. Shared look now uses readable lavender fill and gentler CRT. Existing STATIONS coordinates remain the integration contract; the three central cabinets and prize display are decorative stand-ins pending machine/store integration. Sne/Daniel code and shared state untouched. Issue stays open for playable integration and navigation.
+
+### Circular hub composition
+
+User requested Crash Bandicoot 2 hub-style composition: five cabinets now form a player-facing arc, with an empty circular carpet inlay. Room camera uses damped horizontal mouse parallax, recenters on pointer leave/blur, respects reduced motion, and adapts FOV to viewport aspect. STATIONS and STATION_ROTATIONS in Room.tsx define the revised integration layout; Store position now matches the decorative counter. Free orbit removed in favor of controlled hub framing.
+
+### Store hub integration — Jono, 2026-09-26
+
+User requested a subagent to finish the Store and make it clickable in the hub. Replaced the decorative prize counter with StoreCounter at STATIONS.store, scaled to the existing space. Counter/sign/Item clicks and a keyboard-accessible Store button open the Store HUD and dock the camera; Close/Escape returns to the Room. Generic procedural assets and the existing Tickets-for-Discount economy remain. Subagent improved lettering, empty state, duplicate-claim protection and truthful local-only demo confirmation. Shared arcade state unchanged. Verified production build, 3D sign click, Item selection, a 50-Ticket claim (balance 50 to 0, claimed tag, £6 to £3 discount), zero-balance disable and Escape return in browser. Issue remains open for Machine integration.

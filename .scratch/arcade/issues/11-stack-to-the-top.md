@@ -1,4 +1,4 @@
-# 10 Stack to the Top: a second stacking Machine with Minor and Major prize lines, and a vintage-bundle Store
+# 11 Stack to the Top: a second stacking Machine with Minor and Major prize lines, and a vintage-bundle Store
 
 Type: prototype
 Status: resolved

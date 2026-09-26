@@ -1,6 +1,6 @@
 # Arcade: the three-hour plan
 
-**Deadline: 2026-09-26, three hours from kickoff (about 13:40 BST / 12:40 UTC).** Three devs, async. Quick beats reliable: no tests, no CI, no backend, no Blender. Cut scope before cutting pace.
+**Deadline: 2026-09-26, three hours from kickoff (about 13:40 BST / 12:40 UTC).** Four devs, async (Divya joined at T+1:50 for Whack-a-Mole). Quick beats reliable: no tests, no CI, no backend, no Blender. Cut scope before cutting pace.
 
 Canonical tracker: the markdown map at [`.scratch/arcade/map.md`](./.scratch/arcade/map.md) with one file per issue in [`.scratch/arcade/issues/`](./.scratch/arcade/issues/). This file is the runbook; decisions live on the issue files.
 
@@ -21,6 +21,7 @@ Two phases. **Phase 1**: each dev builds their Machine in isolation on a harness
 | **Sne** | **Stacker** (simplest: timing, no physics) | **Store**: shared state, 3D counter, ring Tiers, Store HUD, Ticket economy | Palette, lighting, props, signage | `src/machines/stacker/`, `src/arcade/`, `src/store/` | `sne` | [06](./.scratch/arcade/issues/06-stacker.md), [07](./.scratch/arcade/issues/07-store-counter-tiers-tickets.md) |
 | **Daniel** | **Skeeball** (mid: ball physics, two-stage input, scoring rings) | | Camera fly-to, Room/Play mode, HUD shell | `src/machines/skeeball/`, `src/world/camera*`, `src/hud/` | `daniel` | [05](./.scratch/arcade/issues/05-skeeball.md) |
 | **Jono** | **Claw** (high: 3-axis movement, grab, chute, prizes) | **Scaffold** (T+0 to 0:25) | Integration of Machines + Store into the Room, deploys | `src/machines/claw/`, `src/app/`, `src/world/room*`, `src/world/look/` | `jono` | [01](./.scratch/arcade/issues/01-scaffold-and-hello-room.md), [09](./.scratch/arcade/issues/09-look-psx-canvas-and-crt.md), [04](./.scratch/arcade/issues/04-claw.md), [08](./.scratch/arcade/issues/08-launch-polish-and-deploy.md) |
+| **Divya** | **Whack-a-Mole** (timing, no physics; joined T+1:50) | | Attract mode on her own Machine | `src/machines/whackamole/` | `divya` | [10](./.scratch/arcade/issues/10-whack-a-mole.md) |
 | **Everyone** | | | [03 World build](./.scratch/arcade/issues/03-art-direction-room-camera-hud.md) | `src/world/` | | [03](./.scratch/arcade/issues/03-art-direction-room-camera-hud.md) |
 
 Research issue [02](./.scratch/arcade/issues/02-research-physics-and-rendering.md) is being answered by an agent; everyone reads its `## Answer` before touching physics.
@@ -33,7 +34,7 @@ Owned by **Sne**, stubbed by **Jono** in the scaffold so nobody waits. Change it
 
 ```ts
 // src/arcade/state.ts  (zustand)
-export type MachineId = 'claw' | 'stacker' | 'skeeball'
+export type MachineId = 'claw' | 'stacker' | 'skeeball' | 'whackamole'
 export type Mode = { kind: 'room' } | { kind: 'play'; machine: MachineId } | { kind: 'store' }
 
 export type ArcadeState = {
@@ -61,7 +62,7 @@ Rules:
 - A Machine renders its own cabinet and game; it never touches the camera. The camera lives in the World and reads `mode`.
 - A Machine calls `onRoundEnd` exactly once per Round. The Room wires it to `awardTickets`.
 - Input: keyboard (Space / arrows) and pointer. Touch is nice-to-have.
-- Payouts (first guess, Sne tunes): Stacker 10 per row reached (win 150), Claw 100 on a grab, Skeeball score / 5.
+- Payouts (first guess, Sne tunes): Stacker 10 per row reached (win 150), Claw 100 on a grab, Skeeball score / 5, Whack-a-Mole 5 per Whack.
 
 ## Timeline
 
@@ -90,7 +91,7 @@ Prices are fake but plausible. Discount = Tickets applied × a rate Sne picks (s
 
 ## Working agreement (async)
 
-- Branches: `main` plus `sne`, `daniel`, `jono`. Rebase onto `main` at every checkpoint. Merge your own branch; no review gate. In Phase 2 commit small and pull often; `src/world/` is shared.
+- Branches: `main` plus `sne`, `daniel`, `jono`, `divya`. Rebase onto `main` at every checkpoint. Merge your own branch; no review gate. In Phase 2 commit small and pull often; `src/world/` is shared.
 - Vercel builds every push; put your preview URL in your issue file's `## Comments` when it's worth looking at.
 - **Feedback**: play the other two roles' previews at each checkpoint and append one comment under `## Comments` in their issue file, three lines max: **Keep / Change / Cut**. Owner decides; no debate threads.
 - Stuck for more than 15 minutes: note it in your issue file and move to the next thing.

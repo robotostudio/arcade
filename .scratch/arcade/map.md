@@ -4,19 +4,20 @@ Tracker: local markdown. Tickets are the files in [`issues/`](./issues/). Issues
 
 ## Destination
 
-A low-poly 3D arcade running in the browser at a public Vercel URL: one diorama Room with three playable Machines (Claw left, Stacker centre with the red boxes, Skeeball right). Click a Machine to fly the camera in and play, Escape to fly out. Every Round pays out Tickets; a 3D Store counter in the Room shows Roboto merch in three ring Tiers (White low, Blue mid, shining Gold top) and lets the player spend Tickets as a Discount on any Item. Front-end only. Live and shareable by the deadline; the map is done when it's live.
+A low-poly 3D arcade running in the browser at a public Vercel URL: one diorama Room with four playable Machines on an arc (Whack-a-Mole, Claw, Stacker with the red boxes, Skeeball). Click a Machine to fly the camera in and play, Escape to fly out. Every Round pays out Tickets; a 3D Store counter in the Room shows Roboto merch in three ring Tiers (White low, Blue mid, shining Gold top) and lets the player spend Tickets as a Discount on any Item. Front-end only. Live and shareable by the deadline; the map is done when it's live.
 
 ## Notes
 
 - **Hackathon: quick beats reliable.** Deadline 2026-09-26, three hours from kickoff (about 13:40 BST / 12:40 UTC). No tests, no CI beyond the Vercel build, no backend, no Blender. Cut scope before cutting pace; the cut order is in PLAN.md.
 - **Execution override**: sessions build as tickets resolve, not plan-only.
-- Three devs async, one branch each, machines assigned by complexity. Each issue file carries a `Role:` line naming the dev. Folder ownership, timeline and the shared state contract are in PLAN.md.
+- Four devs async (Divya joined at T+1:50), one branch each, machines assigned by complexity. Each issue file carries a `Role:` line naming the dev. Folder ownership, timeline and the shared state contract are in PLAN.md.
 
 | Dev | Phase 1 machine | Phase 1 also | Phase 2 World slice | Branch |
 |---|---|---|---|---|
 | Sne | Stacker (simplest) | Store: state, counter, Tiers, Store HUD, economy | Palette, lighting, props | `sne` |
 | Daniel | Skeeball (mid) | | Camera fly-to, modes, HUD shell | `daniel` |
 | Jono | Claw (high) | Scaffold | Integration, deploys, launch | `jono` |
+| Divya | Whack-a-Mole (timing, no physics) | | Attract mode on her Machine | `divya` |
 
   Phase 2 (the World build, issue 03) starts at T+1:45 with all three on it.
 - Decided by Jono at charting (2026-09-26): browser 3D web app (React Three Fiber on Next.js, Vercel); Roboto Studio brand and R&D piece; Machines are playable; diorama navigation; Skeeball is a two-stage input (sweeping aim arrow, then power); the Store is a 3D counter in the Room, not a 2D route; Items are Roboto merch and services; no external asset files.
@@ -27,6 +28,12 @@ A low-poly 3D arcade running in the browser at a public Vercel URL: one diorama 
 
 ## Decisions so far
 
+- [03 Store hub integration](issues/03-art-direction-room-camera-hud.md): real Store counter is clickable in the Room, with camera docking, HUD, Close/Escape, placeholder assets and guarded local demo Discount claims. Build and browser redemption verified.
+
+- [03 World visual revision](issues/03-art-direction-room-camera-hud.md): user requested nostalgic stylized arcade with liminal empty space, superseding the Bloodborne gloom. Jono built the surrounding world; playable machine/store integration remains open.
+
+- [10 Whack-a-Mole](issues/10-whack-a-mole.md) (planned 12:30 BST, open): fourth Machine, Divya's. Timed 30 s Round, nine Holes, 5 Tickets per Whack, no physics, pointer plus numpad keys, basic mallet, arc re-spaced to four with Whack-a-Mole on the left end. Glossary widened to four Machines; Divya edits `state.ts`, `economy.ts` and `Room.tsx` STATIONS directly.
+
 <!-- one line per resolved ticket: [title](issues/NN-slug.md): gist -->
 - [01 Scaffold and hello-room](issues/01-scaffold-and-hello-room.md): live at https://arcade-beta-eight.vercel.app (Vercel `arcade` on roboto, `prj_0c3y5Z3dsJdpPhIFWose9I6uZ3oJ`, GitHub connected, `main` = production; team-scoped and preview URLs need a Vercel login). Next 16.3.6 + pins from 02, state stub + `MachineProps` in place, placeholder Room with `STATIONS` slots. Gotcha: `agentRules: false` in next.config or `next dev` edits AGENTS.md.
 - [02 Research: physics and rendering recipe](issues/02-research-physics-and-rendering.md): pins next 16.3.6 / react 19.3 / three 0.186.1 / fiber 9.8.1 / drei 10.7.9 / rapier 2.2.0; Claw fakes the grip (kinematic claw, sensor snap, setBodyType, scripted slip), Skeeball is a real rapier ball with cuboid ramp + sensor rings, Stacker has no physics (interval trim, one instancedMesh); flat-shaded palette with hemisphere + one shadow directional, `shadows="percentage"`, dpr [1, 1.5], drei CameraControls `setLookAt(..., true)` for the fly-to, `enabled={false}` in Play mode. Details: docs/research/r3f-physics-recipe.md.
@@ -34,7 +41,7 @@ A low-poly 3D arcade running in the browser at a public Vercel URL: one diorama 
 - [04 Claw machine playable round](issues/04-claw.md): kinematic snap plus a scripted slip roll. The nearest prize centre within grabRadius 0.22 + 0.04 of the mouth is grabbed. Slip is rolled at 0.15/s during rise and carry. Win = the chute sensor catches a prize; payout 100. speed 1.0, floorY 1.3, a round is about 5.5 s. Each machine has its own prize registry, and physics settles for 1.5 s, then pauses while inactive. Harness /dev/claw.
 - [06 Stacker](issues/06-stacker.md): playable at `/dev/stacker`, no physics; 7x15 grid, width caps 3/2/1, `tickMs = max(60, 260 - 14*row)`, 1-cell mercy on rows 0-3, 10 per row / 150 win, `onRoundEnd` once (forfeit pays on deactivate).
 - [07 Store](issues/07-store-counter-tiers-tickets.md): state.ts real with localStorage Tickets; economy in `src/arcade/economy.ts` (Stacker 10/row 150 win, Claw 100, Skeeball score/5; 1 Ticket = 1% cap 50%, Gold 0.5%/Ticket); 3D counter with White/Blue/Gold rings and Store HUD at `/dev/store`; claim = spend + toast + persisted tag.
-- [10 Stack to the Top](issues/10-stack-to-the-top.md): second stacking Machine on `sne-stack-top`, harness `/dev/stack-top`; Stacker rules via the shared `logic.ts` plus a Minor line (10 rows: Take Minor 50 or Go for Major, 8 s auto-take) and Major (top, 250), 1 per row on a miss; `'stacktop'` in `MachineId`; Store is nine vintage bundles on Fleek-format cards, 1 Ticket = £0.10 off capped at 50% for every Machine. Room slot pending from Jono.
+- [11 Stack to the Top](issues/11-stack-to-the-top.md): second stacking Machine on `sne-stack-top`, harness `/dev/stack-top`; Stacker rules via the shared `logic.ts` plus a Minor line (10 rows: Take Minor 50 or Go for Major, 8 s auto-take) and Major (top, 250), 1 per row on a miss; `'stacktop'` in `MachineId`; Store is nine vintage bundles on Fleek-format cards, 1 Ticket = £0.10 off capped at 50% for every Machine. Room slot pending from Jono.
 
 ## Not yet specified
 
