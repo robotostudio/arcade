@@ -42,10 +42,7 @@ function Box({ at, size, material }: { at: [number, number, number]; size: [numb
   return <mesh position={at} material={material}><boxGeometry args={size} /></mesh>
 }
 
-// `onPrompt` is the Shell's prompt-per-phase contract (issue 12, step 3); typed here until MachineProps carries it.
-type WhackProps = MachineProps & { onPrompt?: (prompt: string) => void }
-
-export function WhackMachine({ position, rotation, active, onRoundEnd, onPrompt }: WhackProps) {
+export function WhackMachine({ position, rotation, active, onRoundEnd, onPrompt }: MachineProps) {
   const state = useRef(initialState())
   const board = useRef<Group>(null)
   const moles = useRef<(Group | null)[]>([])

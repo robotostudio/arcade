@@ -22,9 +22,11 @@ export function Shell({ accent, prompt }: { accent: AccentKey; prompt: string })
   const tickets = useArcade((s) => s.tickets)
   const exit = useArcade((s) => s.exit)
   const color = useLivery((s) => s.table[accent])
-  const colon = prompt.indexOf(':')
-  const key = colon > 0 ? prompt.slice(0, colon) : ''
-  const verb = colon > 0 ? prompt.slice(colon) : prompt
+  // "Key: verb · Key: verb": every key before a colon takes the Accent.
+  const parts = prompt.split(' · ').map((part) => {
+    const colon = part.indexOf(':')
+    return colon > 0 ? { key: part.slice(0, colon), verb: part.slice(colon) } : { key: '', verb: part }
+  })
   return (
     <>
       <div style={{ ...panel, top: 12, right: 12, textAlign: 'right' }}>
@@ -33,8 +35,13 @@ export function Shell({ accent, prompt }: { accent: AccentKey; prompt: string })
       </div>
       {prompt && (
         <div style={{ ...panel, bottom: 12, left: '50%', transform: 'translateX(-50%)', fontSize: 40, whiteSpace: 'nowrap' }}>
-          {key && <span style={{ color }}>{key}</span>}
-          {verb}
+          {parts.map(({ key, verb }, i) => (
+            <span key={i}>
+              {i > 0 && ' · '}
+              {key && <span style={{ color }}>{key}</span>}
+              {verb}
+            </span>
+          ))}
         </div>
       )}
       <button type="button" onClick={exit} style={{ ...panel, bottom: 12, left: 12, fontSize: 20, border: `1px solid ${SHELL.edge}`, cursor: 'pointer' }}>

@@ -4,7 +4,9 @@
 // Its numbers live on its Display (ADR 0001), so there is no 2D HUD here. Client-only
 // (loaded by StackTopHarness with ssr: false), so the persisted Ticket balance never
 // causes a hydration mismatch.
-import { HarnessCanvas, HarnessCrt } from '@/arcade/dev/HarnessCanvas'
+import { CameraControls } from '@react-three/drei'
+import { ArcadeCanvas } from '@/world/ArcadeCanvas'
+import { FrameCamera } from '@/world/Harness'
 import { useArcade } from '@/arcade/state'
 import { DOCK, StackTop } from './StackTop'
 
@@ -13,10 +15,11 @@ const awardStackTop = (tickets: number) => useArcade.getState().awardTickets('st
 export function StackTopHarnessScene() {
   return (
     <>
-      <HarnessCanvas camera={{ position: [...DOCK.position], target: [...DOCK.target] }}>
+      <ArcadeCanvas camera={{ position: [...DOCK.position] }}>
         <StackTop position={[0, 0, 0]} active onRoundEnd={awardStackTop} />
-      </HarnessCanvas>
-      <HarnessCrt />
+        <CameraControls makeDefault smoothTime={0.6} />
+        <FrameCamera position={DOCK.position} target={DOCK.target} />
+      </ArcadeCanvas>
     </>
   )
 }
