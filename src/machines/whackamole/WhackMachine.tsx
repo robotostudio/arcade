@@ -2,11 +2,12 @@
 
 import { useEffect, useMemo, useRef } from 'react'
 import { useFrame, type ThreeEvent } from '@react-three/fiber'
-import { CanvasTexture, Group, MathUtils, NearestFilter, Vector3 } from 'three'
+import { CanvasTexture, Group, LinearMipmapLinearFilter, MathUtils, NearestFilter, Vector3 } from 'three'
+import { sfx } from '@/arcade/sfx'
 import type { MachineProps } from '../types'
 import { WHACK, holePosition } from './constants'
 import { stillMole, stepMole, type MoleMotion } from './moleMotion'
-import { initialState, step } from './whackLogic'
+import { initialState, step, type State } from './whackLogic'
 import { useWhackInput } from './useWhackInput'
 
 // The deck tips toward the player. The near row used to sink into the cabinet, so the
@@ -15,6 +16,19 @@ const DECK_TILT = 0.2
 
 function Box({ at, size, color }: { at: [number, number, number]; size: [number, number, number]; color: string }) {
   return <mesh position={at}><boxGeometry args={size} /><meshLambertMaterial color={color} /></mesh>
+}
+
+// Sounds come from diffing one step: countdown beeps, GO, Pops, Whacks and escaped Moles.
+const count = (s: State) => Math.ceil(WHACK.countdown - s.elapsed)
+function playCues(prev: State, next: State) {
+  if (next.phase === 'countdown' && (prev.phase !== 'countdown' || count(prev) !== count(next))) sfx.count()
+  if (prev.phase === 'countdown' && next.phase === 'playing') sfx.go()
+  if (next.phase !== 'playing') return
+  if (next.whacks > prev.whacks) sfx.hit(((next.whacks - 1) % 8) + 1)
+  for (let i = 0; i < 9; i++) {
+    if (!prev.moles[i] && next.moles[i]) sfx.pop()
+    else if (prev.moles[i] && !next.moles[i] && next.flashes[i] < .3) sfx.miss()
+  }
 }
 
 export function WhackMachine({ position, rotation, active, onRoundEnd }: MachineProps) {
@@ -36,7 +50,8 @@ export function WhackMachine({ position, rotation, active, onRoundEnd }: Machine
     const canvas = document.createElement('canvas')
     canvas.width = 1024; canvas.height = 384
     const texture = new CanvasTexture(canvas)
-    texture.minFilter = NearestFilter; texture.magFilter = NearestFilter
+    // Mipmapped when shrunk so the sign stays legible from the hub; still crisp pixels up close.
+    texture.minFilter = LinearMipmapLinearFilter; texture.magFilter = NearestFilter; texture.anisotropy = 8
     return { canvas, texture, last: '' }
   }, [])
   useEffect(() => () => display.texture.dispose(), [display])
@@ -55,7 +70,9 @@ export function WhackMachine({ position, rotation, active, onRoundEnd }: Machine
     if (active) {
       const controls = input.read()
       if (controls.hits.length) malletBody.current.av -= 14
-      state.current = step(state.current, controls, rawDt, Math.random)
+      const prev = state.current
+      state.current = step(prev, controls, rawDt, Math.random)
+      playCues(prev, state.current)
       if (state.current.payout !== null) onRoundEnd(state.current.payout)
     } else {
       const a = attract.current
@@ -109,9 +126,10 @@ export function WhackMachine({ position, rotation, active, onRoundEnd }: Machine
       ctx.fillStyle = '#221c2d'; ctx.fillRect(0, 0, 1024, 384)
       ctx.strokeStyle = '#ffb941'; ctx.lineWidth = 12; ctx.strokeRect(12, 12, 1000, 360)
       ctx.textAlign = 'center'
-      ctx.fillStyle = '#ffbd50'; ctx.font = 'bold 78px monospace'; ctx.fillText('MOLE PATROL', 512, 108)
-      ctx.fillStyle = '#fff4d7'; ctx.font = 'bold 48px monospace'; ctx.fillText(headline, 512, 212)
-      ctx.fillStyle = '#eaba80'; ctx.font = '28px monospace'; ctx.fillText('9 HOLES  /  30 SECONDS  /  5 TICKETS A HIT', 512, 300)
+      // Chunky display face at sizes that survive the distance and the dither pass.
+      ctx.fillStyle = '#ffbd50'; ctx.font = '96px Impact, "Arial Black", sans-serif'; ctx.fillText('MOLE PATROL', 512, 112, 960)
+      ctx.fillStyle = '#fff4d7'; ctx.font = '72px Impact, "Arial Black", sans-serif'; ctx.fillText(headline, 512, 228, 960)
+      ctx.fillStyle = '#eaba80'; ctx.font = '56px Impact, "Arial Black", sans-serif'; ctx.fillText('30 SEC  ·  5 TICKETS A HIT', 512, 332, 960)
       display.texture.needsUpdate = true
     }
   })
