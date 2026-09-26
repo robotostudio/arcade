@@ -4,17 +4,17 @@ Low-poly 3D arcade, hackathon build, three devs, three hours. Read [PLAN.md](./P
 
 ## First session in this clone: who are you?
 
-If `.whoami` does not exist at the repo root, before anything else ask: **"Who are you: sne, daniel or jono?"** Accept only those three. Then:
+If `.whoami` does not exist at the repo root, before anything else ask: **"Who are you: sne, daniel or jono?"** Accept only those three. Write the name to `.whoami` (gitignored), then tell them their assignment from the table in PLAN.md and start on their first issue:
 
-1. Write the name to `.whoami` (gitignored).
-2. Read the role table in `.scratch/arcade/map.md`. If the person already has a role there, tell them and stop. Otherwise ask which unclaimed role they want, **World**, **Machines** or **Store** (PLAN.md says what each owns), write `name` next to it in the table, set `Status: claimed (name)` on that role's files in `.scratch/arcade/issues/`, commit as `Claim <role>: <name>` and push `main`.
-3. Check out or create the role's branch (`world`, `machines`, `store`) and start on its first issue.
+- **sne**: Stacker + Store. Branch `sne`. Issues 06, 07.
+- **daniel**: Skeeball + Room. Branch `daniel`. Issues 03, 05.
+- **jono**: Claw + scaffold + launch. Branch `jono`. Issues 01, 04, 08.
 
-Every later session: read `.whoami`, work only your role's folders and issues, rebase onto `main` at each PLAN.md checkpoint.
+Every later session: read `.whoami`, work only your folders and issues, rebase onto `main` at each PLAN.md checkpoint.
 
 ## Rules
 
-- Tracker is markdown: `.scratch/arcade/map.md` and `issues/NN-*.md`. Claim = `Status: claimed (name)`. Resolve = `## Answer` + `Status: resolved` + a line in the map's Decisions so far.
-- Never edit `src/arcade/state.ts` outside the Store role without tagging the other two in your issue comment.
+- Tracker is markdown: `.scratch/arcade/map.md` and `issues/NN-*.md`. Issues are pre-assigned by `Role:`. Resolve = `## Answer` + `Status: resolved` + a line in the map's Decisions so far.
+- Only Sne edits `src/arcade/state.ts`; anyone else proposes the change in their issue comment.
 - No tests, no CI, no backend. Commit small, push often, never force-push `main`.
 - Feedback on others' work: three lines, Keep / Change / Cut, under `## Comments` in their issue file.

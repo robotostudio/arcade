@@ -2,7 +2,7 @@
 
 Type: research
 Status: claimed
-Role: Machines
+Role: agent (everyone reads the Answer)
 Slot: T+0 (running as an agent at charting)
 Blocked by: none
 

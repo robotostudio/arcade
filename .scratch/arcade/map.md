@@ -1,6 +1,6 @@
 # Map: Arcade — low-poly playable web arcade (hackathon)
 
-Tracker: local markdown. Tickets are the files in [`issues/`](./issues/). Claim one by setting `Status: claimed`; resolve by appending `## Answer`, setting `Status: resolved`, and adding a line under Decisions so far here. Runbook, roles and timeline: [PLAN.md](../../PLAN.md).
+Tracker: local markdown. Tickets are the files in [`issues/`](./issues/). Issues are pre-assigned by `Role:`; resolve by appending `## Answer`, setting `Status: resolved`, and adding a line under Decisions so far here. Runbook, roles and timeline: [PLAN.md](../../PLAN.md).
 
 ## Destination
 
@@ -10,15 +10,13 @@ A low-poly 3D arcade running in the browser at a public Vercel URL: one diorama 
 
 - **Hackathon: quick beats reliable.** Deadline 2026-09-26, three hours from kickoff (about 13:40 BST / 12:40 UTC). No tests, no CI beyond the Vercel build, no backend, no Blender. Cut scope before cutting pace; the cut order is in PLAN.md.
 - **Execution override**: sessions build as tickets resolve, not plan-only.
-- Three devs async in three roles, one branch each. Each issue file carries a `Role:` line. Folder ownership and the shared state contract are in PLAN.md.
+- Three devs async, one branch each, machines assigned by complexity. Each issue file carries a `Role:` line naming the dev. Folder ownership, timeline and the shared state contract are in PLAN.md.
 
-| Role | Branch | Dev |
-|---|---|---|
-| World | `world` | |
-| Machines | `machines` | |
-| Store | `store` | |
-
-  Devs: sne, daniel, jono. Claim a role via the first-session prompt in AGENTS.md.
+| Dev | Machine | Also owns | Branch |
+|---|---|---|---|
+| Sne | Stacker (simplest) | Store: state, counter, Tiers, Store HUD, economy | `sne` |
+| Daniel | Skeeball (mid) | Room: art direction, camera, HUD shell | `daniel` |
+| Jono | Claw (high) | Scaffold, integration, launch | `jono` |
 - Decided by Jono at charting (2026-09-26): browser 3D web app (React Three Fiber on Next.js, Vercel); Roboto Studio brand and R&D piece; Machines are playable; diorama navigation; Skeeball is a two-stage input (sweeping aim arrow, then power); the Store is a 3D counter in the Room, not a 2D route; Items are Roboto merch and services; no external reference art.
 - Standing stack (revocable if a ticket proves it wrong): Next.js App Router, TypeScript, pnpm, `@react-three/fiber`, `@react-three/drei`, `@react-three/rapier`, zustand, Tailwind for the HUD; Vercel project `arcade` on the roboto team. Procedural primitive geometry with flat shading. Tickets in `localStorage`.
 - Glossary lives in [CONTEXT.md](../../CONTEXT.md).

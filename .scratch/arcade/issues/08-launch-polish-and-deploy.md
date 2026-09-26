@@ -2,7 +2,7 @@
 
 Type: task
 Status: open
-Role: World
+Role: Jono
 Slot: T+2:15 to 2:55
 Blocked by: 03, 04, 05, 06, 07
 

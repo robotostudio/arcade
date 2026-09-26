@@ -8,21 +8,23 @@ Canonical tracker: the markdown map at [`.scratch/arcade/map.md`](./.scratch/arc
 
 A public Vercel URL. One low-poly Room. Click a Machine to fly the camera in and play; Escape to fly out. Every Round pays Tickets. A 3D Store counter in the Room shows Roboto merch in three ring Tiers (White low, Blue mid, shining Gold top); apply Tickets to any Item for a Discount. Front-end only.
 
-## Roles
+## Who does what
 
-Three roles, one dev each, one long-lived branch each. Pick a role, set `Status: claimed` on its issue files, and stay in your folders.
+Machines are assigned by complexity. Each dev also carries one non-machine area. One branch per dev, named after you. Stay in your folders.
 
-| Role | Owns | Folders | Issues |
-|---|---|---|---|
-| **World** | Scaffold, Room, lighting, palette, camera fly-to, HUD shell, deploy, final polish. Picks up **Stacker** once the Room is up. | `src/world/`, `src/app/`, `src/hud/` | [01](./.scratch/arcade/issues/01-scaffold-and-hello-room.md), [03](./.scratch/arcade/issues/03-art-direction-room-camera-hud.md), [06](./.scratch/arcade/issues/06-stacker.md), [08](./.scratch/arcade/issues/08-launch-polish-and-deploy.md) |
-| **Machines** | Claw and Skeeball game loops, physics, Round results. | `src/machines/` | [02](./.scratch/arcade/issues/02-research-physics-and-rendering.md) (research, already running), [04](./.scratch/arcade/issues/04-claw.md), [05](./.scratch/arcade/issues/05-skeeball.md) |
-| **Store** | Shared state (Tickets, mode), 3D Store counter, Items + ring Tiers, Store HUD, Ticket economy. | `src/arcade/`, `src/store/` | [07](./.scratch/arcade/issues/07-store-counter-tiers-tickets.md) |
+| Dev | Machine | Also owns | Folders | Branch | Issues |
+|---|---|---|---|---|---|
+| **Sne** | **Stacker** (simplest: timing, no physics) | **Store**: shared state, 3D counter, ring Tiers, Store HUD, Ticket economy | `src/machines/stacker/`, `src/arcade/`, `src/store/` | `sne` | [06](./.scratch/arcade/issues/06-stacker.md), [07](./.scratch/arcade/issues/07-store-counter-tiers-tickets.md) |
+| **Daniel** | **Skeeball** (mid: ball physics, two-stage input, scoring rings) | **Room**: art direction, lighting, camera fly-to, HUD shell | `src/machines/skeeball/`, `src/world/`, `src/hud/` | `daniel` | [03](./.scratch/arcade/issues/03-art-direction-room-camera-hud.md), [05](./.scratch/arcade/issues/05-skeeball.md) |
+| **Jono** | **Claw** (high: 3-axis movement, grab, chute, prizes) | **Scaffold + launch**: repo setup, Vercel, integration, final deploy | `src/machines/claw/`, `src/app/` | `jono` | [01](./.scratch/arcade/issues/01-scaffold-and-hello-room.md), [04](./.scratch/arcade/issues/04-claw.md), [08](./.scratch/arcade/issues/08-launch-polish-and-deploy.md) |
 
-Each role also gives **feedback** on the other two (see below). R&D happens inside your role; you don't need permission to try something in your folders.
+Research issue [02](./.scratch/arcade/issues/02-research-physics-and-rendering.md) is being answered by an agent; everyone reads its `## Answer` before touching physics.
+
+Everyone gives **feedback** on the other two (see below). R&D happens inside your folders; no permission needed to try things there.
 
 ## Shared contract (code against this from minute zero)
 
-Owned by **Store**, stubbed by **World** in the scaffold so nobody waits. Change it only by PR with the other two tagged.
+Owned by **Sne**, stubbed by **Jono** in the scaffold so nobody waits. Change it only by PR with the other two tagged.
 
 ```ts
 // src/arcade/state.ts  (zustand)
@@ -51,23 +53,23 @@ export type MachineProps = {
 ```
 
 Rules:
-- A Machine renders its own cabinet and game; it never touches the camera. World owns the camera and reads `mode`.
-- A Machine calls `onRoundEnd` exactly once per Round. World wires it to `awardTickets`.
+- A Machine renders its own cabinet and game; it never touches the camera. Daniel owns the camera and reads `mode`.
+- A Machine calls `onRoundEnd` exactly once per Round. The Room wires it to `awardTickets`.
 - Input: keyboard (Space / arrows) and pointer. Touch is nice-to-have.
-- Payouts (first guess, Store tunes): Stacker 10 per row reached (win 150), Claw 100 on a grab, Skeeball score / 5.
+- Payouts (first guess, Sne tunes): Stacker 10 per row reached (win 150), Claw 100 on a grab, Skeeball score / 5.
 
 ## Timeline
 
-| T+ | World | Machines | Store |
+| T+ | Sne | Daniel | Jono |
 |---|---|---|---|
-| 0:00 | Scaffold on `main`: Next + R3F + rapier + zustand + Tailwind, state stub, placeholder Room with three boxes + counter, Vercel deploy. **Target: 0:25.** | Read the research findings (issue 02, `## Answer`). Start Claw on `machines` off an empty `src/machines/`; use a local `Canvas` harness page `src/app/dev/claw/page.tsx` until the Room exists. | Start `src/arcade/state.ts` for real, Store counter geometry + ring materials on `store`. Local harness `src/app/dev/store/page.tsx`. |
+| 0:00 | `src/arcade/state.ts` for real, then Stacker on a harness page `src/app/dev/stacker/page.tsx`. | Palette + lighting + Room geometry on a harness page `src/app/dev/room/page.tsx`. | Scaffold on `main`: Next + R3F + rapier + zustand + Tailwind, state stub, placeholder Room with three boxes + counter, Vercel deploy. **Target 0:25.** |
 | 0:25 | Rebase onto `main`, everyone. | | |
-| 0:25 to 1:15 | Room: palette, lighting, floor/walls/sign, camera fly-to per station, HUD shell (prompt, Ticket balance, Escape). | Claw playable. | Store HUD: pick Item, apply Tickets, show Discount. Items = Roboto merch (see below). |
-| 1:15 | **Checkpoint 1: merge everything to `main`, deploy, 5-minute feedback round.** | | |
-| 1:15 to 2:15 | Stacker. Wire all Machines + Store into the Room. | Skeeball (two-stage input: sweeping arrow, then power). | Tune payouts against real Rounds. Gold shine. |
+| 0:25 to 1:15 | Stacker playable, then start the Store counter + ring materials. | Room in the real app: camera fly-to per station, Escape out, HUD shell (station name, prompt, Ticket balance). | Claw on `src/app/dev/claw/page.tsx`: movement, drop, grab, chute. |
+| 1:15 | **Checkpoint 1: merge to `main`, deploy, 5-minute feedback round.** | | |
+| 1:15 to 2:15 | Store HUD: pick Item, apply Tickets, Discount, claim. Gold shine. Tune payouts against real Rounds. | Skeeball: sweeping arrow, power meter, ball, scoring rings. | Claw finished and wired into the Room. Integrate anything the others need. |
 | 2:15 | **Checkpoint 2: merge, deploy, feedback round. Cut anything not fun.** | | |
-| 2:15 to 2:50 | Polish: OG image, title, loading state, Round-end feedback. | Bugfix only. | Bugfix only. |
-| 2:50 | **Final merge + production deploy. Stop coding at 2:55.** | | |
+| 2:15 to 2:50 | Bugfix only. | Bugfix only. Round-end feedback in the HUD. | Polish: OG image, title, loading state. |
+| 2:50 | | | **Final merge + production deploy. Stop coding at 2:55.** |
 
 Cut order if behind: Skeeball physics becomes a scripted arc; Claw becomes snap-on-contact with a 60% fail roll; Gold shine becomes a flat yellow; touch input; sound.
 
@@ -77,11 +79,11 @@ Cut order if behind: Skeeball physics becomes a scripted arc; Claw becomes snap-
 - Blue: hoodie, cap, mug set.
 - Gold: "Free site audit" and "A day of Roboto" (the jackpot shelf, shining).
 
-Prices are fake but plausible. Discount = Tickets applied × a rate the Store role picks (start: 1 Ticket = 1%, cap 50%).
+Prices are fake but plausible. Discount = Tickets applied × a rate Sne picks (start: 1 Ticket = 1%, cap 50%).
 
 ## Working agreement (async)
 
-- Branches: `main` plus one branch per role (`world`, `machines`, `store`). Rebase onto `main` at every checkpoint. Merge your own branch; no review gate.
+- Branches: `main` plus `sne`, `daniel`, `jono`. Rebase onto `main` at every checkpoint. Merge your own branch; no review gate.
 - Vercel builds every push; put your preview URL in your issue file's `## Comments` when it's worth looking at.
 - **Feedback**: play the other two roles' previews at each checkpoint and append one comment under `## Comments` in their issue file, three lines max: **Keep / Change / Cut**. Owner decides; no debate threads.
 - Stuck for more than 15 minutes: note it in your issue file and move to the next thing.

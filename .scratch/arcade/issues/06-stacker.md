@@ -2,8 +2,8 @@
 
 Type: prototype
 Status: open
-Role: World (Store takes it if Claw runs long and World is still on the Room)
-Slot: T+1:15 to 2:15
+Role: Sne
+Slot: T+0:00 to 1:15
 Blocked by: none
 
 ## Question
