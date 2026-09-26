@@ -6,6 +6,24 @@ Set by Jono at T+0:45 (2026-09-26). The Room should read like an empty arcade af
 |---|---|---|
 | ![concept](./refs/room-concept-psx.jpg) | ![claw in dark room, UV carpet](./refs/arcade-dim-1.jpg) | ![arcade, UV carpet, violet tubes](./refs/arcade-dim-2.jpg) |
 
+### Concept views (generated from the refs; mood and layout targets, not assets)
+
+Layout matches `STATIONS` in `src/world/Room.tsx`: Claw left, Stacker centre, Skeeball right, Store counter on the back wall, filler cabinets on both side walls facing in.
+
+| Top-down layout | Three-quarter diorama |
+|---|---|
+| ![top-down](./refs/room-topdown.jpg) | ![three-quarter](./refs/room-iso.jpg) |
+
+| Claw (Play mode) | Stacker (Play mode) |
+|---|---|
+| ![claw play view](./refs/play-claw.jpg) | ![stacker play view](./refs/play-stacker.jpg) |
+
+| Skeeball (Play mode) | Store counter (White, Blue, Gold Tiers) |
+|---|---|
+| ![skeeball play view](./refs/play-skeeball.jpg) | ![store counter](./refs/store-counter.jpg) |
+
+What to take from them: cabinet bodies near black with only screens and marquees lit; claw prizes are low-poly icosahedrons (`icosahedronGeometry args={[r, 0]}`) in the neon palette; Stacker blocks are the red instanced grid; Skeeball lane is warm brown under a blue cone; Store Tiers read as three shelves, Gold on top with its own warm light.
+
 Rule of the look: **almost nothing is lit, almost everything that reads is emissive.** Lights are for pools, emissives are for shapes. That is also the cheapest way to do it: emissive costs nothing per light.
 
 ## 1. Palette additions (Sne owns `palette.ts`)
