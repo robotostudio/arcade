@@ -13,15 +13,14 @@ export const MAT = {
   sign: lambert('#1c1a20', { emissive: new THREE.Color('#0c1a3a') }),
   signText: lambert('#3d7bff', { emissive: new THREE.Color('#1d3b8a') }),
   marker: lambert('#f2ecd8', { emissive: new THREE.Color('#6a6250') }),
-  // Item silhouettes
-  bone: lambert('#e8e4d8'),
-  red: lambert('#8c2a22'),
-  canvas: lambert('#c9b98f'),
-  hoodie: lambert('#2a3550'),
-  roboBlue: lambert('#3d7bff'),
-  ceramic: lambert('#d8d2c2'),
   plinth: lambert('#2b2724'),
-  glow: lambert('#ffd76a', { emissive: new THREE.Color('#c08a10'), emissiveIntensity: 0.9 }),
+} as const
+
+// Garment piles: folded flats in the Tier colour, two shades so the layers read.
+export const PILE = {
+  white: [lambert('#e8e4d8'), lambert('#bfb9a8')],
+  blue: [lambert('#3d7bff'), lambert('#2a54b8')],
+  gold: [lambert('#f2c14e', { emissive: new THREE.Color('#5a4000'), emissiveIntensity: 0.5 }), lambert('#c9962a')],
 } as const
 
 // Tier rings under each Item.

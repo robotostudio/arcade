@@ -5,19 +5,10 @@
 // and input, paints the grid, and reports to the HUD store and onRoundEnd.
 import { useEffect, useRef } from 'react'
 import { useFrame, type ThreeEvent } from '@react-three/fiber'
-import { Object3D, type InstancedMesh } from 'three'
+import type { InstancedMesh } from 'three'
 import type { MachineProps } from '@/machines/types'
-import {
-  H,
-  W,
-  createState,
-  currentRow,
-  forfeit,
-  press,
-  step,
-  toAttract,
-  type StackerState,
-} from './logic'
+import { H, W, createState, currentRow, forfeit, press, step, toAttract, type StackerState } from './logic'
+import { paintGrid, type GridLayout } from './grid'
 import { useStackerHud } from './hud'
 import { cellColors, materials } from './materials'
 
@@ -30,35 +21,10 @@ const BEZEL_D = 0.04
 const CELL_Z = FACE_Z + BEZEL_D + BOX / 2
 const COUNT = W * H
 
-const dummy = new Object3D() // reused for every setMatrixAt, never allocated per frame
-
-function inRow(r: { start: number; end: number }, c: number) {
-  return c >= r.start && c < r.end
-}
+const LAYOUT: GridLayout = { cell: CELL, z: CELL_Z, rowY: (r) => GRID_Y + r * CELL + CELL / 2 }
 
 function paint(mesh: InstancedMesh, s: StackerState) {
-  const row = currentRow(s)
-  const won = s.result?.kind === 'win'
-  const lost = s.result?.kind === 'lose'
-  for (let r = 0; r < H; r++) {
-    for (let c = 0; c < W; c++) {
-      const i = r * W + c
-      let color = null
-      if (r < s.placed.length && inRow(s.placed[r], c)) {
-        color = won && r === H - 1 ? cellColors.gold : cellColors.placed
-      } else if (r === row && inRow(s.moving, c)) {
-        if (s.phase !== 'over') color = cellColors.moving
-        else if (lost) color = cellColors.miss
-      }
-      dummy.position.set((c - (W - 1) / 2) * CELL, GRID_Y + r * CELL + CELL / 2, CELL_Z)
-      dummy.scale.setScalar(color ? 1 : 0)
-      dummy.updateMatrix()
-      mesh.setMatrixAt(i, dummy.matrix)
-      mesh.setColorAt(i, color ?? cellColors.placed)
-    }
-  }
-  mesh.instanceMatrix.needsUpdate = true
-  if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true
+  paintGrid(mesh, s, LAYOUT, cellColors)
 }
 
 function publish(s: StackerState) {

@@ -27,7 +27,13 @@ function readClean() {
 // in the R3F store). Frames once; after that the dev owns the camera.
 function FrameCamera({ position, target }: { position: Vec3; target: Vec3 }) {
   const controls = useThree((s) => s.controls) as CameraControls | null
+  const get = useThree((s) => s.get)
   const framed = useRef(false)
+  // Dev handle: `__arcade.get()` in the console gives the R3F state (camera, gl.info for
+  // draw-call counts, controls). Harness pages only.
+  useEffect(() => {
+    ;(window as unknown as { __arcade?: unknown }).__arcade = { get }
+  }, [get])
   useEffect(() => {
     if (!controls || framed.current) return
     framed.current = true
