@@ -14,12 +14,11 @@ import { Cabinet, RoomEnvironment } from './room-environment'
 // Each cabinet faces the shared viewing point on the open side of the hub.
 export const STATIONS = {
   claw: [-2.5, 0, 1] as const,
-  stacker: [0, 0, 0] as const,
+  stacktop: [0, 0, 0] as const, // the centre slot: Stack to the Top is Sne's one stacking Machine in the Room
   skeeball: [2.5, 0, 1] as const,
-  stacktop: [1.5, 0, -2.4] as const,
   store: [6.4, 0, -5.55] as const,
 }
-export const STATION_ROTATIONS = { claw: .38, stacker: 0, skeeball: -.38, stacktop: -.18 } as const
+export const STATION_ROTATIONS = { claw: .38, stacktop: 0, skeeball: -.38 } as const
 
 // Stack to the Top is built at real size (4.6 m tall); Jono's cabinets are 2.2 m, so it shrinks to fit the Room.
 const STACKTOP_SCALE = .55
@@ -120,11 +119,10 @@ export function Room() {
     <ArcadeCanvas camera={{ position: [0, 2.35, 5.8], fov: 55 }}>
       <RoomEnvironment />
       <Cabinet at={[...STATIONS.claw]} rotation={STATION_ROTATIONS.claw} color="#69c3c5" title="CLAW" />
-      <Cabinet at={[...STATIONS.stacker]} rotation={STATION_ROTATIONS.stacker} color="#e886aa" title="STACK" />
       <Cabinet at={[...STATIONS.skeeball]} rotation={STATION_ROTATIONS.skeeball} color="#a68cdb" title="SKEE" />
       <Cabinet at={[-3.8, 0, 2.5]} rotation={.66} color="#8a87b3" title="ORBIT" />
       <Cabinet at={[3.8, 0, 2.5]} rotation={-.66} color="#7ca2ab" title="NOVA" />
-      {/* Stack to the Top (issue 11) stands at the back of the hub between Stacker and Skeeball, facing the viewpoint. Click it to play, Escape to leave. */}
+      {/* Stack to the Top (issue 11) takes the centre slot. Click it to play, Escape to leave. */}
       <group position={[...STATIONS.stacktop]} rotation={[0, STATION_ROTATIONS.stacktop, 0]} scale={STACKTOP_SCALE} onClick={(e) => { if (!playingStackTop) { e.stopPropagation(); enter('stacktop') } }}>
         <StackTop position={[0, 0, 0]} active={playingStackTop} onRoundEnd={awardStackTop} />
       </group>
