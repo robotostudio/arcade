@@ -6,9 +6,9 @@ export const SKEE = {
   aimAmp: (18 * Math.PI) / 180,
   aimOmega: 1.45,
   powerOmega: 2.55,
-  minSpeed: 2.55,
-  maxSpeed: 6.15,
-  hop: 0.28,
+  minSpeed: 4.8,
+  maxSpeed: 8.6,
+  hop: 1.15, // extra upward m/s at full power, added after the along-ramp velocity
   catchSpeed: 1.22,
   flightSecs: 4.6,
   afterScore: 0.85,
@@ -40,7 +40,7 @@ export function rampCenter(): [number, number, number] {
 
 export function ballSpawn() {
   const { startZ, run, rise, y0 } = SKEE.ramp
-  const s = 0.2
+  const s = 0.78
   return {
     x: 0,
     y: y0 + (rise / run) * s + SKEE.ballR + 0.01,

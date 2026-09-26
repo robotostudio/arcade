@@ -16,9 +16,9 @@ Feedback from the others at checkpoint 2 (T+2:35). Answer records: physics appro
 
 ## Answer
 
-Playable at `/dev/skeeball`. Real rapier ball (`dynamic`, `ccd`, ball collider) on cuboid ramp and board colliders. Not a scripted arc. Each hole is a sensor `CylinderCollider`; the ball has to slow inside it before that value counts, so rolling across a ring does not score it. A miss (fell off, or stopped outside a hole) scores 0.
+Playable at `/dev/skeeball`. Real rapier ball (`dynamic`, `ccd`, ball collider) on cuboid ramp and board colliders. Not a scripted arc. Each hole is a sensor `CylinderCollider`. The throw scores the hole the ball settles in. A miss that never reaches one scores 0.
 
-Two-stage input, Space or click. Aim sweeps `18° * sin(t * 1.45)`. Power oscillates at `2.55` rad/s and lerps launch speed from `2.55` to `6.15`. Nine balls. Stacked holes 10 / 20 / 30 / 40 / 50 plus two 100s at the top corners. Tickets = `round(score / PAYOUT.skeeball.scoreDivisor)` (5). `onRoundEnd` fires once, after the result. Cabinet is maroon, blue, and yellow so it matches Stack to the Top. Exports `DOCK` for the hub camera. The Room already mounts this machine.
+Two-stage input, Space or click. Aim sweeps `18° * sin(t * 1.45)`. Power oscillates at `2.55` rad/s and lerps launch speed from `4.8` to `8.6`, plus an upward hop, under gravity `-7.4`. The ball rests on the alley, not in front of the cabinet. A throw scores the hole it settles in. Nine balls. Stacked holes 10 / 20 / 30 / 40 / 50 plus two 100s at the top corners. Tickets = `round(score / PAYOUT.skeeball.scoreDivisor)` (5). `onRoundEnd` fires once, after the result. Cabinet is maroon, blue, and yellow so it matches Stack to the Top. Exports `DOCK` for the hub camera. The Room already mounts this machine.
 
 ## Comments
 

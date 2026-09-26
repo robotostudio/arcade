@@ -25,15 +25,11 @@ function Cup({ hole, lit, onOver }: { hole: Hole; lit: number; onOver: (value: n
       </mesh>
       <RigidBody type="fixed" colliders={false}>
         <CylinderCollider
-          args={[0.05, hole.r * 0.78]}
+          args={[0.14, hole.r * 0.95]}
           sensor
           onIntersectionEnter={(e) => {
             const ud = e.other.rigidBodyObject?.userData as { ball?: boolean } | undefined
             if (ud?.ball) onOver(hole.value)
-          }}
-          onIntersectionExit={(e) => {
-            const ud = e.other.rigidBodyObject?.userData as { ball?: boolean } | undefined
-            if (ud?.ball) onOver(0)
           }}
         />
       </RigidBody>
