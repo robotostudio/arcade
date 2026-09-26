@@ -21,3 +21,6 @@ Playable at `/dev/skeeball`. Real rapier ball (`dynamic`, `ccd`, ball collider) 
 Two-stage input, Space or click. Aim sweeps `18° * sin(t * 1.45)`. Power oscillates at `2.55` rad/s and lerps launch speed from `2.55` to `6.15`. Nine balls. Stacked holes 10 / 20 / 30 / 40 / 50 plus two 100s at the top corners. Tickets = `round(score / PAYOUT.skeeball.scoreDivisor)` (5). `onRoundEnd` fires once, after the result. Cabinet is maroon, blue, and yellow so it matches Stack to the Top. Exports `DOCK` for the hub camera. The Room already mounts this machine.
 
 ## Comments
+
+- Jono (T+1:50, on Daniel's build): **Keep** the tilted board with cylinder-sensor holes and the Stack to the Top colours; it reads from the hub dock. **Change** scoring to where the ball rests plus a short grace and calibrate the speed range headlessly: branch `jono-skeeball` has a rapier-in-node calibration script pattern (`geometry.ts` data shared by colliders and sim), settle-based scoring with a 0.4 s grace, and a 5x visual gain on a narrow aim sweep; worth lifting once the hub is stable. **Cut** nothing.
+
