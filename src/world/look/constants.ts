@@ -1,7 +1,7 @@
 // The PSX look, as numbers. Tune these, not JSX (issue 09, docs/research/psx-look.md).
 export const LOOK = {
   void: '#171535', // background + fog colour; must match or the horizon shows. Smoky, not black: the room is hazy.
-  dpr: 0.7, // plain number: fiber passes it straight to setPixelRatio (no clamp)
+  dpr: 0.7, // target crunch; ArcadeCanvas rounds it so a canvas pixel is a whole block of device pixels (2/3 on a 2x screen, 1/2 on 1x)
   cleanDpr: [1, 1.5] as [number, number], // ?clean=1
   snap: [160, 120] as [number, number], // vertex-snap NDC grid; lower = more wobble
   ditherLevels: 32, // per channel; 32 = 15-bit like the PS1 framebuffer

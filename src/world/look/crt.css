@@ -1,10 +1,14 @@
-/* CRT glass: DOM overlay at native resolution above the low-res canvas (psx-look.md section 5). */
+/* CRT glass: DOM overlay at native resolution above the low-res canvas (psx-look.md section 5).
+   ArcadeCanvas sets --px (one canvas pixel, in CSS px) and --dev (one device pixel), so the
+   scanline pitch matches the canvas rows exactly instead of beating against them. */
 .crt {
+  --px: 3px;
+  --dev: 1px;
   position: absolute;
   inset: 0;
   pointer-events: none;
   background:
-    repeating-linear-gradient(to bottom, rgba(0, 0, 0, 0) 0 2px, rgba(0, 0, 0, 0.055) 2px 3px),
+    repeating-linear-gradient(to bottom, rgba(0, 0, 0, 0) 0 calc(var(--px) - var(--dev)), rgba(0, 0, 0, 0.055) calc(var(--px) - var(--dev)) var(--px)),
     radial-gradient(ellipse at 50% 45%, rgba(0, 0, 0, 0) 50%, rgba(0, 0, 0, 0.3) 100%);
 }
 .crt::after {
@@ -12,11 +16,4 @@
   position: absolute;
   inset: 0;
   background: radial-gradient(ellipse at 18% 8%, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0) 40%);
-}
-@media (min-resolution: 2dppx) {
-  .crt {
-    background:
-      repeating-linear-gradient(to bottom, rgba(0, 0, 0, 0) 0 3px, rgba(0, 0, 0, 0.055) 3px 4px),
-      radial-gradient(ellipse at 50% 45%, rgba(0, 0, 0, 0) 50%, rgba(0, 0, 0, 0.3) 100%);
-  }
 }

@@ -197,7 +197,7 @@ What `src/world/look/constants.ts` and `src/world/look/crt.css` ship, so the doc
 
 | Setting | Live value | Where |
 |---|---|---|
-| dpr | 0.7 (`?clean=1`: [1, 1.5]) | `LOOK.dpr` |
+| dpr | 0.7 target, snapped to devicePixelRatio / ceil(devicePixelRatio / 0.7) so the upscale is a whole block (`?clean=1`: [1, 1.5]) | `LOOK.dpr`, `crunch()` in `ArcadeCanvas` |
 | Void (background and fog colour) | `#171535`, indigo | `LOOK.void` |
 | Fog | near 8, far 33 | `LOOK.fog` |
 | Vertex snap grid | 160 x 120 | `LOOK.snap` |
@@ -205,7 +205,7 @@ What `src/world/look/constants.ts` and `src/world/look/crt.css` ship, so the doc
 | Bloom (before the dither) | threshold 0.62, smoothing 0.3, intensity 0.75, radius 0.6 | `LOOK.bloom` |
 | Hemisphere fill | sky `#9ca8df`, ground `#494064`, 0.46 | `LOOK.hemi` |
 | Moon directional | `#a3b2ed`, 0.28 | `LOOK.moon` |
-| Scanlines | 0.055 alpha, 1 px in 3 (1 in 4 at 2dppx) | `crt.css` |
+| Scanlines | 0.055 alpha, one device pixel per canvas row (`--px`/`--dev` set by `ArcadeCanvas`) | `crt.css` |
 | Vignette | 0.3 at the corners from 50% | `crt.css` |
 | Corner glare | 0.045 | `crt.css` |
 
