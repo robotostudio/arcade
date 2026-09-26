@@ -10,7 +10,6 @@ import {
 } from '@react-three/rapier'
 import { CLAW } from './constants'
 import { usePrizeRegistry } from './prizeRegistry'
-import { MATERIALS } from '@/world/palette'
 import { CLAW_MATS, PRIZE_MATS } from './materials'
 
 type Kind = 'blob' | 'can' | 'crate'
@@ -112,7 +111,7 @@ function Prize({ spec }: { spec: PrizeSpec }) {
           <mesh material={mat}>
             <cylinderGeometry args={[0.16, 0.16, 0.4, 8]} />
           </mesh>
-          <mesh position={[0, 0.201, 0]} material={MATERIALS.bone}>
+          <mesh position={[0, 0.201, 0]} material={CLAW_MATS.lid}>
             <cylinderGeometry args={[0.12, 0.12, 0.01, 8]} />
           </mesh>
         </>
@@ -125,7 +124,7 @@ function Prize({ spec }: { spec: PrizeSpec }) {
           </mesh>
           {spec.heavy && (
             /* riveted band so the heavy crates read as iron, not just dark */
-            <mesh material={MATERIALS.steel}>
+            <mesh material={CLAW_MATS.band}>
               <boxGeometry args={[0.36, 0.06, 0.36]} />
             </mesh>
           )}
