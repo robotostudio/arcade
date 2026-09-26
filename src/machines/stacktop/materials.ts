@@ -1,18 +1,21 @@
-// Stack to the Top materials, one instance per colour. The cabinet is the one bright
-// object in the dark Room, so the face and the cells are unlit (MeshBasicMaterial):
-// they read the same whatever the Room's lights do. The body stays Lambert.
-import { Color, MeshBasicMaterial, MeshLambertMaterial } from 'three'
+// Stack to the Top materials in the Livery (issue 12): the body and flanks in the one
+// Accent, the shared Plinth and trim, the edge strips unlit in the Accent so the bloom
+// lifts them. The deck buttons and the cells keep their own colours; the cells stay a
+// white unlit material tinted per instance by paintGrid (psxify's program cache key is
+// fixed, and three keeps an instanced variant of the program beside it).
+import { Color, MeshBasicMaterial } from 'three'
+import { accentMaterial, bodyMaterial, unlitMaterial } from '@/world/livery'
 
 export const materials = {
-  body: new MeshLambertMaterial({ color: '#3a0a10' }), // maroon cabinet
-  side: new MeshLambertMaterial({ color: '#1b3f9c' }), // blue flanks
-  plinth: new MeshLambertMaterial({ color: '#120608' }),
-  deck: new MeshLambertMaterial({ color: '#241014' }),
-  trim: new MeshBasicMaterial({ color: '#f2c230' }), // yellow edge strips, unlit like the marquee
-  cell: new MeshBasicMaterial({ color: '#ffffff' }), // tinted per instance
-  stop: new MeshBasicMaterial({ color: '#ff2a2a' }),
-  take: new MeshBasicMaterial({ color: '#e8f0ff' }),
-  risk: new MeshBasicMaterial({ color: '#f2c230' }),
+  body: bodyMaterial('stacktop'),
+  side: bodyMaterial('stacktop'),
+  plinth: bodyMaterial('plinth'),
+  deck: bodyMaterial('trim'),
+  trim: accentMaterial('stacktop'),
+  cell: unlitMaterial('#ffffff'), // tinted per instance
+  stop: unlitMaterial('#ff2a2a'),
+  take: unlitMaterial('#e8f0ff'),
+  risk: unlitMaterial('#f2c230'),
   hit: new MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false }),
 }
 
