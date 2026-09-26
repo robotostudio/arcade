@@ -8,7 +8,9 @@ Blocked by: none
 
 ## Question
 
-Nothing to decide; this unblocks everyone's rebase. Jono, on `main`: Next.js App Router + TypeScript + pnpm + Tailwind, `@react-three/fiber`, `@react-three/drei`, `@react-three/rapier`, zustand. Include the `src/arcade/state.ts` stub exactly as PLAN.md's shared contract, and `src/machines/types.ts`. Render a placeholder Room: floor, three coloured boxes where the Machines go (Claw left, Stacker centre, Skeeball right), a fourth box for the Store counter, flat-shaded light. Create Vercel project `arcade` on the roboto team and get a public URL up. Push to `main` and tell the others to rebase.
+Nothing to decide; this unblocks everyone's rebase. Jono, on `main`: Next.js App Router + TypeScript + pnpm + Tailwind, `@react-three/fiber`, `@react-three/drei`, `@react-three/rapier`, zustand. Include the `src/arcade/state.ts` stub exactly as PLAN.md's shared contract, and `src/machines/types.ts`. Render a placeholder Room: floor, three coloured boxes where the Machines go (Claw left, Stacker centre, Skeeball right), a fourth box for the Store counter, Lambert-lit. Create Vercel project `arcade` on the roboto team and get a public URL up. Push to `main` and tell the others to rebase.
+
+The art direction (Bloodborne PSX demake, [docs/research/psx-look.md](../../../docs/research/psx-look.md)) was set at T+0:15, after this scaffold shipped; the look wrapper is [issue 09](./09-look-psx-canvas-and-crt.md), the next thing on Jono's list.
 
 Answer records: the live URL, the Vercel project id, any R3F-on-Next gotchas.
 

@@ -8,7 +8,7 @@ If `.whoami` does not exist at the repo root, before anything else ask: **"Who a
 
 - **sne**: Stacker, then Store. Branch `sne`. Issues 06, 07.
 - **daniel**: Skeeball. Branch `daniel`. Issue 05.
-- **jono**: scaffold, then Claw, then launch. Branch `jono`. Issues 01, 04, 08.
+- **jono**: scaffold, then the look wrapper, then Claw, then launch. Branch `jono`. Issues 01, 09, 04, 08.
 
 From T+1:45 everyone works issue 03 (the World build) together; PLAN.md says who takes which slice.
 

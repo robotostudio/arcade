@@ -13,3 +13,4 @@ Use these words in code, commits and Linear. Nothing else here: no implementatio
 - **Tier**: an Item's value band, shown as a ring under it: **White** (low), **Blue** (mid), **Gold** (top, shining).
 - **Discount**: the price cut bought by applying Tickets to an Item.
 - **HUD**: the 2D overlay on top of the canvas (prompts, Ticket balance, Store panel, Round results).
+- **Look**: the PS1-demake render treatment over the whole canvas (low-res, vertex snap, dither, fog) plus the **CRT** overlay (CSS scanlines and vignette at native resolution). Lives in `src/world/look/`; `?clean=1` disables it.

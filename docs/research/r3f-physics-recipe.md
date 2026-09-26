@@ -164,6 +164,8 @@ Use one `<instancedMesh args={[undefined, undefined, W * H]}>` with a `boxGeomet
 
 ## 4. Rendering recipe
 
+> **Partly superseded (T+0:15) by [psx-look.md](./psx-look.md)**, the Bloodborne-PSX art direction: Lambert (Gouraud) instead of `flatShading`, no shadow maps, `dpr 0.35` instead of `[1, 1.5]`, `flat` mandatory, plus a vertex-snap patch, fog, a dither effect and a CSS CRT overlay. The palette-module, shared-material, primitive-segment and drei-verdict advice below still applies.
+
 ### Materials and palette
 
 - `flatShading: true` on `MeshStandardMaterial` / `MeshLambertMaterial` / `MeshPhongMaterial` is implemented with screen-space derivatives (`dFdx`/`dFdy` in `normal_fragment_begin`), so it works on any geometry, including smooth-normal spheres; no `toNonIndexed()` needed ([shader chunk](https://github.com/mrdoob/three.js/blob/dev/src/renderers/shaders/ShaderChunk/normal_fragment_begin.glsl.js)). Low-segment primitives (`icosahedronGeometry args={[r, 0]}`, `sphereGeometry args={[r, 8, 6]}`, `cylinderGeometry args={[r, r, h, 8]}`) give the facets.
