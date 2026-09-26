@@ -1,12 +1,13 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { Suspense, useEffect, useRef } from 'react'
 import { useFrame, useThree } from '@react-three/fiber'
-import { MathUtils, PerspectiveCamera, Vector3 } from 'three'
+import { MathUtils, PerspectiveCamera, Vector3, WebGLRenderTarget } from 'three'
 import { useArcade } from '@/arcade/state'
 import { useIntro } from '@/intro/store'
 import { StoreCounter } from '@/store/StoreCounter'
 import { StoreHud } from '@/store/StoreHud'
+import { PrizeTextureWarmup } from '@/store/prizeTextures'
 import { ArcadeCanvas } from './ArcadeCanvas'
 import { RoomEnvironment } from './room-environment'
 import { SoundtrackToggle } from './Soundtrack'
@@ -54,9 +55,24 @@ function ReadySignal() {
 }
 
 function HubView() {
-  const { camera, gl, size } = useThree()
+  const { camera, gl, scene, size } = useThree()
   const mode = useArcade((s) => s.mode)
   const introPhase = useIntro((s) => s.phase)
+
+  // Link every program in the room up front, off the frame (KHR_parallel_shader_compile). The hub
+  // camera has its back to the store counter, so without this the half-turn to the Store links the
+  // tier rings' Standard program mid-frame and drops the first turn's frames. Three hashes programs
+  // by output colour space, which depends on whether a render target is bound (the EffectComposer
+  // binds one; ?clean=1 draws straight to the canvas), so compile both variants.
+  useEffect(() => {
+    ;(window as any).__dbg = { gl, scene, camera } // TEMP DEBUG
+    const offscreen = new WebGLRenderTarget(1, 1)
+    gl.setRenderTarget(offscreen)
+    const viaComposer = gl.compileAsync(scene, camera)
+    gl.setRenderTarget(null)
+    const direct = gl.compileAsync(scene, camera)
+    Promise.allSettled([viaComposer, direct]).then(() => offscreen.dispose())
+  }, [gl, scene, camera])
   const inStore = mode.kind === 'store'
   const target = useRef(new Vector3(0, 1.5, 0))
   const pointer = useRef(0)
@@ -174,6 +190,9 @@ export function Room() {
         <StoreCounter position={[0, 0, 0]} onOpen={openStore} open={inStore} onClose={closeStore} />
       </group>
       <pointLight position={[0, 3.6, 11.6]} color="#ffe1b4" intensity={14} distance={8} />
+      <Suspense fallback={null}>
+        <PrizeTextureWarmup />
+      </Suspense>
       <HubView />
       <ReadySignal />
     </ArcadeCanvas>

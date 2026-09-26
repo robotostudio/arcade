@@ -15,6 +15,7 @@ import * as THREE from 'three'
 import { useArcade } from '@/arcade/state'
 import { CREDIT, creditGbp } from '@/arcade/economy'
 import { GRADE_LABEL, ITEMS, STAT_KEYS, STAT_LABEL, itemAfter, itemById, pricePerPiece, type StatKey } from './items'
+import { PRIZE_URLS, configurePrizeTextures } from './prizeTextures'
 import { formatGbp, maxApplicable, priceAfter, useStore } from './state'
 
 type Vec3 = [number, number, number]
@@ -109,15 +110,8 @@ export function PrizeSelector({ onClose }: PrizeSelectorProps) {
   const item = itemById(selectedId) ?? ITEMS[0]
   const index = ITEMS.findIndex((i) => i.id === item.id)
 
-  const textures = useTexture(ITEMS.map((i) => `/store/items/${i.image}`))
-  useEffect(() => {
-    for (const t of textures) {
-      t.magFilter = THREE.NearestFilter
-      t.minFilter = THREE.NearestFilter
-      t.colorSpace = THREE.SRGBColorSpace
-      t.needsUpdate = true
-    }
-  }, [textures])
+  // Usually already fetched and resident: the Room warms these up while the hub idles (prizeTextures.tsx).
+  const textures = useTexture(PRIZE_URLS, configurePrizeTextures)
 
   return (
     <group>
