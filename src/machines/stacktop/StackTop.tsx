@@ -41,6 +41,7 @@ export const PRIZES: Prizes = { minorRow: MINOR_ROW, payout: PAYOUT.stacktop, de
 export const DOCK = { position: [0, 2.9, 6.6], target: [0, 2.45, 0] } as const
 
 const CELL_Z = FACE_Z + 0.01 + BOX / 2
+const FACE_INSET = 0.1 // depth of the face box; the body's front sits this far behind the face
 const COUNT = W * H
 const LAYOUT: GridLayout = { cell: CELL, z: CELL_Z, rowY }
 const DECK_Y = 0.5
@@ -112,6 +113,8 @@ export function StackTop({ position, rotation, active, onRoundEnd, onPrompt }: M
   const faceTexture = useFaceTexture()
   const faceMaterial = useMemo(() => new MeshBasicMaterial({ map: faceTexture }), [faceTexture])
   useEffect(() => () => faceMaterial.dispose(), [faceMaterial])
+  // BoxGeometry groups: +x, -x, +y, -y, +z (the face), -z.
+  const faceMaterials = useMemo(() => [materials.body, materials.body, materials.body, materials.body, faceMaterial, materials.body], [faceMaterial])
 
   // Every way a Round ends goes through here, so onRoundEnd fires exactly once per Round.
   const report = useRef((s: StackerState) => {
@@ -203,8 +206,10 @@ export function StackTop({ position, rotation, active, onRoundEnd, onPrompt }: M
       <mesh position={[0, 0.1, 0.05]} material={materials.plinth}>
         <boxGeometry args={[BODY_W + 0.2, 0.2, BODY_D + 0.1]} />
       </mesh>
-      <mesh position={[0, BODY_H / 2, 0]} material={materials.body}>
-        <boxGeometry args={[BODY_W, BODY_H, BODY_D]} />
+      {/* The body's front stops FACE_INSET behind the face: 5 mm apart, the PSX vertex snap let
+          the red front punch through the face from the hub's angle. */}
+      <mesh position={[0, BODY_H / 2, -FACE_INSET / 2]} material={materials.body}>
+        <boxGeometry args={[BODY_W, BODY_H, BODY_D - FACE_INSET]} />
       </mesh>
       {[-1, 1].map((sx) => (
         <mesh key={sx} position={[sx * (BODY_W / 2 + 0.02), BODY_H / 2 + 0.2, 0]} material={materials.side}>
@@ -215,9 +220,10 @@ export function StackTop({ position, rotation, active, onRoundEnd, onPrompt }: M
         <boxGeometry args={[BODY_W + 0.1, 0.06, BODY_D + 0.05]} />
       </mesh>
 
-      {/* The face: marquee, bands, side columns and glass in one texture. */}
-      <mesh position={[0, (FACE_Y0 + BODY_H) / 2, FACE_Z + 0.005]} material={faceMaterial}>
-        <planeGeometry args={[BODY_W, BODY_H - FACE_Y0]} />
+      {/* The face: marquee, bands, side columns and glass in one texture on the front of a
+          shallow box that fills the inset; its other sides are the body. */}
+      <mesh position={[0, (FACE_Y0 + BODY_H) / 2, FACE_Z + 0.005 - FACE_INSET / 2]} material={faceMaterials}>
+        <boxGeometry args={[BODY_W, BODY_H - FACE_Y0, FACE_INSET]} />
       </mesh>
 
       {/* The Display header over the marquee band. */}

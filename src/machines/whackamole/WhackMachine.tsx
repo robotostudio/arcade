@@ -21,7 +21,8 @@ const DECK_TILT = 0.2
 // table, cream panels, the body in the Whack-a-Mole Accent. Colours the Machine owns (the Moles, the
 // mallet, the hole rims, the hit ring) go through litMaterial / unlitMaterial so they take the snap.
 const MOLE = {
-  hole: litMaterial('#291f32'),
+  // Biased toward the camera: 8 mm over the deck, the PSX vertex snap let the cream deck flicker through.
+  hole: litMaterial('#291f32', { polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4 }),
   rim: litMaterial('#bd6b31'),
   fur: litMaterial('#a97658', { flatShading: true }),
   ear: litMaterial('#d5a17a', { flatShading: true }),
@@ -180,8 +181,8 @@ export function WhackMachine({ position, rotation, active, onRoundEnd, onPrompt 
     <group ref={board} position={[0, 1.36, .08]} rotation={[DECK_TILT, 0, 0]}>
       <Box at={[0, -.065, 0]} size={[1.86, .13, 1.65]} material={bodyMaterial('panel')} />
       {Array.from({ length: 9 }, (_, i) => <group key={i} position={holePosition(i)}>
-        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, .008, 0]} material={MOLE.hole}><circleGeometry args={[.215, 16]} /></mesh>
-        <mesh rotation={[Math.PI / 2, 0, 0]} position={[0, .018, 0]} material={MOLE.rim}><torusGeometry args={[.217, .028, 5, 16]} /></mesh>
+        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, .02, 0]} material={MOLE.hole}><circleGeometry args={[.215, 16]} /></mesh>
+        <mesh rotation={[Math.PI / 2, 0, 0]} position={[0, .026, 0]} material={MOLE.rim}><torusGeometry args={[.217, .028, 5, 16]} /></mesh>
         <group ref={node => { moles.current[i] = node }} visible={false}>
           <mesh position={[0, .18, 0]} material={MOLE.fur}><sphereGeometry args={[.175, 10, 8]} /></mesh>
           {[-1, 1].map(side => <group key={side}>
