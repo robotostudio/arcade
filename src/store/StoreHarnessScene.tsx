@@ -13,8 +13,8 @@ export function StoreHarnessScene() {
   const resetTickets = useArcade((s) => s.resetTickets)
   return (
     <>
-      <HarnessCanvas camera={{ position: [0, 2.6, 6], target: [0, 1.2, 0] }}>
-        <StoreCounter position={[0, 0, 0]} />
+      <HarnessCanvas camera={{ position: [0.6, 2.9, 8], target: [-0.4, 1.9, 0] }}>
+        <StoreCounter position={[0, 0, 0]} open />
       </HarnessCanvas>
       <HarnessCrt />
       <StoreHud />

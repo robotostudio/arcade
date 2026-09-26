@@ -4,13 +4,14 @@
 // (bottom White, middle Blue, top Gold), each Bundle a garment pile standing on its Tier ring.
 // Look rules: Lambert (Gouraud), no shadows, low-segment primitives, shared materials,
 // and useFrame only mutates refs (no allocation, no React state).
-import { useRef, useState } from 'react'
+import { Suspense, useRef, useState } from 'react'
 import { useFrame, type ThreeEvent } from '@react-three/fiber'
 import { useCursor } from '@react-three/drei'
 import type * as THREE from 'three'
 import type { Tier } from '@/arcade/economy'
 import { ITEMS, type Item } from './items'
 import { MAT, PILE, RING } from './materials'
+import { PrizeSelector } from './PrizeSelector'
 import { useStore } from './state'
 
 type Vec3 = [number, number, number]
@@ -20,6 +21,8 @@ export type StoreCounterProps = {
   rotation?: Vec3
   onSelect?: (id: Item['id']) => void
   onOpen?: () => void
+  open?: boolean // Store mode: the select screen is built onto the counter
+  onClose?: () => void
 }
 
 // Counter and shelf layout, in counter-local units.
@@ -32,8 +35,8 @@ const SIGN_Y = 3.75
 const RING_RADIUS = 0.26
 const RING_TUBE = 0.035
 const SELECTED_SCALE = 1.15
-const GOLD_SPIN = 0.7 // rad/s around the vertical
-const GOLD_TILT = 0.18 // rad off flat so the spin reads
+const RING_SPIN = 0.7 // rad/s around the vertical
+const RING_TILT = 0.18 // rad off flat so the spin reads
 const BOB_AMP = 0.05
 const BOB_SPEED = 1.6
 
@@ -48,7 +51,7 @@ const PLACED = (['white', 'blue', 'gold'] as Tier[]).flatMap((tier) =>
   })),
 )
 
-export function StoreCounter({ position, rotation, onSelect, onOpen }: StoreCounterProps) {
+export function StoreCounter({ position, rotation, onSelect, onOpen, open, onClose }: StoreCounterProps) {
   const [hovered, setHovered] = useState(false)
   useCursor(hovered && !!onOpen)
   return (
@@ -76,6 +79,11 @@ export function StoreCounter({ position, rotation, onSelect, onOpen }: StoreCoun
 
       <ShelfUnit />
       <Sign />
+      {open && (
+        <Suspense fallback={null}>
+          <PrizeSelector onClose={onClose} />
+        </Suspense>
+      )}
 
       {PLACED.map(({ item, position: p, phase }) => (
         <ItemSlot key={item.id} item={item} position={p} phase={phase} onSelect={(id) => {
@@ -159,14 +167,12 @@ function ItemSlot({ item, position, phase, onSelect }: ItemSlotProps) {
   const ringSpin = useRef<THREE.Group>(null)
   const body = useRef<THREE.Group>(null)
   const marker = useRef<THREE.Mesh>(null)
-  const gold = item.tier === 'gold'
 
+  // Every Item gets the shine: spinning tilted ring and a slow bob.
   useFrame((state, delta) => {
     const t = state.clock.elapsedTime
-    if (gold) {
-      if (ringSpin.current) ringSpin.current.rotation.y += delta * GOLD_SPIN
-      if (body.current) body.current.position.y = Math.sin(t * BOB_SPEED + phase) * BOB_AMP
-    }
+    if (ringSpin.current) ringSpin.current.rotation.y += delta * RING_SPIN
+    if (body.current) body.current.position.y = Math.sin(t * BOB_SPEED + phase) * BOB_AMP
     if (marker.current) {
       marker.current.rotation.y += delta * 2
       marker.current.position.y = 0.7 + Math.sin(t * 3) * 0.03
@@ -192,7 +198,7 @@ function ItemSlot({ item, position, phase, onSelect }: ItemSlotProps) {
       <group ref={ringSpin} scale={selected ? SELECTED_SCALE : 1}>
         <mesh
           position={[0, 0.03, 0]}
-          rotation={[-Math.PI / 2 + (gold ? GOLD_TILT : 0), 0, 0]}
+          rotation={[-Math.PI / 2 + RING_TILT, 0, 0]}
           material={RING[item.tier]}
         >
           <torusGeometry args={[RING_RADIUS, RING_TUBE, 8, 16]} />

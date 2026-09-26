@@ -1,0 +1,7 @@
+Turn this photo into a 32-bit era (1990s PlayStation / Saturn) video game item sprite of ONLY the garment in the photo.
+
+Isolate the clothing piece: remove the table, floor, hanger, plant, feet, chairs and everything else. Show the single garment alone, laid flat, front facing, upright (collar at the top, hem at the bottom, sleeves spread slightly), centred and filling most of the frame, on a flat pure black (#000000) background with nothing else.
+
+Faithfully keep the garment's real colours, cut, patches, prints, patterns and any lettering that is on it, simplified into chunky pixels.
+
+Style: retro 32-bit pre-rendered game sprite, low resolution look with big visible square pixels, limited 15-bit palette, hard-edged colour bands with ordered 4x4 dither instead of smooth gradients, crunchy PS1 texture feel, slight vertex-lit shading, crisp aliased edges, no anti-aliasing blur, no soft glow, no lighting effects on the background, no shadow on the background, no added text, no captions, no watermark, no borders.

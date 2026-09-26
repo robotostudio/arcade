@@ -85,12 +85,12 @@ function HubView() {
     yaw.current = MathUtils.damp(yaw.current, inStore ? Math.PI : 0, 3, dt)
     const spin = yaw.current / Math.PI
     const x = eye?.x ?? (inStore ? 0 : pan.current * .65)
-    const y = eye?.y ?? (inStore ? 2.4 : 3.4)
-    const z = eye?.z ?? (inStore ? 7.2 : 10 - Math.abs(pan.current) * .08)
+    const y = eye?.y ?? (inStore ? 2.7 : 3.4)
+    const z = eye?.z ?? (inStore ? 6.6 : 10 - Math.abs(pan.current) * .08)
     camera.position.set(MathUtils.damp(camera.position.x, x, 4, dt), MathUtils.damp(camera.position.y, y, 4, dt), MathUtils.damp(camera.position.z, z, 4, dt))
-    // Facing the store, aim a touch right so the counter sits clear of the Store panel.
-    const lookX = look?.x ?? camera.position.x + Math.sin(yaw.current) * 11 + pan.current * .4 * (1 - spin) - 1.4 * spin
-    const lookY = look?.y ?? (inStore ? 1.4 : 1.5)
+    // Facing the store, aim a touch left (world +x) so the details panel beside the prize screen is centred.
+    const lookX = look?.x ?? camera.position.x + Math.sin(yaw.current) * 11 + pan.current * .4 * (1 - spin) + .5 * spin
+    const lookY = look?.y ?? (inStore ? 1.9 : 1.5)
     const lookZ = look?.z ?? camera.position.z - Math.cos(yaw.current) * 11
     const lambda = play ? 4 : 8
     target.current.x = MathUtils.damp(target.current.x, lookX, lambda, dt)
@@ -141,8 +141,8 @@ export function Room() {
           </mesh>}
         </group>
       })}
-      <group scale={[.66, .85, .85]} position={[...STATIONS.store]} rotation={[0, Math.PI, 0]}>
-        <StoreCounter position={[0, 0, 0]} onOpen={openStore} />
+      <group scale={.85} position={[...STATIONS.store]} rotation={[0, Math.PI, 0]}>
+        <StoreCounter position={[0, 0, 0]} onOpen={openStore} open={inStore} onClose={closeStore} />
       </group>
       <pointLight position={[0, 3.6, 11.6]} color="#ffe1b4" intensity={14} distance={8} />
       <HubView />
