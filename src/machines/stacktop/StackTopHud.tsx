@@ -4,7 +4,8 @@
 // Tumbleword pills for row / prize lines, a round-counter badge and chunky Ticket tiles;
 // the Nico Nico corner countdown over a maximalist collage during the take-or-risk pause;
 // the Afterlife flame banner (MISSED) on a loss; the Blingee jewel-glitter frame on Major.
-// Plain DOM; CSS lives in the <style> below so nothing touches globals.css.
+// Plain DOM; CSS lives in the <style> below so nothing touches globals.css. Bungee is the
+// typeface of the approved mock-up; it loads from Google Fonts at runtime with Impact as fallback.
 import { useArcade } from '@/arcade/state'
 import { H } from '@/machines/stacker/logic'
 import { MINOR_ROW } from './face'
@@ -12,7 +13,7 @@ import { useStackTopHud } from './hud'
 import { DECIDE_MS, PRIZES } from './StackTop'
 
 const CSS = `
-.stt { position:absolute; inset:0; pointer-events:none; font-family: Impact, "Arial Black", "Helvetica Neue", Arial, sans-serif; color:#fff6d0; text-transform:uppercase; letter-spacing:0.04em; }
+.stt { position:absolute; inset:0; pointer-events:none; font-family: Bungee, Impact, "Arial Black", "Helvetica Neue", Arial, sans-serif; color:#fff6d0; text-transform:uppercase; letter-spacing:0.04em; }
 .stt-pills { position:absolute; left:16px; top:16px; display:flex; flex-wrap:wrap; gap:6px; align-items:center; max-width:60vw; }
 .stt-pill { border-radius:999px; padding:4px 12px; font-size:13px; line-height:1; background:#111; border:2px solid #f2c230; color:#f2c230; box-shadow: 3px 3px 0 #7a1020; }
 .stt-pill.on { background:#f2c230; color:#3a0a10; }
@@ -137,6 +138,7 @@ export function StackTopHud() {
 
   return (
     <div className="stt">
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&display=swap" />
       <style>{CSS}</style>
       <div className="stt-pills">
         <span className="stt-badge" title="Rounds">

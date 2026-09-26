@@ -21,7 +21,6 @@ export type StoreState = {
 // Most Tickets that can go on `item` now: the credit cap or the balance, whichever is lower.
 export function maxApplicable(item: Item, balance = useArcade.getState().tickets): number {
   return Math.max(0, Math.min(Number.isFinite(balance) ? Math.floor(balance) : 0, maxTicketsFor(item)))
-
 }
 
 // Price in GBP after the credit bought by `applied` Tickets, rounded to pence.
@@ -69,7 +68,6 @@ export const useStore = create<StoreState>()(
         set({
           claimed: claimed.includes(item.id) ? claimed : [...claimed, item.id],
           toast: `Claimed: ${item.title} with ${formatGbp(off)} off, now ${formatGbp(priceAfter(item, applied))}. This is a demo: nothing ships.`,
-
           applied: 0,
         })
       },

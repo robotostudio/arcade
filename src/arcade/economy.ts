@@ -1,5 +1,5 @@
 // The Ticket economy in one place: what a Round pays and what Tickets buy in the Store.
-// Owned by Sne (issue 07, issue 10). Tune numbers here, nowhere else.
+// Owned by Sne (issue 07, issue 11). Tune numbers here, nowhere else.
 
 export type Tier = 'white' | 'blue' | 'gold'
 
