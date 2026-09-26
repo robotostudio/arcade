@@ -10,6 +10,7 @@ import { StoreCounter } from '@/store/StoreCounter'
 import { StoreHud } from '@/store/StoreHud'
 import { PrizeTextureWarmup } from '@/store/prizeTextures'
 import { ArcadeCanvas } from './ArcadeCanvas'
+import { Cat, type CatTarget } from './Cat'
 import { LiveryPanel } from './LiveryPanel'
 import { RoomEnvironment } from './room-environment'
 import { SHELL, Shell } from './Shell'
@@ -62,6 +63,9 @@ export const STATION_ROTATIONS = {
 export const STATION_SCALE = { whackamole: 1.15, claw: 1, skeeball: 1, stacktop: .8 } as const
 // Invisible click volume per cabinet in its own frame: [w, h, d, z offset].
 const HIT_BOX = { whackamole: [2, 2.4, 1.9, 0], claw: [3, 4, 2.8, 0], skeeball: [1.9, 3.8, 4.6, -.57], stacktop: [2.2, 5, 1.6, 0] } as const
+
+// The cat pees on a cabinet's front corner; the hit box gives it each cabinet's footprint.
+const CAT_TARGETS: CatTarget[] = IDS.map((id) => ({ at: STATIONS[id], facing: STATION_ROTATIONS[id], halfDepth: HIT_BOX[id][2] / 2 * STATION_SCALE[id], zOffset: HIT_BOX[id][3] * STATION_SCALE[id] }))
 
 // Every Round end in the hub lands here: Tickets awarded, with a fanfare or a sad trombone.
 function endRound(id: MachineId, amount: number) {
@@ -294,6 +298,7 @@ export function Room() {
       <group scale={.85} position={[...STATIONS.store]} rotation={[0, Math.PI, 0]}>
         <StoreCounter position={[0, 0, 0]} onOpen={openStore} open={inStore} onClose={closeStore} />
       </group>
+      <Cat targets={CAT_TARGETS} />
       <pointLight position={[0, 3.6, 11.6]} color="#ffe1b4" intensity={14} distance={8} />
       <Suspense fallback={null}>
         <PrizeTextureWarmup />
