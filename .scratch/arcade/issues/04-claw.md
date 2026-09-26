@@ -34,3 +34,5 @@ Feedback from the others at checkpoint 1 (T+1:00). Answer records: the grab appr
 **Cut:** real rapier finger grip, pointer and touch controls, sound, prize restock during a session (Reset remounts the machine), and a per-prize-type slip chance.
 
 Harness: `/dev/claw` (arrows or WASD move, Space or Enter drops, Reset button). Commits 5e4f554 (first cut) and 708ca6c (review fixes) on `jono`. Merged to main by Jono at checkpoint 1.
+
+- Jono (T+1:00, played on production): a centre drop grabs, rises, carries and pays 100 through the chute sensor, HUD counts once per round, no console errors. Live at https://arcade-beta-eight.vercel.app/dev/claw (`?clean=1` for the un-crunched view). Fun pass next: odds, tap distance, camera pitch.

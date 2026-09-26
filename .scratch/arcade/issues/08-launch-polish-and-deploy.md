@@ -13,3 +13,5 @@ Nothing to decide. With everything merged: OG image and title, a loading state, 
 Answer records the final URL and closes the map.
 
 ## Comments
+
+- Jono (2026-09-26, T+1:15): README now documents `?clean=1` and the `/dev/<machine>` harness pages; that part of 08 is done. Still open here: OG image (a `?clean=0` screenshot with the CRT baked in), loading state, mobile pass, and the preview deployment protection decision (team handoff gap 8): feedback rounds so far run on production only.

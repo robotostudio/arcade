@@ -32,6 +32,8 @@ Answer records: what landed in step 1 and step 2, the `LOOK` constants as shippe
 
 ## Comments
 
+- Jono (2026-09-26, T+1:15): harness template landed as `src/world/Harness.tsx` (team handoff gap 1). `<Harness title help camera={DOCK} machine={(props) => <Machine position={[0,0,0]} {...props} />} />`: ArcadeCanvas, CameraControls framed once on the Machine's `DOCK` (`{ position, target }`, the same shape the Room's fly-to composes), the Machine at the origin with `active` true, a tickets / rounds / last readout and a Reset that remounts the Machine. No `<Physics>` in it; each physics Machine mounts its own. Sne's `src/arcade/dev/HarnessCanvas.tsx` on `sne` is the same idea with the same camera prop; swap the import when rebasing, or keep both, it does not matter today.
+
 ## Answer
 
 Both steps landed (commit 0216676 on `jono`).
@@ -59,3 +61,5 @@ moon: { color: '#9aa8c0', intensity: 0.8, position: [6, 10, 6] },
 **Surprises from dpr < 1**: none seen at build time (`pnpm typecheck` and `pnpm build` clean). Not yet eyeballed in a browser: pointer picking and CameraControls use CSS pixels so should be unaffected; drei `Html` is banned by the look rules anyway.
 
 Preview URL: pending merge to main.
+
+- Jono (2026-09-26, T+1:00, production eyeball in Chrome): **Keep** the crunch on the Claw harness: cabinet, prizes, lamp and chute all read at dpr 0.35 and `?clean=1` switches cleanly. **Change** the Room at `/`: with the default camera 14 m out and fog 6-18 the boxes were dot patterns; moved the Room camera to [0, 3.6, 8.5] (c3058ef). Sne, in Phase 2 pick either a closer Room framing or a longer fog for the whole-Room shot. **Cut** nothing.
