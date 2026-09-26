@@ -181,6 +181,16 @@ For floors, walls and cloth: generate a `CanvasTexture` once, 32×32 or 64×64, 
 
 `?clean=1` on any page skips the overlay, the composer and the dpr drop (sets `dpr={[1, 1.5]}`), so a dev can check that a bug is theirs and not the look's. One boolean read once in the wrapper.
 
+## 8. Atmosphere (added 2026-09-26, the "charisma" pass)
+
+`src/world/look/Atmosphere.tsx`, mounted once from `RoomEnvironment`. Fake volumetrics the way the PS1 did them: additive geometry, no depth write, and the dither pass bands every gradient into steps.
+
+- **`LightCone`**: open frustum under each ceiling tube, a hand-written `ShaderMaterial` (vertex snap inlined) that fades by height, by rim (`|n·v|`, so tangential faces go soft) and by distance to the camera (`smoothstep(1.5, 5.5)`), because the hub camera walks through these and an additive cone around the camera washes the whole frame. The tube over the hub camera gets a ceiling halo instead, for that reason.
+- **`Glow`**: a soft plane, `band` for neon tubes (fades across its height), `spot` for screens, the marquee and fixtures. Optional `pulse` for the neon-transformer breathe.
+- **`Dust`**: ~320 additive points drifting in place; positions mutate in the buffer, no allocation.
+- **`BrokenTube`**: the middle fixture over the cabinets is steady, then every 45–120 s it stutters for a second or two (hash of `floor(t*16)`, fast attack, slow decay); one ref drives its point light, cone and ceiling panel. First episode 15–35 s after load.
+- **Bloom** sits before `Dither` in `ArcadeCanvas` (`LOOK.bloom`): threshold 0.62 so only glow blocks, screens and the sign cross it, then the dither crunches the halo. Fog is now `[8, 33]` and the void is smoky `#171535` rather than near-black; the CSS vignette went up to 0.3 to keep the corners dark.
+
 ## What this changes in the physics recipe
 
 Section 4 of [r3f-physics-recipe.md](./r3f-physics-recipe.md) still holds for materials-per-colour, primitive segments, `dpr` as a constant, `Preload all` and the drei verdicts. Overridden by this file: `flatShading` on Standard becomes plain `meshLambertMaterial` (Gouraud); `shadows="percentage"` and the shadow directional go away; `dpr [1, 1.5]` becomes `0.35` unless `?clean=1`; `flat` on the Canvas is now mandatory, not optional; `ContactShadows` stays optional.

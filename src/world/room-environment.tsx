@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo } from 'react'
 import { CanvasTexture, RepeatWrapping, SRGBColorSpace } from 'three'
+import { Atmosphere, Glow } from './look/Atmosphere'
 
 function texture(kind: 'carpet' | 'sign', title = '', subtitle = '') {
   const canvas = document.createElement('canvas')
@@ -60,6 +61,7 @@ export function Cabinet({ at, color, title = 'PIXEL', rotation = 0 }: { at: [num
     <Block at={[0, 1.02, .51]} size={[1.12, .14, .4]} color="#514677" />
     <Block at={[-.25, 1.17, .55]} size={[.05, .22, .05]} color="#f691bb" />
     <Block at={[.22, 1.12, .59]} size={[.12, .06, .12]} color="#ffe29b" />
+    <Glow kind="spot" at={[0, 1.78, .58]} size={[1.5, 1.15]} color="#7ce5df" intensity={.5} pulse={.06} />
     <pointLight position={[0, 1.6, .85]} color="#77b5ff" intensity={2.8} distance={3.4} decay={2} />
     <Block at={[0, .48, .44]} size={[.22, .31, .03]} color="#211e3c" />
     <Sign at={[0, 2.36, .04]} title={title} subtitle="INSERT COIN" width={1.18} />
@@ -108,11 +110,12 @@ export function RoomEnvironment() {
     {[-.5, 1].map((z, i) => <Cabinet key={z} at={[-8.5, 0, z]} rotation={Math.PI / 2} color={['#a786d1', '#da8599', '#68b8b7'][i]} title="PLAY" />)}
     {[-5, 0, 5].map((x, i) => <group key={x}>
       <Block at={[x, 5.06, -3]} size={[2.95, .13, 1.05]} color="#646475" />
-      <Block at={[x, 4.98, -3]} size={[2.7, .04, .85]} color={i === 1 ? '#303444' : '#8d96ac'} glow />
-      <pointLight position={[x, 4.4, -2]} color={i === 1 ? '#788ec7' : '#afbde8'} intensity={i === 1 ? .4 : 3} distance={10} decay={2} />
+      {i !== 1 && <Block at={[x, 4.98, -3]} size={[2.7, .04, .85]} color="#8d96ac" glow />}
+      {i !== 1 && <pointLight position={[x, 4.4, -2]} color="#afbde8" intensity={3} distance={10} decay={2} />}
     </group>)}
     <pointLight position={[-7, 3, 3]} color="#76eeef" intensity={8} distance={10} />
     <pointLight position={[5, 3, 1]} color="#ffa6d7" intensity={6} distance={10} />
     {[[7.2, 3.8]].map(([x, z]) => <group key={x} position={[x, 0, z]}><Block at={[0, .65, 0]} size={[1.7, .16, .7]} color="#f5abac" /><Block at={[-.6, .3, 0]} size={[.12, .6, .55]} color="#74b4ba" /><Block at={[.6, .3, 0]} size={[.12, .6, .55]} color="#74b4ba" /></group>)}
+    <Atmosphere />
   </group>
 }

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { Canvas } from '@react-three/fiber'
-import { EffectComposer } from '@react-three/postprocessing'
+import { Bloom, EffectComposer } from '@react-three/postprocessing'
 import { LOOK } from './look/constants'
 import { Dither } from './look/Dither'
 import './look/crt.css'
@@ -13,7 +13,7 @@ type ArcadeCanvasProps = {
 }
 
 // The one Canvas every page and dev harness mounts (issue 09): low-res dpr, no AA, no tone mapping,
-// no shadows, lavender fog, soft fluorescent fill, dither pass, restrained CRT overlay.
+// no shadows, smoky fog, soft fluorescent fill, bloom on the glow blocks, dither pass, restrained CRT overlay.
 // ?clean=1 skips the crunch (dpr [1, 1.5], no dither, no overlay) so a bug can be ruled in or out.
 export function ArcadeCanvas({ children, camera }: ArcadeCanvasProps) {
   const [clean, setClean] = useState(false)
@@ -37,6 +37,7 @@ export function ArcadeCanvas({ children, camera }: ArcadeCanvasProps) {
         {children}
         {!clean && (
           <EffectComposer multisampling={0}>
+            <Bloom mipmapBlur luminanceThreshold={LOOK.bloom.threshold} luminanceSmoothing={LOOK.bloom.smoothing} intensity={LOOK.bloom.intensity} radius={LOOK.bloom.radius} />
             <Dither levels={LOOK.ditherLevels} />
           </EffectComposer>
         )}
