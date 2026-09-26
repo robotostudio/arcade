@@ -10,7 +10,7 @@ function Cup({ hole, lit, onHole }: { hole: Hole; lit: number; onHole: (value: n
   const [x, y, z] = onBoard(hole.x, hole.s, 0.012)
   const hot = lit === hole.value
   const label = useLabelMat(hole.value)
-  const labelOff = hole.value === 100 ? (hole.x < 0 ? -0.13 : 0.13) : 0.2
+  const labelOff = hole.value === 100 ? (hole.x < 0 ? -0.13 : 0.13) : hole.r + 0.11
 
   return (
     <group position={[x, y, z]} rotation={[tilt, 0, 0]}>
@@ -44,9 +44,9 @@ function Cup({ hole, lit, onHole }: { hole: Hole; lit: number; onHole: (value: n
 function FlankDots() {
   const tilt = boardTheta()
   const dots = []
-  for (let i = 0; i < 6; i++) {
-    const s = 0.14 + i * 0.15
-    for (const x of [-0.5, 0.5] as const) {
+  for (let i = 0; i < 7; i++) {
+    const s = 0.12 + i * 0.15
+    for (const x of [-0.56, 0.56] as const) {
       dots.push(
         <mesh
           key={`${x}:${i}`}
