@@ -32,7 +32,7 @@ function Box({
 
 export function Room() {
   return (
-    <ArcadeCanvas>
+    <ArcadeCanvas camera={{ position: [0, 3.6, 8.5], fov: 45 }}>
       {/* floor */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} material={MATERIALS.floor}>
         <planeGeometry args={[24, 20]} />
