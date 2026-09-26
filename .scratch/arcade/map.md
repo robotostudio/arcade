@@ -4,7 +4,7 @@ Tracker: local markdown. Tickets are the files in [`issues/`](./issues/). Issues
 
 ## Destination
 
-A low-poly 3D arcade running in the browser at a public Vercel URL: one diorama Room with four playable Machines on an arc (Whack-a-Mole, Claw, Stacker with the red boxes, Skeeball). Click a Machine to fly the camera in and play, Escape to fly out. Every Round pays out Tickets; a 3D Store counter in the Room shows Roboto merch in three ring Tiers (White low, Blue mid, shining Gold top) and lets the player spend Tickets as a Discount on any Item. Front-end only. Live and shareable by the deadline; the map is done when it's live.
+A low-poly 3D arcade running in the browser at a public Vercel URL: one diorama Room with four playable Machines on an arc (Whack-a-Mole, Claw, Skeeball, Stack to the Top). Click a Machine to fly the camera in and play, Escape to fly out. Every Round pays out Tickets; a 3D Store counter in the Room shows Roboto merch in three ring Tiers (White low, Blue mid, shining Gold top) and lets the player spend Tickets as a Discount on any Item. Front-end only. Live and shareable by the deadline; the map is done when it's live.
 
 ## Notes
 
@@ -43,7 +43,7 @@ A low-poly 3D arcade running in the browser at a public Vercel URL: one diorama 
 - [06 Stacker](issues/06-stacker.md): playable at `/dev/stacker`, no physics; 7x15 grid, width caps 3/2/1, `tickMs = max(60, 260 - 14*row)`, 1-cell mercy on rows 0-3, 10 per row / 150 win, `onRoundEnd` once (forfeit pays on deactivate).
 - [07 Store](issues/07-store-counter-tiers-tickets.md): state.ts real with localStorage Tickets; economy in `src/arcade/economy.ts` (Stacker 10/row 150 win, Claw 100, Skeeball score/5; 1 Ticket = 1% cap 50%, Gold 0.5%/Ticket); 3D counter with White/Blue/Gold rings and Store HUD at `/dev/store`; claim = spend + toast + persisted tag.
 - [11 Stack to the Top](issues/11-stack-to-the-top.md): second stacking Machine on `sne-stack-top`, harness `/dev/stack-top`; Stacker rules via the shared `logic.ts` plus a Minor line (10 rows: Take Minor 50 or Go for Major, 8 s auto-take) and Major (top, 250), 1 per row on a miss; `'stacktop'` in `MachineId`; Store is nine vintage bundles on Fleek-format cards, 1 Ticket = £0.10 off capped at 50% for every Machine. Room slot pending from Jono.
-- [12 Livery](issues/12-livery.md) (planned 13:40 BST, open): one design language for every Machine, the Store and the HUD. Whack-a-Mole is the spec: dark Plinth, cream panels, body in one Accent per Machine (orange, blue, pink, teal), in-world Display carries the numbers, the Shell holds only Tickets, prompt and Back. VT323 everywhere. Look unchanged. `?livery=1` colour panel. Stacker and HarnessCanvas deleted. ADR 0001.
+- [12 Livery](issues/12-livery.md) (resolved 2026-09-26): one design language for every Machine, the Store and the HUD, built from `src/world/livery.ts` + `Display.tsx` + `Shell.tsx`. Whack-a-Mole is the spec: dark Plinth, cream panels, body in one Accent per Machine (orange `#d66b27`, blue `#2d6ce6`, pink `#cf4585`, teal `#2ec4b0`), in-world Display carries the numbers, the Shell holds only Tickets, prompt and Back. VT323 everywhere. Look unchanged and recorded. `?livery=1` colour panel. Stacker and HarnessCanvas deleted. ADR 0001.
 
 ## Not yet specified
 

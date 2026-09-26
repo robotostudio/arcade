@@ -1,7 +1,7 @@
 # 12 Livery: one design language across every Machine, the Store and the HUD
 
 Type: build
-Status: open
+Status: resolved
 Role: Jono
 Slot: after the deadline (planned 14:00 BST, 2026-09-26)
 Blocked by: none
@@ -57,4 +57,26 @@ Planned by Jono with a full grilling at 13:40 BST. Everything below is decided. 
 
 ## Answer
 
-(pending)
+Built and merged on 2026-09-26 (afternoon), all twelve steps. Shared layer: `src/world/livery.ts` (the `LIVERY` table, `bodyMaterial` / `accentMaterial` / `flatMaterial` / `mutedMaterial` keyed on it and repainted live, `litMaterial` / `unlitMaterial` for Machine-owned hexes, all through `psxify`), `src/world/Display.tsx` (`useDisplay` + `<Display>`, canvas texture in VT323 drawn after `document.fonts` has it, `loadDisplayFont` / `displayFont` for any other canvas text), `src/world/Shell.tsx` (Tickets, one prompt line, Back; every "Key:" before a colon takes the Accent), `src/world/LiveryPanel.tsx` behind `?livery=1`. Machines supply the prompt through `MachineProps.onPrompt`; the Room keeps the last one per Machine in `useArcade.prompts`. VT323 loads once in `layout.tsx` via next/font.
+
+Every Machine, the Store and the five decorative cabinets consume it. Skeeball's Html HUD, `StackTopHud`, the Room play bar, `HarnessCanvas` and the Stacker cabinet and harness are gone (Stack to the Top keeps `stacker/logic.ts`, `grid.ts`, `hud.ts`). Every `/dev/*` page renders through `ArcadeCanvas`.
+
+Final values (also in `livery.ts`):
+
+```ts
+export const LIVERY = {
+  plinth: '#362940',
+  trim: '#312634',
+  panel: '#f6e3b4',
+  frame: '#2a2136',
+  screen: '#221c2d',
+  text: '#fff4d7',
+  whackamole: '#d66b27',
+  skeeball: '#2d6ce6',
+  stacktop: '#cf4585',
+  claw: '#2ec4b0',
+  glow: 1,
+}
+```
+
+Checked in headless Chrome at 1440x900: the hub shows four distinct Accents at Room distance, and from each Play-mode camera the Subject and the Display numbers read through the Look. Two things learned on the way: a Display screen must sit 2 cm proud of its snapped frame (the vertex snap jitters the frame's rasterised depth and a 1 mm gap loses from a close, steep camera), and an unlit cream fill on a face texture crosses the bloom threshold, so unlit "panels" draw at 55% (`face.ts`). Live Look values are recorded in `docs/research/psx-look.md`. The pink was tuned twice: `#ee5fa0` bloomed as a slab on the hub's right edge; `#cf4585` reads as pink without lifting.
