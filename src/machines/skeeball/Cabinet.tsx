@@ -1,103 +1,62 @@
 'use client'
 
-import { MATERIALS, COLORS } from '@/world/palette'
-import { SKEE } from './constants'
+import { BOARD, SKEE, lip } from './constants'
 import { SKEE_MATS } from './materials'
+import { useSignMat } from './textures'
 
-// Visual shell around the Lane: plinth, side rails, hood over the target well with a marquee,
-// control ledge with the press button. No physics here; the Lane owns every collider.
+// Visual only. Colliders live on the lane. Maroon body, blue flanks and a yellow
+// bulb marquee, the same cabinet language as Stack to the Top.
 export function Cabinet() {
-  const { w, h, d } = SKEE.cabinet
-  const { laneY, lane, wallT, ramp, backWall } = SKEE
-  const front = d / 2
-  const back = -d / 2
-  const plinthH = laneY - 0.1 // the lane slab (0.1 thick) sits on the plinth
-  const wallOuterX = lane.w / 2 + wallT // outer face of the Lane's side walls
-  const cheekT = 0.12
-  const cheekX = wallOuterX + cheekT / 2
-  const hoodFront = ramp.zStart - 0.4 // hood starts over the upper ramp
-  const roofT = 0.14
-  const roofY = h - roofT / 2
-  const wellWallTop = laneY + backWall.h
-  const railH = 0.25
-  const ledgeD = front - lane.zStart // 0.2: between the lane end and the cabinet front
+  const { startZ } = SKEE.ramp
+  const end = lip()
+  const zMid = (startZ + end.z - BOARD.run) / 2
+  const len = startZ - (end.z - BOARD.run) + 0.55
+  const wallX = SKEE.ramp.width / 2 + 0.28
+  const sign = useSignMat()
 
   return (
     <group>
-      {/* amber gaslamp over the well so the troughs read through the dither; no shadows */}
-      <pointLight position={[0, h - 0.5, -1.5]} color={COLORS.amber} intensity={4} distance={4.5} decay={1.2} />
+      <pointLight position={[0, 2.8, 1.8]} color="#ffd98a" intensity={5} distance={8} decay={2} />
+      <pointLight position={[0, 1.2, 2.2]} color="#ff5a3a" intensity={2.2} distance={6} decay={2} />
 
-      {/* base plinth */}
-      <mesh position={[0, plinthH / 2, 0]} material={MATERIALS.oxblood}>
-        <boxGeometry args={[w, plinthH, d]} />
+      <mesh position={[0, 0.16, zMid]} material={SKEE_MATS.cabinetMid}>
+        <boxGeometry args={[1.62, 0.32, len + 0.08]} />
       </mesh>
-      {/* kick plate */}
-      <mesh position={[0, 0.06, front + 0.005]} material={MATERIALS.void}>
-        <boxGeometry args={[w, 0.12, 0.02]} />
+      <mesh position={[0, 0.38, zMid]} material={SKEE_MATS.cabinetDark}>
+        <boxGeometry args={[1.4, 0.06, len - 0.1]} />
       </mesh>
 
-      {/* low side rails along the lane, outside the Lane's walls */}
-      {[-1, 1].map((s) => (
-        <mesh
-          key={s}
-          position={[s * cheekX, plinthH + railH / 2, (lane.zStart + hoodFront) / 2]}
-          material={MATERIALS.oxblood}
-        >
-          <boxGeometry args={[cheekT, railH, lane.zStart - hoodFront]} />
-        </mesh>
+      <mesh position={[0, 0.22, startZ + 0.28]} material={SKEE_MATS.cabinet}>
+        <boxGeometry args={[1.62, 0.44, 0.1]} />
+      </mesh>
+      <mesh position={[0, 0.46, startZ + 0.32]} material={SKEE_MATS.trim}>
+        <boxGeometry args={[1.5, 0.04, 0.04]} />
+      </mesh>
+
+      {([-wallX, wallX] as const).map((x) => (
+        <group key={x}>
+          <mesh position={[x, 0.62, zMid]} material={SKEE_MATS.side}>
+            <boxGeometry args={[0.1, 0.52, len]} />
+          </mesh>
+          <mesh position={[x, 0.9, zMid]} material={SKEE_MATS.trim}>
+            <boxGeometry args={[0.12, 0.04, len]} />
+          </mesh>
+        </group>
       ))}
 
-      {/* hood cheeks: tall side panels around the well */}
-      {[-1, 1].map((s) => (
-        <mesh key={s} position={[s * cheekX, (plinthH + h) / 2, (hoodFront + back) / 2]} material={MATERIALS.oxblood}>
-          <boxGeometry args={[cheekT, h - plinthH, hoodFront - back]} />
-        </mesh>
-      ))}
-      {/* backboard above the Lane's back wall */}
-      <mesh position={[0, (wellWallTop + h) / 2, backWall.z]} material={MATERIALS.oxblood}>
-        <boxGeometry args={[wallOuterX * 2 + cheekT * 2, h - wellWallTop, 0.08]} />
+      <mesh position={[0, 1.78, end.z - BOARD.run - 0.58]} material={SKEE_MATS.cabinet}>
+        <boxGeometry args={[1.5, 0.08, 0.28]} />
       </mesh>
-      {/* hood roof */}
-      <mesh position={[0, roofY, (hoodFront + back) / 2]} material={MATERIALS.oxblood}>
-        <boxGeometry args={[wallOuterX * 2 + cheekT * 2, roofT, hoodFront - back]} />
+      <mesh position={[0, 1.84, end.z - BOARD.run - 0.58]} material={SKEE_MATS.trim}>
+        <boxGeometry args={[1.58, 0.04, 0.32]} />
       </mesh>
-      {/* hood front lintel, with the marquee on its face */}
-      <mesh position={[0, h - 0.45, hoodFront + 0.04]} material={MATERIALS.floor}>
-        <boxGeometry args={[wallOuterX * 2 + cheekT * 2, 0.9 - roofT, 0.08]} />
-      </mesh>
-      <mesh position={[0, h - 0.45, hoodFront + 0.1]} material={SKEE_MATS.marquee}>
-        <boxGeometry args={[wallOuterX * 2, 0.5, 0.06]} />
-      </mesh>
-      <mesh position={[0, h - 0.45, hoodFront + 0.135]} material={MATERIALS.void}>
-        <boxGeometry args={[wallOuterX * 2 - 0.3, 0.16, 0.01]} />
-      </mesh>
-      {/* bone edge strips on the hood front so the opening reads */}
-      {[-1, 1].map((s) => (
-        <mesh key={s} position={[s * (wallOuterX + cheekT - 0.02), (plinthH + h) / 2, hoodFront + 0.005]} material={MATERIALS.bone}>
-          <boxGeometry args={[0.03, h - plinthH, 0.02]} />
-        </mesh>
-      ))}
-
-      {/* control ledge at the player end, with the press button */}
-      <mesh position={[0, plinthH + 0.06, lane.zStart + ledgeD / 2]} material={MATERIALS.stone}>
-        <boxGeometry args={[w - 0.2, 0.12, ledgeD]} />
-      </mesh>
-      <mesh position={[0, plinthH + 0.12 + 0.025, lane.zStart + ledgeD / 2]} material={SKEE_MATS.button}>
-        <cylinderGeometry args={[0.09, 0.09, 0.05, 8]} />
-      </mesh>
-      <mesh position={[0, plinthH + 0.12 + 0.005, lane.zStart + ledgeD / 2]} material={MATERIALS.void}>
-        <cylinderGeometry args={[0.11, 0.11, 0.01, 8]} />
+      <mesh position={[0, 1.32, end.z - BOARD.run - 0.62]} material={SKEE_MATS.cabinet}>
+        <boxGeometry args={[1.62, 1.15, 0.12]} />
       </mesh>
 
-      {/* coin panel on the front face */}
-      <mesh position={[0.6, 0.4, front + 0.02]} material={MATERIALS.floor}>
-        <boxGeometry args={[0.36, 0.3, 0.04]} />
+      <mesh position={[0, end.y + BOARD.rise + 0.32, end.z - BOARD.run + 0.06]} material={sign}>
+        <planeGeometry args={[1.42, 0.52]} />
       </mesh>
-      {[-0.07, 0.07].map((cx) => (
-        <mesh key={cx} position={[0.6 + cx, 0.42, front + 0.045]} material={SKEE_MATS.ringDim}>
-          <boxGeometry args={[0.03, 0.09, 0.01]} />
-        </mesh>
-      ))}
     </group>
   )
 }

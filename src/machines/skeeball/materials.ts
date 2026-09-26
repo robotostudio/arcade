@@ -1,27 +1,36 @@
-import { MeshLambertMaterial } from 'three'
-import { psxify } from '@/world/look/psx-material'
-import { COLORS, MATERIALS } from '@/world/palette'
+import { MeshBasicMaterial, MeshLambertMaterial } from 'three'
 
-// Skeeball materials, one shared psxified MeshLambertMaterial per colour (psx-look.md section 2).
-// Palette colours reuse the shared MATERIALS instance; off-palette ones are made here once.
-const lambert = (p: ConstructorParameters<typeof MeshLambertMaterial>[0]) => psxify(new MeshLambertMaterial(p))
+// Same cabinet language as Stack to the Top: maroon body, blue flanks, unlit yellow
+// trim. The face and the ball stay MeshBasic so they read through the Room lights.
+const lambert = (color: string) => new MeshLambertMaterial({ color })
+const basic = (color: string) => new MeshBasicMaterial({ color })
 
 export const SKEE_MATS = {
-  lane: lambert({ color: '#4a3a2a' }), // warm dark wood
-  laneStripe: MATERIALS.bone,
-  ramp: lambert({ color: '#5a4632' }), // a shade lighter so the slope reads against the lane
-  wall: MATERIALS.stone,
-  trough: lambert({ color: '#1a1c22' }), // shelves, risers, well floor
-  lip: MATERIALS.slate,
-  divider: MATERIALS.slate,
-  plate: MATERIALS.void, // dark inset behind the amber digits
-  plateFrame: MATERIALS.bone,
-  ringGlow: lambert({ color: COLORS.amber, emissive: COLORS.amber, emissiveIntensity: 0.9 }), // lit trough lamp / digits
-  ringDim: lambert({ color: COLORS.amber, emissive: COLORS.amber, emissiveIntensity: 0.25 }), // unlit trough lamp
-  meter: lambert({ color: COLORS.bone, emissive: COLORS.bone, emissiveIntensity: 0.8 }),
-  arrow: lambert({ color: COLORS.amber, emissive: COLORS.amber, emissiveIntensity: 0.8 }),
-  ball: lambert({ color: COLORS.bone, emissive: COLORS.bone, emissiveIntensity: 0.15 }),
-  button: lambert({ color: COLORS.bone, emissive: COLORS.bone, emissiveIntensity: 0.3 }),
-  marquee: lambert({ color: COLORS.amber, emissive: COLORS.amber, emissiveIntensity: 0.6 }),
-  glass: lambert({ color: COLORS.bone, transparent: true, opacity: 0.05, depthWrite: false }),
+  cabinet: lambert('#3a0a10'),
+  cabinetMid: lambert('#120608'),
+  cabinetDark: lambert('#241014'),
+  side: lambert('#1b3f9c'),
+  trim: basic('#f2c230'),
+  wood: lambert('#241014'),
+  woodDark: lambert('#3a0a10'),
+  woodStripe: basic('#f2c230'),
+  gutter: lambert('#120608'),
+  board: lambert('#2a0507'),
+  boardFrame: lambert('#7a1020'),
+  hole: lambert('#120608'),
+  ball: basic('#d41c1c'),
+  ballStripe: basic('#fff6d0'),
+  glow: basic('#f2c230'),
+  glowDim: basic('#8ec0ff'),
+  dot: basic('#8ec0ff'),
+  dotAlt: basic('#f4f7ff'),
+  ledOff: basic('#4a1010'),
+  ledOn: basic('#f2c230'),
+  ring10: basic('#d41c1c'),
+  ring20: basic('#8ec0ff'),
+  ring30: basic('#f4f7ff'),
+  ring40: basic('#f2c230'),
+  ring50: basic('#ffd24a'),
+  ring100: basic('#ff6a3a'),
+  hit: basic('#ffffff'),
 }

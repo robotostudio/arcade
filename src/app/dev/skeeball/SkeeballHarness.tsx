@@ -1,14 +1,15 @@
 'use client'
 
 import { Harness } from '@/world/Harness'
-import { SkeeballMachine, DOCK } from '@/machines/skeeball'
+import { DOCK, SkeeballMachine } from '@/machines/skeeball'
 
 export function SkeeballHarness() {
   return (
     <Harness
       title="SKEEBALL"
-      help="space: lock aim, lock power"
+      help="space / click — aim, then power"
       camera={DOCK}
+      fov={42}
       machine={(props) => <SkeeballMachine position={[0, 0, 0]} {...props} />}
     />
   )

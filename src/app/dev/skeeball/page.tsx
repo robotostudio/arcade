@@ -2,7 +2,9 @@
 
 import dynamic from 'next/dynamic'
 
-const SkeeballHarness = dynamic(() => import('./SkeeballHarness').then((m) => m.SkeeballHarness), { ssr: false })
+const SkeeballHarness = dynamic(() => import('./SkeeballHarness').then((m) => m.SkeeballHarness), {
+  ssr: false,
+})
 
 export default function SkeeballDevPage() {
   return (
