@@ -3,7 +3,6 @@
 import { useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { Group, Mesh } from 'three'
-import { MATERIALS } from '@/world/palette'
 import { CLAW } from './constants'
 import { CLAW_MATS } from './materials'
 
@@ -13,9 +12,9 @@ export type ClawPose = { x: number; y: number; z: number; grip: number; showAim:
 
 type Props = { pose: React.RefObject<ClawPose> }
 
-const STEEL = MATERIALS.slate
-const DARK_STEEL = MATERIALS.stone
-const BRASS = MATERIALS.amber
+const STEEL = CLAW_MATS.steel
+const DARK_STEEL = CLAW_MATS.darkSteel
+const BRASS = CLAW_MATS.brass
 const CABLE_TOP = CLAW.homeY + 0.5
 const RAIL_Y = CLAW.cabinet.h - 0.18
 const HOME: [number, number, number] = [CLAW.homeXZ[0], CLAW.homeY, CLAW.homeXZ[1]]
@@ -81,8 +80,8 @@ export function ClawRig({ pose }: Props) {
       >
         <cylinderGeometry args={[0.012, 0.012, 1, 6]} />
       </mesh>
-      {/* drop marker on the pit floor: a fake shadow disc under the head and an amber ring that
-          turns bone when the drop would reach a prize (not a shadow; there are none in this look) */}
+      {/* drop marker on the pit floor: a fake shadow disc under the head and an Accent ring that
+          turns cream when the drop would reach a prize (not a shadow; there are none in this look) */}
       <group ref={aim} position={[HOME[0], CLAW.baseH + 0.012, HOME[2]]} rotation={[-Math.PI / 2, 0, 0]}>
         <mesh material={CLAW_MATS.aimShadow} renderOrder={1}>
           <circleGeometry args={[CLAW.reach, 8]} />

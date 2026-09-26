@@ -3,13 +3,13 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { Physics } from '@react-three/rapier'
-import { Color, Group, Vector3 } from 'three'
+import { Group, Vector3 } from 'three'
+import { Display, useDisplay } from '@/world/Display'
 import type { MachineProps } from '@/machines/types'
 import { CLAW } from './constants'
 import { initialClawState, stepClaw, type ClawGrabSense, type ClawPhase, type ClawState } from './clawLogic'
 import { useClawInput } from './useClawInput'
 import { createPrizeRegistry, PrizeRegistryContext, usePrizeRegistry } from './prizeRegistry'
-import { makeLampMaterial } from './materials'
 import { Cabinet } from './Cabinet'
 import { PrizePit } from './Prizes'
 import { Chute } from './Chute'
@@ -25,18 +25,38 @@ const HOLD_OFFSET = -0.34 // where a grabbed prize's centre hangs below the head
 const HELD_GRIP = 0.55 // fingers spring back to this around a held prize; empty close goes to 1
 const DANGLE = 0.7 // an edge grab keeps this much of its off-centre offset, so it visibly hangs crooked
 const SLIP_BUMP = 0.7 // m/s sideways kick when a prize slips, so it tumbles off rather than dropping dead
-const FLASH_TIME = 1.2 // s of lamp blink after a prize drops into the chute
+const RESULT_TIME = 2.5 // s the Display holds a result before going back to the phase
 const SETTLE_MS = 1500 // physics runs this long after mount even when inactive, so prizes rest
 const RESPAWN_LOCAL = new Vector3(0, 2.4, 0)
-const MARQUEE: Record<ClawPhase, Color> = {
-  idle: new Color('#c98a3a'),
-  moving: new Color('#c98a3a'),
-  descending: new Color('#6b1f1f'),
-  closing: new Color('#6b1f1f'),
-  rising: new Color('#9aa8c0'),
-  carrying: new Color('#9aa8c0'),
-  releasing: new Color('#d8cfc0'),
-  returning: new Color('#c98a3a'),
+// The Display (issue 12, ADR 0001): title, the phase, prizes won since docking, the result. It stands
+// on the roof at the front, above the rails, so it never covers the play volume from DOCK.
+const DISPLAY_W = 2.4
+const DISPLAY_AT: [number, number, number] = [0, CLAW.cabinet.h + 0.62, CLAW.cabinet.d / 2 - 0.3]
+const FOOTER = 'ONE DROP A ROUND / 100 TICKETS A PRIZE'
+const IDLE_CONTENT = { headline: 'GRAB A PRIZE', footer: FOOTER }
+const LABEL: Record<ClawPhase, string> = {
+  idle: 'IDLE',
+  moving: 'MOVE',
+  descending: 'DROP',
+  closing: 'GRAB',
+  rising: 'RISING',
+  carrying: 'CARRYING',
+  releasing: 'RELEASE',
+  returning: 'RETURNING',
+}
+// One prompt string per phase for the Shell: the real keys (useClawInput) and the verb. A Round
+// starts on the drop, not on the first move, so idle and moving offer both; the automatic phases
+// take no input, so they show nothing.
+const AIM_PROMPT = 'Arrows: move · Space: drop'
+const PROMPT: Record<ClawPhase, string> = {
+  idle: AIM_PROMPT,
+  moving: AIM_PROMPT,
+  descending: '',
+  closing: '',
+  rising: '',
+  carrying: '',
+  releasing: '',
+  returning: '',
 }
 const AIM_PHASES = new Set<ClawPhase>(['idle', 'moving', 'descending'])
 const NO_GRAB: ClawGrabSense = { prizeInReach: false, grabQuality: 0, prizeHeavy: false }
@@ -54,11 +74,13 @@ const StaticParts = memo(function StaticParts({ onScore }: { onScore: (id: numbe
 function ClawController({
   active,
   onRoundEnd,
+  onPrompt,
   originRef,
   scoredRef,
 }: {
   active: boolean
   onRoundEnd: (t: number) => void
+  onPrompt?: (prompt: string) => void
   originRef: React.RefObject<Group>
   scoredRef: React.RefObject<number>
 }) {
@@ -77,14 +99,24 @@ function ClawController({
   const lastRound = useRef(0)
   const scoredAtDrop = useRef(0)
   const scoreSeen = useRef(0)
-  const flashUntil = useRef(0)
+  const scoredAtDock = useRef(0) // prizes won since docking = scoredRef - this
+  const result = useRef({ text: '', until: 0 })
+  const lastPrompt = useRef<string | null>(null)
   const onRoundEndRef = useRef(onRoundEnd)
   onRoundEndRef.current = onRoundEnd
+  const onPromptRef = useRef(onPrompt)
+  onPromptRef.current = onPrompt
   const v = useMemo(() => new Vector3(), [])
   const holdOffset = useMemo(() => new Vector3(), []) // machine-local prize offset from the head, eased toward hang
   const hang = useMemo(() => new Vector3(0, HOLD_OFFSET, 0), []) // where the held prize settles under the head
-  const lamp = useMemo(() => makeLampMaterial(), [])
-  useEffect(() => () => lamp.dispose(), [lamp])
+  const display = useDisplay({ accent: 'claw', title: 'CLAW' })
+
+  // Once per phase change (and on leaving), never per frame.
+  const prompt = (next: string) => {
+    if (next === lastPrompt.current) return
+    lastPrompt.current = next
+    onPromptRef.current?.(next)
+  }
 
   // Nearest registered prize centre to a mouth at head (x, y, z), within reach. Returns the prize
   // and its distance, or null when a drop here would close on nothing.
@@ -138,9 +170,16 @@ function ClawController({
     }
   }
 
-  // Player left mid-round: settle the pending round now so it is never lost.
+  // Docking: the Display's prize count starts here, and a prize that fell in while settling
+  // must not read as a win. Leaving mid-round: settle the pending round now so it is never lost.
   useEffect(() => {
-    if (active) return
+    if (active) {
+      scoredAtDock.current = scoredRef.current
+      scoreSeen.current = scoredRef.current
+      result.current = { text: '', until: 0 }
+      return
+    }
+    prompt('')
     if (state.current.round > lastRound.current) {
       lastRound.current = state.current.round
       onRoundEndRef.current(scoredRef.current > scoredAtDrop.current ? CLAW.payout : 0)
@@ -154,7 +193,10 @@ function ClawController({
   }, [active])
 
   useFrame((three, dt) => {
-    if (!active) return
+    if (!active) {
+      display.show(IDLE_CONTENT)
+      return
+    }
     const now = three.clock.elapsedTime
     const prev = state.current
     const input = readInput()
@@ -205,6 +247,7 @@ function ClawController({
       lastRound.current = next.result.round
       const chuted = scoredRef.current > scoredAtDrop.current
       onRoundEndRef.current(chuted ? CLAW.payout : 0)
+      if (!chuted) result.current = { text: 'MISSED', until: now + RESULT_TIME }
     }
 
     // Escaped prizes (pushed through floor/wall) come back into the pit while idle.
@@ -231,30 +274,25 @@ function ClawController({
     // the aim ring lights when a drop from here would close on something
     p.aimLock = p.showAim && nearestPrize(next.x, CLAW.floorY, next.z) !== null
 
-    // phase lamp; blinks after a chute hit
+    // Display: a chute hit shows the win the moment the prize lands; otherwise the phase.
     if (scoredRef.current > scoreSeen.current) {
       scoreSeen.current = scoredRef.current
-      flashUntil.current = now + FLASH_TIME
+      result.current = { text: `+${CLAW.payout} TICKETS`, until: now + RESULT_TIME }
     }
-    const c = MARQUEE[next.phase]
-    lamp.color.copy(c)
-    lamp.emissive.copy(c)
-    lamp.emissiveIntensity = now < flashUntil.current ? (Math.floor(now * 8) % 2 ? 2.0 : 0.3) : 0.8
+    const headline = now < result.current.until ? result.current.text : LABEL[next.phase]
+    display.show({ headline, sub: `PRIZES ${scoredRef.current - scoredAtDock.current}`, footer: FOOTER })
+    prompt(PROMPT[next.phase])
   })
 
-  const { w, h, d } = CLAW.cabinet
   return (
     <>
       <ClawRig pose={pose} />
-      {/* phase lamp capping the marquee topper */}
-      <mesh position={[0, h + 0.33, d / 2 - 0.15]} material={lamp}>
-        <boxGeometry args={[w - 0.2, 0.05, 0.06]} />
-      </mesh>
+      <Display handle={display} position={DISPLAY_AT} width={DISPLAY_W} />
     </>
   )
 }
 
-export function ClawMachine({ position, rotation, active, onRoundEnd }: MachineProps) {
+export function ClawMachine({ position, rotation, active, onRoundEnd, onPrompt }: MachineProps) {
   const originRef = useRef<Group>(null!)
   const scoredRef = useRef(0)
   const registry = useMemo(() => createPrizeRegistry(), [])
@@ -274,7 +312,7 @@ export function ClawMachine({ position, rotation, active, onRoundEnd }: MachineP
       <PrizeRegistryContext.Provider value={registry}>
         <Physics timeStep={1 / 60} paused={!active && settled}>
           <StaticParts onScore={onScore} />
-          <ClawController active={active} onRoundEnd={onRoundEnd} originRef={originRef} scoredRef={scoredRef} />
+          <ClawController active={active} onRoundEnd={onRoundEnd} onPrompt={onPrompt} originRef={originRef} scoredRef={scoredRef} />
         </Physics>
       </PrizeRegistryContext.Provider>
     </group>
