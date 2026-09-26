@@ -1,6 +1,6 @@
 # Store Item art (digital garments)
 
-Twelve images in `public/items/`, two per garment Jono photographed: `<slug>-psx.jpg` is a 32-bit PS1-style game sprite on black, and `<slug>-render.jpg` is a clean product render on charcoal. Generated from Jono's photos on 2026-09-26. The Items are digital, so no real stock is implied.
+Twelve 512x512 images in `public/items/`, two per garment Jono photographed: `<slug>-psx.jpg` is a 32-bit PS1-style game sprite on black, and `<slug>-render.jpg` is a clean product render on charcoal. Generated from Jono's photos on 2026-09-26. The Items are digital, so no real stock is implied.
 
 | Slug | What it is |
 |---|---|
