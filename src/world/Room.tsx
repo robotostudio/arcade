@@ -148,9 +148,8 @@ export function Room() {
       <HubView />
     </ArcadeCanvas>
     {mode.kind === 'play' && mode.machine === 'stacktop' && <StackTopHud />}
-    {mode.kind === 'room' && <nav aria-label="Arcade machines" className="absolute bottom-6 left-0 right-0 z-20 flex flex-wrap justify-center gap-2 px-4">{IDS.map((id) => <button key={id} onClick={() => select(id)} className="border border-white/40 bg-[#242044]/95 px-4 py-3 font-mono text-xs text-white">{LABELS[id]}</button>)}</nav>}
     {mode.kind === 'play' && <div className="absolute bottom-3 left-3 right-3 z-20 flex flex-wrap items-center justify-between gap-2 bg-[#242044]/95 p-3 font-mono text-xs text-white"><span>{LABELS[mode.machine]} · {HELP[mode.machine]}{lastRound?.machine === mode.machine && ` · Round complete: +${lastRound.tickets} Tickets`}</span><button onClick={exit} className="border border-white/40 px-4 py-2">Back to hub · Esc</button></div>}
-    {!inStore && <button ref={storeButton} type="button" onClick={openStore} className="absolute right-4 top-4 z-10 border border-[#ffe099]/60 bg-[#242044]/95 px-4 py-3 font-mono text-xs uppercase tracking-widest text-[#ffe099] hover:bg-[#393366] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#ffe099]">
+    {!inStore && mode.kind === 'room' && <button ref={storeButton} type="button" onClick={openStore} className="absolute bottom-6 left-1/2 z-10 -translate-x-1/2 border border-[#ffe099]/60 bg-[#242044]/95 px-4 py-3 font-mono text-xs uppercase tracking-widest text-[#ffe099] hover:bg-[#393366] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#ffe099]">
       Store · {tickets} Tickets
     </button>}
     {inStore && <StoreHud onClose={closeStore} />}
