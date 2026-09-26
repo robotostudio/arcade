@@ -130,7 +130,8 @@ export function RoomEnvironment() {
       {i !== 1 && <pointLight position={[x, 4.4, -2]} color="#afbde8" intensity={3} distance={10} decay={2} />}
     </group>)}
     <pointLight position={[-7, 3, 3]} color="#76eeef" intensity={8} distance={10} />
-    <pointLight position={[5, 3, 1]} color="#ffa6d7" intensity={6} distance={10} />
+    {/* Off the arc: a metre from Stack to the Top's face it lit the big quads in hard triangles. */}
+    <pointLight position={[7.6, 3, 2.6]} color="#ffa6d7" intensity={6} distance={10} />
     {[[7.2, 3.8]].map(([x, z]) => <group key={x} position={[x, 0, z]}><Block at={[0, .65, 0]} size={[1.7, .16, .7]} color="#f5abac" /><Block at={[-.6, .3, 0]} size={[.12, .6, .55]} color="#74b4ba" /><Block at={[.6, .3, 0]} size={[.12, .6, .55]} color="#74b4ba" /></group>)}
     <Atmosphere />
   </group>

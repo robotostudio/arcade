@@ -46,11 +46,15 @@ export const STATIONS = {
   stacktop: onArc(ARC_ANGLE.stacktop),
   store: [0, 0, 13.6] as const, // behind the hub camera; the Store button spins round to face it
 }
+// Cabinets turn to face the hub eye, which stands behind HUB_SPOT; facing the spot itself showed
+// the outer cabinets side-on from the camera.
+const HUB_EYE_BACK = 3
+const faceEye = (id: keyof typeof ARC_ANGLE) => Math.atan2(HUB_SPOT[0] - STATIONS[id][0], HUB_SPOT[1] + HUB_EYE_BACK - STATIONS[id][2])
 export const STATION_ROTATIONS = {
-  whackamole: -MathUtils.degToRad(ARC_ANGLE.whackamole),
-  claw: -MathUtils.degToRad(ARC_ANGLE.claw),
-  skeeball: -MathUtils.degToRad(ARC_ANGLE.skeeball),
-  stacktop: -MathUtils.degToRad(ARC_ANGLE.stacktop),
+  whackamole: faceEye('whackamole'),
+  claw: faceEye('claw'),
+  skeeball: faceEye('skeeball'),
+  stacktop: faceEye('stacktop'),
 }
 // One hero scale for the hub: each cabinet's marquee tops out in the Claw's 3.6-4 m band and
 // play surfaces sit near one waist height. Physics machines (Claw, Skeeball) are built to size
@@ -73,7 +77,7 @@ const INTRO_EYE = new Vector3(0, 7.5, 21)
 const SIGN_EYE = new Vector3(0.35, 4.35, 0.15)
 const SIGN_LOOK = new Vector3(0, 3.7, -6.6)
 // Hub eye: just behind the player's spot at head height, looking across the arc.
-const HUB_EYE = new Vector3(HUB_SPOT[0], 2.9, HUB_SPOT[1] + 3)
+const HUB_EYE = new Vector3(HUB_SPOT[0], 2.9, HUB_SPOT[1] + HUB_EYE_BACK)
 const HUB_LOOK = new Vector3(HUB_SPOT[0], 1.7, HUB_SPOT[1] - ARC_RADIUS)
 // How far the mouse turns the head: full left/right looks this far round the arc.
 const PAN_YAW = MathUtils.degToRad(44)
