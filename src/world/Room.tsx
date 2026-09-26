@@ -20,23 +20,29 @@ import { StackTopHud } from '@/machines/stacktop/StackTopHud'
 const MACHINES = { whackamole: WhackMachine, claw: ClawMachine, skeeball: SkeeballMachine, stacktop: StackTop }
 type HubId = keyof typeof MACHINES
 const LABELS = { whackamole: 'Mole Patrol', claw: 'Claw', stacker: 'Stacker', skeeball: 'Skeeball', stacktop: 'Stack to the Top' }
-const HELP = { whackamole: 'Space starts · Click moles or keys 7 8 9 / 4 5 6 / 1 2 3', claw: 'Arrow keys move · Space drops', stacker: 'Space or click to start / stop', skeeball: 'Space or click: start, lock aim, lock power', stacktop: 'Space or click to start / stop' }
+const HELP = { whackamole: 'Space starts · Click moles or keys 7 8 9 / 4 5 6 / 1 2 3', claw: 'Arrow keys move · Space drops', stacker: 'Space or click to start / stop', skeeball: 'Space or click: lock aim, then lock power to swing and roll', stacktop: 'Space or click to start / stop' }
 const DOCKS = { whackamole: WHACK_DOCK, claw: CLAW_DOCK, skeeball: SKEE_DOCK, stacktop: TOP_DOCK }
 const IDS = Object.keys(MACHINES) as HubId[]
 const Y_AXIS = new Vector3(0, 1, 0)
 function dockPoint(id: HubId, point: readonly number[]) {
-  return new Vector3(point[0], point[1], point[2]).applyAxisAngle(Y_AXIS, STATION_ROTATIONS[id]).add(new Vector3(...STATIONS[id]))
+  return new Vector3(point[0], point[1], point[2]).multiplyScalar(STATION_SCALE[id]).applyAxisAngle(Y_AXIS, STATION_ROTATIONS[id]).add(new Vector3(...STATIONS[id]))
 }
 
 // Each cabinet faces the shared viewing point on the open side of the hub.
 export const STATIONS = {
   whackamole: [-6.3, 0, .2] as const,
   claw: [-2.1, 0, -1.7] as const,
-  skeeball: [2.1, 0, -1.7] as const,
+  skeeball: [2.3, 0, -1.9] as const,
   stacktop: [6.3, 0, .2] as const,
   store: [0, 0, 13.6] as const, // behind the hub camera; the Store button spins round to face it
 }
-export const STATION_ROTATIONS = { whackamole: .55, claw: .2, skeeball: -.2, stacktop: -.55 } as const
+export const STATION_ROTATIONS = { whackamole: .55, claw: .2, skeeball: -.42, stacktop: -.55 } as const
+// One hero scale for the hub: each cabinet's marquee tops out in the Claw's 3.6-4 m band and
+// play surfaces sit near one waist height. Physics machines (Claw, Skeeball) are built to size
+// in their own constants; only the physics-free cabinets are scaled here.
+export const STATION_SCALE = { whackamole: 1.15, claw: 1, skeeball: 1, stacktop: .8 } as const
+// Invisible click volume per cabinet in its own frame: [w, h, d, z offset].
+const HIT_BOX = { whackamole: [2, 2.4, 1.9, 0], claw: [3, 4, 2.8, 0], skeeball: [1.9, 3.8, 4.6, -.57], stacktop: [2.2, 5, 1.6, 0] } as const
 
 // The intro holds the camera high and far back in the fog; on landing it is released and glides in.
 const INTRO_EYE = new Vector3(0, 7.5, 21)
@@ -162,11 +168,13 @@ export function Room() {
       {IDS.map((id) => {
         const Machine = MACHINES[id]
         return <group key={id}>
-          <Machine position={[...STATIONS[id]]} rotation={[0, STATION_ROTATIONS[id], 0]} active={mode.kind === 'play' && mode.machine === id} onRoundEnd={(amount) => useArcade.getState().awardTickets(id, amount)} />
-          {mode.kind === 'room' && <mesh position={[STATIONS[id][0], 2, STATIONS[id][2]]} rotation={[0, STATION_ROTATIONS[id], 0]} onClick={(event) => { event.stopPropagation(); select(id) }}>
-            <boxGeometry args={[id === 'claw' ? 3 : 2.3, 4.5, id === 'skeeball' ? 4.5 : 2.8]} />
-            <meshBasicMaterial transparent opacity={0} depthWrite={false} />
-          </mesh>}
+          <group position={[...STATIONS[id]]} rotation={[0, STATION_ROTATIONS[id], 0]} scale={STATION_SCALE[id]}>
+            <Machine position={[0, 0, 0]} rotation={[0, 0, 0]} active={mode.kind === 'play' && mode.machine === id} onRoundEnd={(amount) => useArcade.getState().awardTickets(id, amount)} />
+            {mode.kind === 'room' && <mesh position={[0, HIT_BOX[id][1] / 2, HIT_BOX[id][3]]} onClick={(event) => { event.stopPropagation(); select(id) }}>
+              <boxGeometry args={[HIT_BOX[id][0], HIT_BOX[id][1], HIT_BOX[id][2]]} />
+              <meshBasicMaterial transparent opacity={0} depthWrite={false} />
+            </mesh>}
+          </group>
         </group>
       })}
       <group scale={.85} position={[...STATIONS.store]} rotation={[0, Math.PI, 0]}>
