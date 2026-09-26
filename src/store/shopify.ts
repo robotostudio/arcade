@@ -3,10 +3,11 @@
 // sprite (see items.ts). Missing env, a network error or a product without both images falls
 // back to the bundled files for that Item, so the arcade always has something to show.
 //
-// Env (set by the Vercel Shopify integration, pulled with `vercel env pull`):
+// Env (on the Vercel project and in .env.local; `vercel env pull` refreshes the local copy):
 //   SHOPIFY_STORE_DOMAIN             e.g. fleekade.myshopify.com
 //   SHOPIFY_STOREFRONT_ACCESS_TOKEN  public Storefront API token
-// scripts/shopify-sync.mts pushes the catalogue up; this file only reads it.
+// scripts/shopify-sync.mts pushes the catalogue up; this file only reads it. Checkout with the
+// Ticket credit is checkout.ts (it also needs SHOPIFY_ADMIN_ACCESS_TOKEN).
 import { ITEMS, type Item, type ItemImages } from './items'
 import type { ImageMap } from './catalogue'
 

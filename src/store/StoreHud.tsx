@@ -2,8 +2,8 @@
 
 // The Store's thin DOM layer. The select screen itself is built into the counter
 // (PrizeSelector, in the scene); this only carries what has to live outside the canvas:
-// the keyboard (left/right browse, up/down Tickets, shift = 10, Enter claims; Escape is
-// the Room's), the claim toast and a Back button. Plain DOM + Tailwind, in the Shell's
+// the keyboard (left/right browse, up/down Tickets, shift = 10, Enter claims and leaves for
+// Shopify checkout with the credit applied; Escape is the Room's), the claim toast and a Back button. Plain DOM + Tailwind, in the Shell's
 // surface and text colours and its typeface (VT323 through the `vt` class, 20 px).
 import { useEffect } from 'react'
 import { SHELL } from '@/world/Shell'

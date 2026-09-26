@@ -41,3 +41,5 @@ On branch `sne` at `/dev/store` (`src/store/`). Real `src/arcade/state.ts`: cont
 - Cut real checkout.
 
 - Jono (2026-09-26, T+1:00): Claw pays 100 Tickets per successful grab (`CLAW.payout`, issue 04). At 1 Ticket = 1% with a 50% cap, one grab maxes any Discount. Sne owns the rate; either lower the rate (e.g. 1 Ticket = 0.25%) or tell me to drop the Claw payout. Keep / Change / Cut is yours.
+
+- Jono (2026-09-26, after the deadline): Keep the economy; the claim now goes to real checkout at Jono's request. Change: I edited `src/store/state.ts` (`claim()` is async, new `checkingOut` flag) so Enter POSTs `/api/checkout`, which mints a single-use Shopify discount code for the credit (`src/store/checkout.ts`, Admin API, `write_discounts` added to the Arcade sync app) and sends the page to the cart's checkoutUrl; Tickets are spent only after the URL is in hand. Cut: the "nothing ships" toast.

@@ -308,7 +308,7 @@ function DetailsPanel() {
           <span className="k">You pay</span>
           <span className="v now">{isClaimed ? 'Claimed' : formatGbp(priceAfter(item, visibleApplied))}</span>
           <span className="pz-note">
-            {tickets === 0 ? 'No Tickets yet. Play a Machine.' : 'Demo prizes: apply Tickets for money off, claim once per bundle. No real orders.'}
+            {tickets === 0 ? 'No Tickets yet. Play a Machine.' : 'Apply Tickets for money off, then Accept to check out on Shopify with the credit applied. One claim per bundle.'}
           </span>
         </div>
       </div>

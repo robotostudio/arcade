@@ -7,7 +7,9 @@
 //   `<id>-game.png`    the 32-bit PS1-style sprite the cabinet shows (GAME_PROMPT.txt)
 // Local copies live in public/store/items. The same two files are the Shopify product's
 // images, in that order: image #1 is the render the storefront sells with, image #2 is the
-// sprite the arcade pulls (src/store/shopify.ts). The Item id is the Shopify product handle.
+// sprite the arcade pulls (src/store/shopify.ts). The Item id is the Shopify product handle, and
+// claiming an Item sends the player to Shopify checkout for that product with the Ticket credit
+// minted as a discount code (src/store/checkout.ts).
 import type { Tier } from '@/arcade/economy'
 
 // Reseller grades, worst to best. NWT = new with tags.
