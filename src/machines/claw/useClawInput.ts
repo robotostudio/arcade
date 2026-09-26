@@ -7,7 +7,8 @@ const RIGHT = new Set(['ArrowRight', 'KeyD'])
 const UP = new Set(['ArrowUp', 'KeyW']) // away from player = -z
 const DOWN = new Set(['ArrowDown', 'KeyS'])
 const DROP = new Set(['Space', 'Enter', 'NumpadEnter'])
-const PREVENT = new Set(['Space', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'])
+// Enter is prevented too so it never activates a focused button while dropping the claw.
+const PREVENT = new Set(['Space', 'Enter', 'NumpadEnter', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'])
 
 export function useClawInput(enabled: boolean): () => Omit<ClawInput, 'prizeInReach'> {
   const held = useRef(new Set<string>())

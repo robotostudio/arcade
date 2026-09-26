@@ -9,12 +9,13 @@ import {
   type RapierRigidBody,
 } from '@react-three/rapier'
 import { CLAW } from './constants'
-import { prizeRegistry } from './prizeRegistry'
+import { usePrizeRegistry } from './prizeRegistry'
+import { MATERIALS } from '@/world/palette'
+import { CLAW_MATS, PRIZE_MATS } from './materials'
 
 type Kind = 'blob' | 'can' | 'crate'
-type PrizeSpec = { id: number; kind: Kind; pos: [number, number, number]; rotY: number; color: string }
+type PrizeSpec = { id: number; kind: Kind; pos: [number, number, number]; rotY: number; mat: number }
 
-const COLORS = ['#6b1f1f', '#c98a3a', '#d8cfc0', '#3d5a80', '#2f6f6a', '#4a5260']
 const KINDS: Kind[] = ['blob', 'can', 'crate']
 
 function mulberry32(seed: number) {
@@ -62,7 +63,7 @@ function layout(seed: number, count: number): PrizeSpec[] {
       kind: KINDS[Math.floor(rng() * KINDS.length)],
       pos: [x, y, z],
       rotY: rng() * Math.PI * 2,
-      color: COLORS[Math.floor(rng() * COLORS.length)],
+      mat: Math.floor(rng() * PRIZE_MATS.length),
     })
   }
   return out
@@ -70,11 +71,14 @@ function layout(seed: number, count: number): PrizeSpec[] {
 
 function Prize({ spec }: { spec: PrizeSpec }) {
   const ref = useRef<RapierRigidBody>(null!)
+  const registry = usePrizeRegistry()
+  const mat = PRIZE_MATS[spec.mat]
   useEffect(() => {
     const body = ref.current
-    if (body) prizeRegistry.register(spec.id, body)
-    return () => prizeRegistry.unregister(spec.id)
-  }, [spec.id])
+    if (!body) return
+    registry.register(spec.id, body)
+    return () => registry.unregister(spec.id, body)
+  }, [spec.id, registry])
 
   return (
     <RigidBody
@@ -85,44 +89,39 @@ function Prize({ spec }: { spec: PrizeSpec }) {
       friction={0.8}
       linearDamping={0.5}
       angularDamping={0.5}
+      ccd
       userData={{ prize: true, id: spec.id }}
     >
       {spec.kind === 'blob' && (
         <>
           <BallCollider args={[0.24]} mass={0.3} friction={0.8} />
-          <mesh>
+          <mesh material={mat}>
             <icosahedronGeometry args={[0.22, 0]} />
-            <meshLambertMaterial color={spec.color} />
           </mesh>
-          <mesh position={[-0.13, 0.17, 0]}>
+          <mesh position={[-0.13, 0.17, 0]} material={mat}>
             <icosahedronGeometry args={[0.08, 0]} />
-            <meshLambertMaterial color={spec.color} />
           </mesh>
-          <mesh position={[0.13, 0.17, 0]}>
+          <mesh position={[0.13, 0.17, 0]} material={mat}>
             <icosahedronGeometry args={[0.08, 0]} />
-            <meshLambertMaterial color={spec.color} />
           </mesh>
         </>
       )}
       {spec.kind === 'can' && (
         <>
           <CylinderCollider args={[0.2, 0.16]} mass={0.3} friction={0.8} />
-          <mesh>
+          <mesh material={mat}>
             <cylinderGeometry args={[0.16, 0.16, 0.4, 8]} />
-            <meshLambertMaterial color={spec.color} />
           </mesh>
-          <mesh position={[0, 0.201, 0]}>
+          <mesh position={[0, 0.201, 0]} material={MATERIALS.bone}>
             <cylinderGeometry args={[0.12, 0.12, 0.01, 8]} />
-            <meshLambertMaterial color="#d8cfc0" />
           </mesh>
         </>
       )}
       {spec.kind === 'crate' && (
         <>
           <CuboidCollider args={[0.17, 0.17, 0.17]} mass={0.3} friction={0.8} />
-          <mesh>
+          <mesh material={mat}>
             <boxGeometry args={[0.34, 0.34, 0.34]} />
-            <meshLambertMaterial color={spec.color} />
           </mesh>
         </>
       )}
@@ -132,7 +131,7 @@ function Prize({ spec }: { spec: PrizeSpec }) {
 
 function PitColliders() {
   const { w, h, d } = CLAW.cabinet
-  const t = 0.1 // half-thickness
+  const t = 0.3 // half-thickness (thick floor so squashed prizes cannot tunnel out)
   const innerW = w - 0.2
   const innerD = d - 0.2
   const wallH = h - CLAW.baseH
@@ -166,9 +165,8 @@ export function PrizePit({ seed, count, reset = 0 }: { seed: number; count: numb
     <group>
       <PitColliders />
       {/* visible pit floor */}
-      <mesh position={[0, CLAW.baseH - 0.005, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+      <mesh position={[0, CLAW.baseH + 0.002, 0]} rotation={[-Math.PI / 2, 0, 0]} material={CLAW_MATS.pitFloor}>
         <planeGeometry args={[CLAW.cabinet.w - 0.2, CLAW.cabinet.d - 0.2]} />
-        <meshLambertMaterial color="#1a1c22" />
       </mesh>
       <PrizeSet key={reset} seed={seed} count={count} />
     </group>

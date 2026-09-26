@@ -13,11 +13,11 @@ export function ClawHarness() {
   const [last, setLast] = useState<string>('-')
   const [resetKey, setResetKey] = useState(0)
   const controls = useRef<CameraControlsImpl>(null)
-  // Harness owns the camera: aim at the middle of the glass box, not the floor.
+  // Harness owns the camera: look down into the tray at about 30 degrees.
   useEffect(() => {
     const id = setInterval(() => {
       if (!controls.current) return
-      controls.current.setLookAt(0, 3.2, 6.5, 0, 2.0, 0, false)
+      controls.current.setLookAt(0, 4.6, 7.4, 0, 1.8, 0, false)
       clearInterval(id)
     }, 50)
     return () => clearInterval(id)
@@ -31,7 +31,7 @@ export function ClawHarness() {
 
   return (
     <>
-      <ArcadeCanvas camera={{ position: [0, 3.2, 6.5], fov: 40 }}>
+      <ArcadeCanvas camera={{ position: [0, 4.6, 7.4], fov: 40 }}>
         <ClawMachine key={resetKey} position={[0, 0, 0]} active onRoundEnd={onRoundEnd} />
         <CameraControls ref={controls} makeDefault />
       </ArcadeCanvas>

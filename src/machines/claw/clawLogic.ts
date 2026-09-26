@@ -4,7 +4,7 @@
 //   idle|moving --(drop)--> descending        (round += 1, result = null)
 //   descending --(y <= floorY)--> closing
 //   closing --(t >= closeTime)--> rising      (holding = prizeInReach, grip = 1)
-//   rising --(y >= homeY)--> carrying
+//   rising --(y >= homeY)--> carrying   (slip roll runs here too)
 //   carrying: head -> chuteXZ, each frame while holding: rng() < slip*dt -> slipped
 //   carrying --(at chute)--> releasing        (grip 1 -> 0 over releaseTime)
 //   releasing --(t >= releaseTime)--> returning  (result = {round, won}, holding = false)
@@ -112,6 +112,10 @@ export function stepClaw(s: ClawState, input: ClawInput, dt: number, rng: () => 
       break
     }
     case 'rising': {
+      if (n.holding && rng() < CLAW.slipChancePerSecond * dt) {
+        n.holding = false
+        n.slipped = true
+      }
       n.y = Math.min(CLAW.homeY, s.y + CLAW.riseSpeed * dt)
       if (n.y >= CLAW.homeY) go('carrying')
       break
