@@ -11,11 +11,8 @@ import { PrizeTextureWarmup } from '@/store/prizeTextures'
 import { ArcadeCanvas } from './ArcadeCanvas'
 import { LiveryPanel } from './LiveryPanel'
 import { RoomEnvironment } from './room-environment'
-<<<<<<< HEAD
-import { SoundtrackToggle } from './Soundtrack'
-=======
 import { SHELL, Shell } from './Shell'
->>>>>>> 39bfdcd (Room: drop the debug handle left in the shader warm-up)
+import { SoundtrackToggle } from './Soundtrack'
 
 import { WhackMachine, DOCK as WHACK_DOCK } from '@/machines/whackamole'
 import { ClawMachine, DOCK as CLAW_DOCK } from '@/machines/claw'
@@ -202,7 +199,6 @@ export function Room() {
     {!inStore && mode.kind === 'room' && <button ref={storeButton} type="button" inert={!introDone} onClick={openStore} style={{ background: SHELL.surface, color: SHELL.text, borderColor: SHELL.edge }} className={`${hud} vt absolute bottom-6 left-1/2 z-10 -translate-x-1/2 border px-5 py-2 text-[28px] leading-none hover:brightness-125 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#fff4d7]`}>
       Store · {tickets} Tickets
     </button>}
-<<<<<<< HEAD
     <div className={`${hud} absolute right-4 top-4 z-40 flex items-center gap-2`}>
       {inStore && (
         <button type="button" onClick={closeStore} className="border border-[#ffe099]/60 bg-[#242044]/95 px-4 py-3 font-mono text-xs uppercase tracking-widest text-[#ffe099] hover:bg-[#393366] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#ffe099]">
@@ -212,10 +208,7 @@ export function Room() {
       <SoundtrackToggle />
     </div>
     {inStore && <StoreHud />}
-=======
-    {inStore && <StoreHud onClose={closeStore} />}
     <LiveryPanel />
->>>>>>> 39bfdcd (Room: drop the debug handle left in the shader warm-up)
     </>
   )
 }
