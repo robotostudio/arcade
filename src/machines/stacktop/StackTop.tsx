@@ -32,7 +32,7 @@ export const DECIDE_MS = 8000
 export const PRIZES: Prizes = { minorRow: MINOR_ROW, payout: PAYOUT.stacktop, decideMs: DECIDE_MS }
 
 // Camera dock for the Room and the harness, relative to the cabinet origin (player at +z).
-export const DOCK = { position: [0, 2.6, 5.2], target: [0, 2.2, 0] } as const
+export const DOCK = { position: [0, 2.9, 6.6], target: [0, 2.45, 0] } as const
 
 const CELL_Z = FACE_Z + 0.01 + BOX / 2
 const COUNT = W * H

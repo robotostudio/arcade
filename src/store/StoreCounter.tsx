@@ -1,16 +1,16 @@
 'use client'
 
 // The Store counter: a low-poly prize counter with a back shelf unit, one shelf per Tier
-// (bottom White, middle Blue, top Gold), each Item standing on its Tier ring.
+// (bottom White, middle Blue, top Gold), each Bundle a garment pile standing on its Tier ring.
 // Look rules: Lambert (Gouraud), no shadows, low-segment primitives, shared materials,
 // and useFrame only mutates refs (no allocation, no React state).
-import { useRef, useState, type ReactNode } from 'react'
+import { useRef, useState } from 'react'
 import { useFrame, type ThreeEvent } from '@react-three/fiber'
 import { useCursor } from '@react-three/drei'
 import type * as THREE from 'three'
 import type { Tier } from '@/arcade/economy'
 import { ITEMS, type Item } from './items'
-import { MAT, RING } from './materials'
+import { MAT, PILE, RING } from './materials'
 import { useStore } from './state'
 
 type Vec3 = [number, number, number]
@@ -172,7 +172,7 @@ function ItemSlot({ item, position, phase, onSelect }: ItemSlotProps) {
         </mesh>
       </group>
       <group ref={body}>
-        <Silhouette id={item.id} />
+        <GarmentPile item={item} />
       </group>
       {selected && (
         <mesh ref={marker} position={[0, 0.7, 0]} rotation={[0, 0, Math.PI / 4]} material={MAT.marker}>
@@ -183,88 +183,25 @@ function ItemSlot({ item, position, phase, onSelect }: ItemSlotProps) {
   )
 }
 
-// Procedural stand-ins for each Item. Everything sits on y = 0 (the shelf top).
-function Silhouette({ id }: { id: Item['id'] }): ReactNode {
-  switch (id) {
-    case 'sticker-pack':
-      return (
-        <>
-          <mesh position={[0, 0.03, 0]} material={MAT.roboBlue}>
-            <boxGeometry args={[0.3, 0.03, 0.22]} />
-          </mesh>
-          <mesh position={[0.02, 0.06, 0.01]} rotation={[0, 0.3, 0]} material={MAT.bone}>
-            <boxGeometry args={[0.26, 0.03, 0.2]} />
-          </mesh>
-        </>
-      )
-    case 'enamel-pin':
-      return (
-        <mesh position={[0, 0.14, 0]} rotation={[Math.PI / 2, 0, 0]} material={MAT.red}>
-          <cylinderGeometry args={[0.11, 0.11, 0.035, 8]} />
+// A pile of 3-5 folded flats in the Tier colour; bigger bundles pile higher.
+// Deterministic offsets per layer so the pile looks tossed, not stamped.
+const FLAT = { w: 0.34, h: 0.05, d: 0.26 }
+
+function GarmentPile({ item }: { item: Item }) {
+  const layers = 3 + Math.min(2, Math.floor(item.pieces / 12))
+  const shades = PILE[item.tier]
+  return (
+    <>
+      {Array.from({ length: layers }, (_, n) => (
+        <mesh
+          key={n}
+          position={[((n % 2) - 0.5) * 0.03, FLAT.h / 2 + n * FLAT.h, ((n % 3) - 1) * 0.015]}
+          rotation={[0, (n % 2 ? -1 : 1) * 0.12 * (1 + (n % 3) * 0.4), 0]}
+          material={shades[n % 2]}
+        >
+          <boxGeometry args={[FLAT.w - n * 0.015, FLAT.h, FLAT.d - n * 0.01]} />
         </mesh>
-      )
-    case 'tote-bag':
-      return (
-        <>
-          <mesh position={[0, 0.19, 0]} material={MAT.canvas}>
-            <boxGeometry args={[0.3, 0.34, 0.07]} />
-          </mesh>
-          <mesh position={[0, 0.37, 0]} material={MAT.canvas}>
-            <torusGeometry args={[0.09, 0.014, 4, 8]} />
-          </mesh>
-        </>
-      )
-    case 'hoodie':
-      return (
-        <>
-          <mesh position={[0, 0.19, 0]} material={MAT.hoodie}>
-            <boxGeometry args={[0.42, 0.34, 0.16]} />
-          </mesh>
-          <mesh position={[0, 0.42, -0.01]} material={MAT.hoodie}>
-            <boxGeometry args={[0.2, 0.14, 0.14]} />
-          </mesh>
-        </>
-      )
-    case 'cap':
-      return (
-        <>
-          <mesh position={[0, 0.03, 0]} material={MAT.roboBlue}>
-            <sphereGeometry args={[0.16, 8, 4, 0, Math.PI * 2, 0, Math.PI / 2]} />
-          </mesh>
-          <mesh position={[0, 0.035, 0.17]} material={MAT.roboBlue}>
-            <boxGeometry args={[0.2, 0.015, 0.12]} />
-          </mesh>
-        </>
-      )
-    case 'mug-set':
-      return (
-        <>
-          {[-0.15, 0, 0.15].map((x) => (
-            <mesh key={x} position={[x, 0.08, 0]} material={MAT.ceramic}>
-              <cylinderGeometry args={[0.06, 0.06, 0.13, 8]} />
-            </mesh>
-          ))}
-        </>
-      )
-    case 'site-audit':
-    case 'day-of-roboto': {
-      const r = id === 'day-of-roboto' ? 0.19 : 0.15
-      return (
-        <>
-          <mesh position={[0, 0.07, 0]} material={MAT.plinth}>
-            <cylinderGeometry args={[0.13, 0.17, 0.14, 8]} />
-          </mesh>
-          <mesh position={[0, 0.14 + r + 0.06, 0]} material={MAT.glow}>
-            <icosahedronGeometry args={[r, 0]} />
-          </mesh>
-        </>
-      )
-    }
-    default:
-      return (
-        <mesh position={[0, 0.12, 0]} material={MAT.bone}>
-          <boxGeometry args={[0.2, 0.24, 0.2]} />
-        </mesh>
-      )
-  }
+      ))}
+    </>
+  )
 }
