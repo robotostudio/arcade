@@ -38,8 +38,10 @@ export const useArcade = create<ArcadeState>()(
         set((s) => ({ tickets: s.tickets + won, lastRound: { machine, tickets: won } }))
       },
       spendTickets: (amount) => {
-        if (get().tickets < amount) return false
-        set((s) => ({ tickets: s.tickets - amount }))
+        // Same sanitising as awardTickets: whole, positive, finite.
+        const n = Number.isFinite(amount) ? Math.round(amount) : 0
+        if (n <= 0 || get().tickets < n) return false
+        set((s) => ({ tickets: s.tickets - n }))
         return true
       },
       clearLastRound: () => set({ lastRound: null }),

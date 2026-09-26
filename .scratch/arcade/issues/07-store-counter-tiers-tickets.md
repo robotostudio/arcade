@@ -1,7 +1,7 @@
 # 07 3D Store counter, Roboto merch in White / Blue / Gold tiers, Tickets spent as discounts
 
 Type: prototype
-Status: open
+Status: resolved
 Role: Sne
 Slot: T+1:00 to 1:45
 Blocked by: none
@@ -17,5 +17,21 @@ Placeholder Items. White: sticker pack, enamel pin, tote. Blue: hoodie, cap, mug
 Sne starts once the Stacker is playable (about T+1:00), on branch `sne`, harness page `src/app/dev/store/page.tsx`.
 
 Feedback from the other roles at each checkpoint. Answer records: payout table, discount rate and caps, Tier prices, ring recipe. Merged to `main`.
+
+## Answer
+
+On branch `sne` at `/dev/store` (`src/store/`). Real `src/arcade/state.ts`: contract unchanged, plus `lastRound`, `clearLastRound()`, `resetTickets()`; Tickets persist to localStorage `arcade:tickets`, claims to `arcade:claimed`. Tested in Chrome on 2026-09-26: +50, select, Max, Claim, toast, balance drop, "claimed" tag.
+
+**Payout table** (`PAYOUT` in `src/arcade/economy.ts`): Stacker 10 per row placed, 150 on a win. Claw 100 per prize in the chute. Skeeball Round score / 5, rounded. Tune in that one file.
+
+**Discount** (`DISCOUNT`, helpers `discountPct` and `maxTicketsFor`): White and Blue 1 Ticket = 1%, cap 50% (50 Tickets). Gold is steeper: 0.5% per Ticket, cap 50% (100 Tickets). Applied Tickets clamp to min(balance, cap); price after = price x (100 - pct) / 100 to the penny.
+
+**Items and Tier prices (GBP)**: White: sticker pack 6, enamel pin 9, tote bag 14. Blue: hoodie 48, cap 24, mug set 30. Gold: Free site audit 1500, A day of Roboto 2400. Blurbs in `items.ts`.
+
+**Claiming**: `spendTickets(applied)`, id added to `claimed` (persisted), toast "Claimed: <name> at N% off, now £X. Roboto will be in touch.", applied resets. Not enough Tickets = toast, no spend. No shelf in the Room; the tag in the HUD is the record.
+
+**Ring recipe**: torus [0.26, 0.035, 8, 16] laid flat 0.03 above the shelf. White Lambert #e8e4d8, Blue Lambert #3d7bff, Gold Standard #f2c14e metalness 0.9 roughness 0.25 emissive #7a5a00 at 0.6, tilted 0.18 rad and spun at 0.7 rad/s; Gold Items bob 0.05 at 1.6 rad/s. Selected ring scales 1.15 with a spinning marker cube above. Counter: body 6 x 1.2 x 1.5, shelves at y 1.45 / 2.2 / 2.95, sign at 3.75. Cut to flat yellow Lambert if the Standard material fights the psxify pass in Phase 2.
+
+**For Jono's integration**: `StoreCounter({ position, rotation?, onSelect? })` and `StoreHud` are the two exports; `StoreHud` must sit inside an ssr:false boundary because it reads the persisted balance. Harness pages use `src/arcade/dev/HarnessCanvas.tsx`, a stand-in for `ArcadeCanvas` (issue 09); swap the import when the wrapper lands and delete the stand-in.
 
 ## Comments
