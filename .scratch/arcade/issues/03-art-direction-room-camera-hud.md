@@ -33,3 +33,9 @@ User requested Crash Bandicoot 2 hub-style composition: five cabinets now form a
 ### Store hub integration — Jono, 2026-09-26
 
 User requested a subagent to finish the Store and make it clickable in the hub. Replaced the decorative prize counter with StoreCounter at STATIONS.store, scaled to the existing space. Counter/sign/Item clicks and a keyboard-accessible Store button open the Store HUD and dock the camera; Close/Escape returns to the Room. Generic procedural assets and the existing Tickets-for-Discount economy remain. Subagent improved lettering, empty state, duplicate-claim protection and truthful local-only demo confirmation. Shared arcade state unchanged. Verified production build, 3D sign click, Item selection, a 50-Ticket claim (balance 50 to 0, claimed tag, £6 to £3 discount), zero-balance disable and Escape return in browser. Issue remains open for Machine integration.
+
+### Machine integration — Jono, 2026-09-26
+
+Merged origin/sne-stack-top into the latest main, preserving Store close navigation and one-claim validation with Sne's bundle credit economy. Mounted Claw, Stacker, Skeeball (existing local implementation), and Stack to the Top in the Room. Cabinet hit targets and accessible navigation buttons enter Play mode; local camera docks are transformed by each station's rotation and position. Only the selected Machine is active, onRoundEnd awards shared Tickets, and Escape / Back returns to the hub. Stack to the Top includes its prize-choice HUD. Whack-a-Mole remains planned: no implementation branch was available at integration time.
+
+Validation: pnpm typecheck and pnpm build pass, including all five dev harness routes. Browser gameplay has not been verified in this integration pass. Issue remains open for the complete deployed play-through and remaining World polish.

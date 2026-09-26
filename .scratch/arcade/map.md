@@ -56,3 +56,4 @@ A low-poly 3D arcade running in the browser at a public Vercel URL: one diorama 
 - Linking the arcade from the Roboto website (separate effort once it's live).
 - Hand-modelled assets (Blender/GLTF pipeline) and asset store purchases.
 - Automated tests and CI pipelines.
+- [03 Machine integration](issues/03-art-direction-room-camera-hud.md): Claw, Stacker, Skeeball and Stack to the Top now mount in the hub with station camera docks, selection, active controls, Ticket payouts and Escape/back navigation; Sne's bundle Store merged. Whack-a-Mole implementation is still pending. Production build and typecheck pass.
