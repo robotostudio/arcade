@@ -16,7 +16,7 @@ What does the arcade look like, and how does moving between Room mode and Play m
 - **Daniel**: camera fly-to per station with Escape to return, Room/Play/Store mode switching, HUD shell (station name, "press to play" prompt, Ticket balance, Round-end feedback). HUD in the register of reference frame 3: pixel font, small, boxed bars, sits above the CRT overlay so it stays crisp. The fly-to is where the vertex wobble shows; keep `smoothTime` long enough to enjoy it.
 - **Jono**: place the three Machines and the Store counter in the Room, wire `onRoundEnd` to `awardTickets`, keep `main` deploying.
 
-Machines never touch the camera. Commit small, pull before every commit; `src/world/` is shared.
+Machines never touch the camera. Each physics Machine owns its own `<Physics paused={!active}>` (the Claw set the pattern, T+0:40); the Room mounts none. Commit small, pull before every commit; `src/world/` is shared.
 
 Answer records: the palette, the tuned look constants (dpr, snap grid, dither levels, fog range, scanline pitch), camera dock positions per station, the interaction rules, and the deployed URL at checkpoint 2.
 
