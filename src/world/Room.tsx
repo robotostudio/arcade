@@ -14,6 +14,7 @@ import { LiveryPanel } from './LiveryPanel'
 import { RoomEnvironment } from './room-environment'
 import { SHELL, Shell } from './Shell'
 import { SoundtrackToggle } from './Soundtrack'
+import { ArcadeCat } from './cat'
 
 import { WhackMachine, DOCK as WHACK_DOCK } from '@/machines/whackamole'
 import { ClawMachine, DOCK as CLAW_DOCK } from '@/machines/claw'
@@ -60,6 +61,8 @@ export const STATION_ROTATIONS = {
 // play surfaces sit near one waist height. Physics machines (Claw, Skeeball) are built to size
 // in their own constants; only the physics-free cabinets are scaled here.
 export const STATION_SCALE = { whackamole: 1.15, claw: 1, skeeball: 1, stacktop: .8 } as const
+// The Room cat's targets: where each cabinet stands and which way it faces.
+const CAT_CABINETS = IDS.map((id) => ({ id, position: STATIONS[id], rotation: STATION_ROTATIONS[id] }))
 // Invisible click volume per cabinet in its own frame: [w, h, d, z offset].
 const HIT_BOX = { whackamole: [2, 2.4, 1.9, 0], claw: [3, 4, 2.8, 0], skeeball: [1.9, 3.8, 4.6, -.57], stacktop: [2.2, 5, 1.6, 0] } as const
 
@@ -298,6 +301,7 @@ export function Room() {
       <Suspense fallback={null}>
         <PrizeTextureWarmup />
       </Suspense>
+      <ArcadeCat cabinets={CAT_CABINETS} busy={mode.kind === 'play' ? mode.machine : null} />
       <HubView />
       <ReadySignal />
     </ArcadeCanvas>
