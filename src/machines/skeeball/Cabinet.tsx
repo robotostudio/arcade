@@ -1,17 +1,27 @@
 'use client'
 
+import { Display, type DisplayHandle } from '@/world/Display'
 import { BOARD, SKEE, lip } from './constants'
 import { SKEE_MATS } from './materials'
 import { useSignMat } from './textures'
 
-// Visual only. Colliders live on the lane. Maroon body, blue flanks and a yellow
-// bulb marquee, the same cabinet language as Stack to the Top.
-export function Cabinet() {
+// Visual only. Colliders live on the lane. Livery (issue 12): Plinth base, the body and flanks in
+// the Skeeball Accent, Accent edge strips, and above the board the Display carrying balls and score
+// with the bulb marquee over it. Both face +z at the head of the board, square to the DOCK camera.
+const DISPLAY_W = 1.36
+const DISPLAY_H = DISPLAY_W * (384 / 1024)
+const DISPLAY_BORDER = DISPLAY_W * 0.06
+const DISPLAY_Y = 2.25
+const MARQUEE_H = 0.34
+const MARQUEE_Y = DISPLAY_Y + DISPLAY_H / 2 + DISPLAY_BORDER + MARQUEE_H / 2
+
+export function Cabinet({ display }: { display: DisplayHandle }) {
   const { startZ } = SKEE.ramp
   const end = lip()
   const zMid = (startZ + end.z - BOARD.run) / 2
   const len = startZ - (end.z - BOARD.run) + 0.55
   const wallX = SKEE.ramp.width / 2 + 0.28
+  const zFace = end.z - BOARD.run + 0.06
   const sign = useSignMat()
 
   return (
@@ -54,8 +64,12 @@ export function Cabinet() {
         <boxGeometry args={[1.62, 1.15, 0.12]} />
       </mesh>
 
-      <mesh position={[0, end.y + BOARD.rise + 0.32, end.z - BOARD.run + 0.06]} material={sign}>
-        <planeGeometry args={[1.42, 0.52]} />
+      <Display handle={display} position={[0, DISPLAY_Y, zFace]} width={DISPLAY_W} />
+      <mesh position={[0, MARQUEE_Y, zFace - 0.07]} material={SKEE_MATS.cabinetDark}>
+        <boxGeometry args={[DISPLAY_W + DISPLAY_BORDER * 2, MARQUEE_H, 0.14]} />
+      </mesh>
+      <mesh position={[0, MARQUEE_Y, zFace + 0.001]} material={sign}>
+        <planeGeometry args={[DISPLAY_W, MARQUEE_H]} />
       </mesh>
     </group>
   )

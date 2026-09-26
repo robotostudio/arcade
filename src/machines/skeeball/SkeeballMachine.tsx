@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useFrame } from '@react-three/fiber'
-import { Html } from '@react-three/drei'
 import {
   CoefficientCombineRule,
   CuboidCollider,
@@ -13,6 +12,7 @@ import {
 import { MathUtils, Vector3, type Group } from 'three'
 import { PAYOUT } from '@/arcade/economy'
 import type { MachineProps } from '@/machines/types'
+import { useDisplay } from '@/world/Display'
 import { Board } from './Board'
 import { Cabinet } from './Cabinet'
 import {
@@ -61,54 +61,16 @@ function ticketsFor(score: number) {
   return Math.max(0, Math.round(score / PAYOUT.skeeball.scoreDivisor))
 }
 
-const HUD_CSS = `
-.sk { position:absolute; inset:0; pointer-events:none; font-family: Impact, "Arial Black", "Helvetica Neue", Arial, sans-serif; color:#fff6d0; text-transform:uppercase; letter-spacing:0.04em; }
-.sk-pills { position:absolute; right:72px; top:16px; display:flex; gap:6px; }
-.sk-pill { border-radius:999px; padding:4px 12px; font-size:13px; line-height:1; background:#111; border:2px solid #f2c230; color:#f2c230; box-shadow: 3px 3px 0 #7a1020; }
-.sk-pill.on { background:#f2c230; color:#3a0a10; }
-.sk-tiles { position:absolute; right:72px; top:52px; display:flex; gap:4px; align-items:flex-end; }
-.sk-tile { min-width:30px; height:40px; display:grid; place-items:center; font-size:26px; background:#f2c230; color:#3a0a10; border:3px solid #7a1020; box-shadow: 0 4px 0 #3a0a10; }
-.sk-tiles small { font-size:11px; color:#f2c230; margin-right:6px; align-self:center; }
-.sk-prompt { position:absolute; left:50%; bottom:36px; transform:translateX(-50%); font-size:22px; white-space:nowrap; text-shadow: 2px 2px 0 #7a1020; }
-.sk-over { position:absolute; inset:0; display:grid; place-items:center; }
-.sk-card { background:#111; border:4px solid #f2c230; padding:18px 28px; box-shadow: 8px 8px 0 #7a1020; text-align:center; }
-.sk-card h2 { margin:0; font-size:28px; }
-.sk-sub { margin-top:8px; font-size:18px; text-shadow: 2px 2px 0 #7a1020; }
-`
+const FOOTER = `${SKEE.balls} BALLS / ${PAYOUT.skeeball.scoreDivisor} PTS A TICKET`
 
-function SkeeballHud({ ball, score, prompt, result }: { ball: number; score: number; prompt: string; result: boolean }) {
-  const digits = String(score).split('')
-  const tickets = ticketsFor(score)
-  return (
-    <div className="sk">
-      <style>{HUD_CSS}</style>
-      <div className="sk-pills">
-        <span className="sk-pill on">Skee-Ball</span>
-        <span className="sk-pill">
-          Ball {ball}/{SKEE.balls}
-        </span>
-      </div>
-      <div className="sk-tiles" aria-label={`${score} points`}>
-        <small>Score</small>
-        {digits.map((d, i) => (
-          <span key={i} className="sk-tile">
-            {d}
-          </span>
-        ))}
-      </div>
-      {prompt ? <div className="sk-prompt">{prompt}</div> : null}
-      {result ? (
-        <div className="sk-over">
-          <div className="sk-card">
-            <h2>{score === 0 ? 'Missed' : 'Round'}</h2>
-            <div className="sk-sub">
-              {score} pts · +{tickets} Tickets
-            </div>
-          </div>
-        </div>
-      ) : null}
-    </div>
-  )
+// One prompt string per phase for the Shell (issue 12): the real key and the verb. Space (or Enter)
+// and a click both press, so the prompt names both. Flight and result take no input.
+function promptFor(active: boolean, phase: Phase): string {
+  if (!active) return ''
+  if (phase === 'idle') return 'Space or click: start'
+  if (phase === 'aim') return 'Space or click: lock aim'
+  if (phase === 'power') return 'Space or click: throw'
+  return ''
 }
 
 function freshGame(): Game {
@@ -280,14 +242,23 @@ function ReturnBalls() {
   )
 }
 
-export function SkeeballMachine({ position, rotation, active, onRoundEnd }: MachineProps) {
+export function SkeeballMachine({ position, rotation, active, onRoundEnd, onPrompt }: MachineProps) {
   const ball = useRef<RapierRigidBody>(null)
   const arrow = useRef<Group>(null)
   const game = useRef<Game>(freshGame())
   const onRoundEndRef = useRef(onRoundEnd)
   onRoundEndRef.current = onRoundEnd
   const readPress = useSkeeballPress(active)
-  const [hud, setHud] = useState({ phase: 'idle' as Phase, score: 0, ball: 1, last: 0, lit: 0, power: 0 })
+  const display = useDisplay({ accent: 'skeeball', title: 'SKEEBALL' })
+  const lastPrompt = useRef<string | null>(null)
+  // React-driven parts only: the lit ring on the Board and the power LEDs. Numbers go to the Display.
+  const [hud, setHud] = useState({ phase: 'idle' as Phase, lit: 0, power: 0 })
+
+  const sendPrompt = (prompt: string) => {
+    if (prompt === lastPrompt.current) return
+    lastPrompt.current = prompt
+    onPrompt?.(prompt)
+  }
 
   const onHole = useCallback((value: number, inside: boolean) => {
     const g = game.current
@@ -320,7 +291,11 @@ export function SkeeballMachine({ position, rotation, active, onRoundEnd }: Mach
       resetBall(ball.current)
       g.needsReset = false
     }
-    if (!active) return
+    if (!active) {
+      display.show({ headline: 'STEP RIGHT UP!', footer: FOOTER })
+      sendPrompt('')
+      return
+    }
 
     const press = g.phase === 'flight' ? false : readPress()
 
@@ -408,46 +383,23 @@ export function SkeeballMachine({ position, rotation, active, onRoundEnd }: Mach
       arrow.current.rotation.y = g.aim
     }
 
-    const ballN = g.phase === 'aim' || g.phase === 'power' ? g.balls + 1 : Math.max(1, g.balls)
+    const ballN = Math.min(g.phase === 'aim' || g.phase === 'power' ? g.balls + 1 : Math.max(1, g.balls), SKEE.balls)
     const lit = g.scored && g.lastThrow > 0 ? g.lastThrow : 0
     setHud((prev) => {
-      if (
-        prev.phase === g.phase &&
-        prev.score === g.score &&
-        prev.ball === ballN &&
-        prev.last === g.lastThrow &&
-        prev.lit === lit &&
-        Math.abs(prev.power - g.power) < 0.04
-      ) {
-        return prev
-      }
-      return {
-        phase: g.phase,
-        score: g.score,
-        ball: Math.min(ballN, SKEE.balls),
-        last: g.lastThrow,
-        lit,
-        power: g.power,
-      }
+      if (prev.phase === g.phase && prev.lit === lit && Math.abs(prev.power - g.power) < 0.04) return prev
+      return { phase: g.phase, lit, power: g.power }
     })
-  })
 
-  const prompt =
-    hud.phase === 'aim'
-      ? 'Space to lock aim'
-      : hud.phase === 'power'
-        ? 'Space to throw'
-        : hud.phase === 'flight'
-          ? hud.last > 0
-            ? `+${hud.last}`
-            : 'In the air'
-          : hud.phase === 'idle'
-            ? 'Space to start'
-            : ''
+    // Balls left and score live on the Display (ADR 0001); the result shows the Tickets paid.
+    if (g.phase === 'idle') display.show({ headline: 'SPACE TO START', footer: FOOTER })
+    else if (g.phase === 'result') display.show({ headline: `+${ticketsFor(g.score)} TICKETS`, sub: `SCORE ${g.score}`, footer: g.score === 0 ? 'MISSED' : FOOTER })
+    else display.show({ headline: `BALL ${ballN} / ${SKEE.balls}`, sub: `SCORE ${g.score}`, footer: g.phase === 'flight' ? (g.scored && g.lastThrow > 0 ? `+${g.lastThrow}` : 'IN THE AIR') : FOOTER })
+    sendPrompt(promptFor(active, g.phase))
+  })
 
   return (
     <group position={position} rotation={rotation} name="skeeball">
-      <Cabinet />
+      <Cabinet display={display} />
       <ReturnBalls />
       <Physics gravity={[0, -9.81, 0]} timeStep={1 / 60} paused={!active}>
         <Lane />
@@ -484,12 +436,6 @@ export function SkeeballMachine({ position, rotation, active, onRoundEnd }: Mach
       </group>
 
       <PowerLeds power={hud.power} show={hud.phase === 'power'} />
-
-      {active ? (
-        <Html fullscreen style={{ pointerEvents: 'none' }} zIndexRange={[30, 10]}>
-          <SkeeballHud ball={hud.ball} score={hud.score} prompt={prompt} result={hud.phase === 'result'} />
-        </Html>
-      ) : null}
     </group>
   )
 }
