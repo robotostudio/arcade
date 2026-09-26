@@ -13,6 +13,7 @@ import { ITEMS, type Item } from './items'
 import { MAT, PILE, RING } from './materials'
 import { PrizeSelector } from './PrizeSelector'
 import { useStore } from './state'
+import { sfx } from '@/arcade/sfx'
 
 type Vec3 = [number, number, number]
 
@@ -192,6 +193,7 @@ function ItemSlot({ item, position, phase, onSelect }: ItemSlotProps) {
       onPointerOver={(e) => {
         e.stopPropagation()
         setHovered(true)
+        sfx.hover()
       }}
       onPointerOut={() => setHovered(false)}
     >

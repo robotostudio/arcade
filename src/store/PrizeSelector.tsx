@@ -13,6 +13,7 @@ import { Html, useCursor, useTexture } from '@react-three/drei'
 import { useFrame, type ThreeEvent } from '@react-three/fiber'
 import * as THREE from 'three'
 import { useArcade } from '@/arcade/state'
+import { sfx } from '@/arcade/sfx'
 import { CREDIT, creditGbp } from '@/arcade/economy'
 import { GRADE_LABEL, ITEMS, STAT_KEYS, STAT_LABEL, itemAfter, itemById, pricePerPiece, type StatKey } from './items'
 import { formatGbp, maxApplicable, priceAfter, useStore } from './state'
@@ -195,6 +196,7 @@ function Arrow({ side, onClick }: { side: -1 | 1; onClick: () => void }) {
       onPointerOver={(e) => {
         e.stopPropagation()
         setHovered(true)
+        sfx.hover()
       }}
       onPointerOut={() => setHovered(false)}
     />
@@ -251,13 +253,14 @@ function ArcadeButton({ x, radius, idle, hot, enabled, onPress, label }: ArcadeB
         material={hovered && enabled ? hot : idle}
         onClick={(e) => {
           e.stopPropagation()
-          if (!enabled) return
+          if (!enabled) { sfx.denied(); return }
           pressed.current = 1
           onPress()
         }}
         onPointerOver={(e) => {
           e.stopPropagation()
           setHovered(true)
+          if (enabled) sfx.hover()
         }}
         onPointerOut={() => setHovered(false)}
         userData={{ label }}

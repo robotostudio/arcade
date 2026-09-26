@@ -13,6 +13,7 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { useThree } from '@react-three/fiber'
 import { CameraControls } from '@react-three/drei'
+import { sfx } from '@/arcade/sfx'
 import { ArcadeCanvas } from './ArcadeCanvas'
 
 type Vec3 = readonly [number, number, number]
@@ -56,6 +57,8 @@ export function Harness({ title, help, camera, fov = 40, machine }: HarnessProps
     setTickets((t) => t + earned)
     setRounds((r) => r + 1)
     setLast(earned > 0 ? `WON +${earned}` : 'missed')
+    if (earned > 0) sfx.win(earned)
+    else sfx.lose()
   }, [])
 
   return (

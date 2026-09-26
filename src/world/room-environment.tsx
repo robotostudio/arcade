@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo } from 'react'
 import { CanvasTexture, RepeatWrapping, SRGBColorSpace } from 'three'
+import { NeonSign } from './NeonSign'
 import { Atmosphere, Glow } from './look/Atmosphere'
 
 function texture(kind: 'carpet' | 'sign', title = '', subtitle = '') {
@@ -105,7 +106,7 @@ export function RoomEnvironment() {
     <Block at={[0, 4.8, -6.8]} size={[18.8, .06, .1]} color="#5faaaa" glow />
     <Block at={[-9.22, 4.8, 4.5]} size={[.08, .06, 23]} color="#ad638f" glow />
     <Block at={[-9.22, 1.25, 4.5]} size={[.08, .12, 23]} color="#f896b8" />
-    <Sign at={[0, 3.9, -6.7]} title="FLEEKADE" subtitle="EST. 1996 • OPEN LATE" width={8.8} />
+    <NeonSign />
     {[-7.7, -6.3, -4.9].map((x, i) => <Cabinet key={x} at={[x, 0, -5.65]} color={['#dc719e', '#5da6b4', '#9e82cd'][i]} title={['ORBIT', 'NOVA', 'RUSH'][i]} />)}
     {[-.5, 1].map((z, i) => <Cabinet key={z} at={[-8.5, 0, z]} rotation={Math.PI / 2} color={['#a786d1', '#da8599', '#68b8b7'][i]} title="PLAY" />)}
     {[-5, 0, 5].map((x, i) => <group key={x}>

@@ -201,7 +201,7 @@ export function Atmosphere() {
     <Glow kind="band" at={[-9.1, 4.8, 4.5]} size={[23, 1.5]} color="#ad638f" intensity={.7} rotation={[0, Math.PI / 2, 0]} />
     <Glow kind="band" at={[-9.1, 1.25, 4.5]} size={[23, 1.6]} color="#f896b8" intensity={.8} rotation={[0, Math.PI / 2, 0]} />
     {/* The marquee: a haze halo that breathes like a neon transformer. */}
-    <Glow kind="spot" at={[0, 3.9, -6.55]} size={[12.5, 4.2]} color="#6ee9db" intensity={.45} pulse={.08} />
-    <Glow kind="spot" at={[0, 3.9, -6.5]} size={[9, 2.6]} color="#fff0c9" intensity={.3} pulse={.12} />
+    <Glow kind="spot" at={[0, 3.85, -6.82]} size={[12.5, 4.2]} color="#6ee9db" intensity={.4} pulse={.08} />
+    <Glow kind="spot" at={[0, 3.85, -6.78]} size={[9, 2.6]} color="#fff0c9" intensity={.22} pulse={.1} />
   </group>
 }
