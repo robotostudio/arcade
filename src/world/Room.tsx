@@ -4,6 +4,7 @@ import { useEffect, useRef } from 'react'
 import { useFrame, useThree } from '@react-three/fiber'
 import { MathUtils, PerspectiveCamera, Vector3 } from 'three'
 import { useArcade } from '@/arcade/state'
+import { useIntro } from '@/intro/store'
 import { StoreCounter } from '@/store/StoreCounter'
 import { StoreHud } from '@/store/StoreHud'
 import { ArcadeCanvas } from './ArcadeCanvas'
@@ -37,9 +38,24 @@ export const STATIONS = {
 }
 export const STATION_ROTATIONS = { whackamole: .55, claw: .2, skeeball: -.2, stacktop: -.55 } as const
 
+// The intro holds the camera high and far back in the fog; on landing it is released and glides in.
+const INTRO_EYE = new Vector3(0, 7.5, 21)
+
+// Tells the intro the Room has drawn its first frame, so the Connecting page can let go.
+function ReadySignal() {
+  const sent = useRef(false)
+  useFrame(() => {
+    if (sent.current) return
+    sent.current = true
+    useIntro.getState().setRoomReady()
+  })
+  return null
+}
+
 function HubView() {
   const { camera, gl, size } = useThree()
   const mode = useArcade((s) => s.mode)
+  const introPhase = useIntro((s) => s.phase)
   const inStore = mode.kind === 'store'
   const target = useRef(new Vector3(0, 1.5, 0))
   const pointer = useRef(0)
@@ -77,6 +93,13 @@ function HubView() {
   }, [camera, size.width, size.height])
 
   useFrame((_, delta) => {
+    if (introPhase === 'boot' || introPhase === 'running') {
+      camera.position.copy(INTRO_EYE)
+      target.current.set(0, 1.5, 0)
+      camera.lookAt(target.current)
+      return
+    }
+    const landing = introPhase === 'landing'
     pan.current = MathUtils.damp(pan.current, pointer.current, 3.5, Math.min(delta, .1))
     const dt = Math.min(delta, .1)
     const play = mode.kind === 'play' && mode.machine in MACHINES ? mode.machine as HubId : null
@@ -89,12 +112,13 @@ function HubView() {
     const x = eye?.x ?? (inStore ? 0 : pan.current * .65)
     const y = eye?.y ?? (inStore ? 2.7 : 3.4)
     const z = eye?.z ?? (inStore ? 6.6 : 10 - Math.abs(pan.current) * .08)
-    camera.position.set(MathUtils.damp(camera.position.x, x, 4, dt), MathUtils.damp(camera.position.y, y, 4, dt), MathUtils.damp(camera.position.z, z, 4, dt))
+    const glide = landing ? 1.8 : 4
+    camera.position.set(MathUtils.damp(camera.position.x, x, glide, dt), MathUtils.damp(camera.position.y, y, glide, dt), MathUtils.damp(camera.position.z, z, glide, dt))
     // Facing the store, aim a touch left (world +x) so the details panel beside the prize screen is centred.
     const lookX = look?.x ?? camera.position.x + Math.sin(yaw.current) * 11 + pan.current * .4 * (1 - spin) + .5 * spin
     const lookY = look?.y ?? (inStore ? 1.9 : 1.5)
     const lookZ = look?.z ?? camera.position.z - Math.cos(yaw.current) * 11
-    const lambda = play ? 4 : 8
+    const lambda = landing ? 3 : play ? 4 : 8
     target.current.x = MathUtils.damp(target.current.x, lookX, lambda, dt)
     target.current.y = MathUtils.damp(target.current.y, lookY, lambda, dt)
     target.current.z = MathUtils.damp(target.current.z, lookZ, lambda, dt)
@@ -113,10 +137,12 @@ export function Room() {
   const openStore = useArcade((s) => s.openStore)
   const exit = useArcade((s) => s.exit)
   const storeButton = useRef<HTMLButtonElement>(null)
+  const introDone = useIntro((s) => s.phase === 'done')
+  const hud = `transition-opacity duration-700 ${introDone ? 'opacity-100' : 'pointer-events-none opacity-0'}`
   const closeStore = () => { exit() }
   useEffect(() => {
-    if (!inStore) storeButton.current?.focus({ preventScroll: true })
-  }, [inStore])
+    if (!inStore && introDone) storeButton.current?.focus({ preventScroll: true })
+  }, [inStore, introDone])
 
   useEffect(() => {
     const keydown = (event: KeyboardEvent) => {
@@ -148,10 +174,11 @@ export function Room() {
       </group>
       <pointLight position={[0, 3.6, 11.6]} color="#ffe1b4" intensity={14} distance={8} />
       <HubView />
+      <ReadySignal />
     </ArcadeCanvas>
     {mode.kind === 'play' && mode.machine === 'stacktop' && <StackTopHud />}
     {mode.kind === 'play' && <div className="absolute bottom-3 left-3 right-3 z-20 flex flex-wrap items-center justify-between gap-2 bg-[#242044]/95 p-3 font-mono text-xs text-white"><span>{LABELS[mode.machine]} · {HELP[mode.machine]}{lastRound?.machine === mode.machine && ` · Round complete: +${lastRound.tickets} Tickets`}</span><button onClick={exit} className="border border-white/40 px-4 py-2">Back to hub · Esc</button></div>}
-    {!inStore && mode.kind === 'room' && <button ref={storeButton} type="button" onClick={openStore} className="absolute bottom-6 left-1/2 z-10 -translate-x-1/2 border border-[#ffe099]/60 bg-[#242044]/95 px-4 py-3 font-mono text-xs uppercase tracking-widest text-[#ffe099] hover:bg-[#393366] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#ffe099]">
+    {!inStore && mode.kind === 'room' && <button ref={storeButton} type="button" inert={!introDone} onClick={openStore} className={`${hud} absolute bottom-6 left-1/2 z-10 -translate-x-1/2 border border-[#ffe099]/60 bg-[#242044]/95 px-4 py-3 font-mono text-xs uppercase tracking-widest text-[#ffe099] hover:bg-[#393366] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#ffe099]`}>
       Store · {tickets} Tickets
     </button>}
     {inStore && <StoreHud onClose={closeStore} />}
