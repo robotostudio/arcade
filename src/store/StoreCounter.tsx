@@ -37,7 +37,7 @@ const BOB_AMP = 0.05
 const BOB_SPEED = 1.6
 
 // Where each Item sits along its shelf.
-const SLOT_X: Record<Tier, number[]> = { white: [-1.7, 0, 1.7], blue: [-1.7, 0, 1.7], gold: [-1, 1] }
+const SLOT_X: Record<Tier, number[]> = { white: [-1.7, 0, 1.7], blue: [-1.7, 0, 1.7], gold: [-1.7, 0, 1.7] }
 
 const PLACED = (['white', 'blue', 'gold'] as Tier[]).flatMap((tier) =>
   ITEMS.filter((i) => i.tier === tier).map((item, n) => ({

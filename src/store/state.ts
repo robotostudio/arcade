@@ -1,9 +1,9 @@
-// Store state: which Item is selected, how many Tickets are applied to it, what was claimed.
+// Store state: which bundle is selected, how many Tickets are applied to it, what was claimed.
 // Only `claimed` persists (localStorage `arcade:claimed`). Tickets live in useArcade.
 import { create } from 'zustand'
 import { createJSONStorage, persist } from 'zustand/middleware'
 import { useArcade } from '@/arcade/state'
-import { discountPct, maxTicketsFor } from '@/arcade/economy'
+import { creditGbp, maxTicketsFor } from '@/arcade/economy'
 import { itemById, type Item } from './items'
 
 export type StoreState = {
@@ -18,19 +18,19 @@ export type StoreState = {
   dismissToast: () => void
 }
 
-// Most Tickets that can go on `item` now: the Tier cap or the balance, whichever is lower.
+// Most Tickets that can go on `item` now: the credit cap or the balance, whichever is lower.
 export function maxApplicable(item: Item, balance = useArcade.getState().tickets): number {
-  return Math.max(0, Math.min(balance, maxTicketsFor(item.tier)))
+  return Math.max(0, Math.min(balance, maxTicketsFor(item)))
 }
 
-// Price in GBP after the Discount bought by `applied` Tickets, rounded to pence.
+// Price in GBP after the credit bought by `applied` Tickets, rounded to pence.
 export function priceAfter(item: Item, applied: number): number {
-  const pct = discountPct(item.tier, applied)
-  return Math.round(item.priceGbp * (100 - pct)) / 100
+  return Math.round((item.priceGbp - creditGbp(item, applied)) * 100) / 100
 }
 
+// Prices always show pence, the way reseller cards do.
 export function formatGbp(n: number): string {
-  return `£${Number.isInteger(n) ? n : n.toFixed(2)}`
+  return `£${n.toFixed(2)}`
 }
 
 export const useStore = create<StoreState>()(
@@ -60,10 +60,10 @@ export const useStore = create<StoreState>()(
           set({ toast: 'Not enough Tickets. Go win a Round.' })
           return
         }
-        const pct = discountPct(item.tier, applied)
+        const off = creditGbp(item, applied)
         set({
           claimed: claimed.includes(item.id) ? claimed : [...claimed, item.id],
-          toast: `Claimed: ${item.name} at ${pct}% off, now ${formatGbp(priceAfter(item, applied))}. Roboto will be in touch.`,
+          toast: `Claimed: ${item.title} with ${formatGbp(off)} off, now ${formatGbp(priceAfter(item, applied))}. This is a demo: nothing ships.`,
           applied: 0,
         })
       },
