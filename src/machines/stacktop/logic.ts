@@ -147,7 +147,8 @@ function payoutFor(s: StackerState, kind: Result['kind']): number {
     const p = s.prizes.payout
     return kind === 'win' ? p.major : kind === 'minor' ? p.minor : p.perRow * rows
   }
-  return kind === 'win' ? PAYOUT.stacker.win : PAYOUT.stacker.perRow * rows
+  // No Prizes given: Stack to the Top's flat rates (the Stacker that used this fallback is retired).
+  return kind === 'win' ? PAYOUT.stacktop.major : PAYOUT.stacktop.perRow * rows
 }
 
 function endRound(s: StackerState, kind: Result['kind']): void {

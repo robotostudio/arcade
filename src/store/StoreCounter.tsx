@@ -2,8 +2,10 @@
 
 // The Store counter: a low-poly prize counter with a back shelf unit, one shelf per Tier
 // (bottom White, middle Blue, top Gold), each Bundle a garment pile standing on its Tier ring.
-// Look rules: Lambert (Gouraud), no shadows, low-segment primitives, shared materials,
-// and useFrame only mutates refs (no allocation, no React state).
+// The counter wears the Livery (Plinth, trim, cream panels; materials.ts) and has no Accent;
+// only the Tier rings and piles carry the Store's own colours. Look rules: Lambert (Gouraud),
+// no shadows, low-segment primitives, shared materials, and useFrame only mutates refs
+// (no allocation, no React state).
 import { Suspense, useRef, useState } from 'react'
 import { useFrame, type ThreeEvent } from '@react-three/fiber'
 import { useCursor } from '@react-three/drei'
@@ -66,15 +68,18 @@ export function StoreCounter({ position, rotation, onSelect, onOpen, open, onClo
       onPointerOver={() => setHovered(true)}
       onPointerOut={() => setHovered(false)}
     >
-      {/* Counter body and top slab */}
-      <mesh position={[0, BODY.h / 2, 0]} material={MAT.body}>
+      {/* Counter body on the Plinth, cream top slab and a cream panel on its face */}
+      <mesh position={[0, BODY.h / 2, 0]} material={MAT.plinth}>
         <boxGeometry args={[BODY.w, BODY.h, BODY.d]} />
       </mesh>
-      <mesh position={[0, BODY.h + 0.06, 0.05]} material={MAT.slab}>
+      <mesh position={[0, BODY.h + 0.06, 0.05]} material={MAT.panel}>
         <boxGeometry args={[BODY.w + 0.3, 0.12, BODY.d + 0.2]} />
       </mesh>
+      <mesh position={[0, BODY.h / 2 + 0.02, BODY.d / 2 + 0.02]} material={MAT.panel}>
+        <boxGeometry args={[BODY.w - 0.6, BODY.h - 0.5, 0.04]} />
+      </mesh>
       {/* Kick plate so the body does not float in the fog */}
-      <mesh position={[0, 0.06, 0.02]} material={MAT.shelf}>
+      <mesh position={[0, 0.06, 0.02]} material={MAT.trim}>
         <boxGeometry args={[BODY.w - 0.1, 0.12, BODY.d]} />
       </mesh>
 
@@ -101,18 +106,18 @@ function ShelfUnit() {
   return (
     <group>
       {/* Back panel */}
-      <mesh position={[0, top / 2, SHELF_Z - 0.34]} material={MAT.shelf}>
+      <mesh position={[0, top / 2, SHELF_Z - 0.34]} material={MAT.trim}>
         <boxGeometry args={[SHELF_W + 0.2, top, 0.08]} />
       </mesh>
       {/* Uprights */}
       {[-1, 1].map((s) => (
-        <mesh key={s} position={[s * (SHELF_W / 2 + 0.05), top / 2, SHELF_Z]} material={MAT.shelf}>
+        <mesh key={s} position={[s * (SHELF_W / 2 + 0.05), top / 2, SHELF_Z]} material={MAT.trim}>
           <boxGeometry args={[0.1, top, 0.7]} />
         </mesh>
       ))}
       {/* One board per Tier */}
       {(Object.keys(SHELF_Y) as Tier[]).map((tier) => (
-        <mesh key={tier} position={[0, SHELF_Y[tier] - 0.04, SHELF_Z]} material={MAT.shelf}>
+        <mesh key={tier} position={[0, SHELF_Y[tier] - 0.04, SHELF_Z]} material={MAT.trim}>
           <boxGeometry args={[SHELF_W, 0.08, 0.66]} />
         </mesh>
       ))}
@@ -133,17 +138,17 @@ function Sign() {
     <group position={[0, SIGN_Y, SHELF_Z + 0.1]}>
       {/* Chains */}
       {[-1, 1].map((s) => (
-        <mesh key={s} position={[s * 1.1, 0.35, 0]} material={MAT.plinth}>
+        <mesh key={s} position={[s * 1.1, 0.35, 0]} material={MAT.trim}>
           <boxGeometry args={[0.03, 0.4, 0.03]} />
         </mesh>
       ))}
-      <mesh material={MAT.sign}>
+      <mesh material={MAT.frame}>
         <boxGeometry args={[2.8, 0.42, 0.08]} />
       </mesh>
       {/* Pixel lettering uses geometry so the sign needs no font download. */}
       {STORE_GLYPHS.map((rows, letter) => rows.flatMap((row, y) =>
         [...row].flatMap((pixel, x) => pixel === '1' ? (
-          <mesh key={`${letter}-${y}-${x}`} position={[(letter * 4 + x - 9) * 0.095, (2 - y) * 0.06, 0.055]} material={MAT.signText}>
+          <mesh key={`${letter}-${y}-${x}`} position={[(letter * 4 + x - 9) * 0.095, (2 - y) * 0.06, 0.055]} material={MAT.glow}>
             <boxGeometry args={[0.08, 0.05, 0.02]} />
           </mesh>
         ) : []),
@@ -210,7 +215,7 @@ function ItemSlot({ item, position, phase, onSelect }: ItemSlotProps) {
         <GarmentPile item={item} />
       </group>
       {selected && (
-        <mesh ref={marker} position={[0, 0.7, 0]} rotation={[0, 0, Math.PI / 4]} material={MAT.marker}>
+        <mesh ref={marker} position={[0, 0.7, 0]} rotation={[0, 0, Math.PI / 4]} material={MAT.glow}>
           <boxGeometry args={[0.08, 0.08, 0.08]} />
         </mesh>
       )}

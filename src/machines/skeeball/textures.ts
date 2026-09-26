@@ -1,90 +1,72 @@
 'use client'
 
 import { useEffect, useMemo } from 'react'
-import { CanvasTexture, LinearFilter, MeshBasicMaterial, NearestFilter, SRGBColorSpace } from 'three'
+import { MeshBasicMaterial } from 'three'
+import { type CanvasDraw, displayFont, useLiveryCanvas } from '@/world/Display'
+import { livery } from '@/world/livery'
 
-const FONT = 'Impact, "Arial Black", "Helvetica Neue", Arial, sans-serif'
-const YELLOW = '#f2c230'
-const MAROON = '#7a1020'
+// Canvas textures drawn in the Livery (issue 12): VT323 at integer px, colours from the table.
+// Each redraws once the font resolves and whenever the ?livery=1 panel repaints.
+type Draw = CanvasDraw
 
-function canvasTexture(draw: (ctx: CanvasRenderingContext2D, w: number, h: number) => void, w: number, h: number) {
-  const canvas = document.createElement('canvas')
-  canvas.width = w
-  canvas.height = h
-  draw(canvas.getContext('2d')!, w, h)
-  const map = new CanvasTexture(canvas)
-  map.colorSpace = SRGBColorSpace
-  map.magFilter = NearestFilter
-  map.minFilter = LinearFilter
-  map.generateMipmaps = false
-  return map
+function useLiveryCanvasMat(draw: Draw, w: number, h: number, transparent = false) {
+  const sign = useLiveryCanvas(w, h, draw)
+  const mat = useMemo(() => new MeshBasicMaterial({ map: sign.texture, transparent }), [sign, transparent])
+  useEffect(() => () => mat.dispose(), [mat])
+  return mat
 }
 
-function bulbs(ctx: CanvasRenderingContext2D, w: number, h: number) {
-  const r = 14
-  for (let x = 28; x < w - 10; x += 36) {
-    for (const y of [22, h - 22]) {
+function bulbs(ctx: CanvasRenderingContext2D, w: number, h: number, fill: string, stroke: string) {
+  const r = 13
+  for (let x = 30; x < w - 12; x += 36) {
+    for (const y of [24, h - 24]) {
       ctx.beginPath()
       ctx.arc(x, y, r, 0, Math.PI * 2)
-      ctx.fillStyle = '#fff6d0'
+      ctx.fillStyle = fill
       ctx.fill()
       ctx.lineWidth = 3
-      ctx.strokeStyle = '#e07a10'
+      ctx.strokeStyle = stroke
       ctx.stroke()
     }
   }
 }
 
-export function useSignMat() {
-  const map = useMemo(
-    () =>
-      canvasTexture((ctx, w, h) => {
-        ctx.fillStyle = YELLOW
-        ctx.fillRect(0, 0, w, h)
-        bulbs(ctx, w, h)
-        ctx.fillStyle = MAROON
-        ctx.fillRect(0, h * 0.72, w, h * 0.28)
-        ctx.font = `bold 78px ${FONT}`
-        ctx.textAlign = 'center'
-        ctx.textBaseline = 'middle'
-        ctx.fillText('SKEE-BALL', w / 2, h * 0.4)
-        ctx.fillStyle = YELLOW
-        ctx.font = `bold 36px ${FONT}`
-        ctx.fillText('9 BALLS', w / 2, h * 0.86)
-      }, 1024, 256),
-    [],
-  )
-  const mat = useMemo(() => new MeshBasicMaterial({ map }), [map])
-  useEffect(
-    () => () => {
-      map.dispose()
-      mat.dispose()
-    },
-    [map, mat],
-  )
-  return mat
+// The bulb marquee above the Display: dark screen, Accent border and title, cream bulbs and sub-line.
+function drawSign(ctx: CanvasRenderingContext2D, w: number, h: number) {
+  const t = livery()
+  ctx.fillStyle = t.screen
+  ctx.fillRect(0, 0, w, h)
+  ctx.strokeStyle = t.skeeball
+  ctx.lineWidth = 10
+  ctx.strokeRect(10, 10, w - 20, h - 20)
+  bulbs(ctx, w, h, t.text, t.skeeball)
+  ctx.textAlign = 'center'
+  ctx.textBaseline = 'middle'
+  ctx.fillStyle = t.skeeball
+  ctx.font = displayFont(104)
+  ctx.fillText('SKEEBALL', w / 2, 116)
+  ctx.fillStyle = t.text
+  ctx.font = displayFont(40)
+  ctx.fillText('9 BALLS', w / 2, 188)
 }
 
+export function useSignMat() {
+  return useLiveryCanvasMat(drawSign, 1024, 256)
+}
+
+// A cup's point value, cream on the dark board.
 export function useLabelMat(value: number) {
-  const map = useMemo(
-    () =>
-      canvasTexture((ctx, w, h) => {
-        ctx.clearRect(0, 0, w, h)
-        ctx.fillStyle = YELLOW
-        ctx.font = `bold 52px ${FONT}`
-        ctx.textAlign = 'center'
-        ctx.textBaseline = 'middle'
-        ctx.fillText(String(value), w / 2, h / 2 + 2)
-      }, 128, 64),
+  const draw = useMemo<Draw>(
+    () => (ctx, w, h) => {
+      const t = livery()
+      ctx.clearRect(0, 0, w, h)
+      ctx.fillStyle = t.text
+      ctx.font = displayFont(52)
+      ctx.textAlign = 'center'
+      ctx.textBaseline = 'middle'
+      ctx.fillText(String(value), w / 2, h / 2 + 2)
+    },
     [value],
   )
-  const mat = useMemo(() => new MeshBasicMaterial({ map, transparent: true }), [map])
-  useEffect(
-    () => () => {
-      map.dispose()
-      mat.dispose()
-    },
-    [map, mat],
-  )
-  return mat
+  return useLiveryCanvasMat(draw, 128, 64, true)
 }

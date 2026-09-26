@@ -1,17 +1,24 @@
 'use client'
 
+import { Display, type DisplayHandle } from '@/world/Display'
 import { BOARD, CABINET, SKEE, laneTop, lip } from './constants'
 import { SKEE_MATS } from './materials'
 import { useSignMat } from './textures'
 
-// Visual only. Colliders live on the lane. Maroon body, blue flanks and a yellow
-// bulb marquee, the same cabinet language as Stack to the Top. Hero scale: the
-// marquee tops out near 3.7 m, level with the Claw and Stack to the Top.
-export function Cabinet() {
+// Visual only. Colliders live on the lane. Livery (issue 12): Plinth base, the body and flanks in
+// the Skeeball Accent, Accent edge strips. Hero scale: the back tower carries the Display (balls
+// and score) above the canopy with the bulb marquee over it, topping out near 3.9 m, level with the
+// Claw and Stack to the Top.
+const DISPLAY_W = 1.2
+const DISPLAY_H = DISPLAY_W * (384 / 1024)
+const DISPLAY_BORDER = DISPLAY_W * 0.06
+
+export function Cabinet({ display }: { display: DisplayHandle }) {
   const { startZ, y0, slope, run, width } = SKEE.lane
   const { width: W, backZ, towerH, marqueeH } = CABINET
   const top = laneTop()
   const end = lip()
+  const displayY = towerH - 0.06 - DISPLAY_H / 2 - DISPLAY_BORDER
   const sign = useSignMat()
 
   const front = startZ + 0.12
@@ -86,11 +93,12 @@ export function Cabinet() {
         <boxGeometry args={[W - 0.3, 0.02, 0.04]} />
       </mesh>
 
-      {/* Back tower and marquee. */}
+      {/* Back tower: the Display above the canopy, the marquee on top. */}
       <mesh position={[0, towerH / 2, backZ + 0.06]} material={SKEE_MATS.cabinet}>
         <boxGeometry args={[W, towerH, 0.12]} />
       </mesh>
-      <mesh position={[0, towerH + marqueeH / 2, backZ + 0.18]} material={SKEE_MATS.cabinet}>
+      <Display handle={display} position={[0, displayY, backZ + 0.26]} width={DISPLAY_W} />
+      <mesh position={[0, towerH + marqueeH / 2, backZ + 0.18]} material={SKEE_MATS.cabinetDark}>
         <boxGeometry args={[W + 0.1, marqueeH, 0.36]} />
       </mesh>
       <mesh position={[0, towerH + marqueeH / 2, backZ + 0.365]} material={sign}>

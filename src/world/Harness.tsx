@@ -15,6 +15,7 @@ import { useThree } from '@react-three/fiber'
 import { CameraControls } from '@react-three/drei'
 import { sfx } from '@/arcade/sfx'
 import { ArcadeCanvas } from './ArcadeCanvas'
+import { SHELL } from './Shell'
 
 type Vec3 = readonly [number, number, number]
 
@@ -36,7 +37,7 @@ type HarnessProps = {
 
 // Runs inside the Canvas so it sees CameraControls once makeDefault has put it in the store.
 // Frames once, then the dev owns the camera (drag to orbit).
-function FrameCamera({ position, target }: Dock) {
+export function FrameCamera({ position, target }: Dock) {
   const controls = useThree((s) => s.controls) as CameraControls | null
   const framed = useRef(false)
   useEffect(() => {
@@ -74,10 +75,10 @@ export function Harness({ title, help, camera, fov = 40, machine }: HarnessProps
           top: 16,
           left: 16,
           zIndex: 10,
-          fontFamily: 'ui-monospace, monospace',
-          color: '#d8cfc0',
-          fontSize: 13,
-          lineHeight: 1.6,
+          fontFamily: 'var(--font-vt323), monospace',
+          color: SHELL.text,
+          fontSize: 20,
+          lineHeight: 1.3,
           whiteSpace: 'pre',
         }}
       >
@@ -93,9 +94,9 @@ export function Harness({ title, help, camera, fov = 40, machine }: HarnessProps
           style={{
             marginTop: 6,
             font: 'inherit',
-            color: '#d8cfc0',
-            background: '#1a1410',
-            border: '1px solid #6b1f1f',
+            color: SHELL.text,
+            background: SHELL.surface,
+            border: `1px solid ${SHELL.edge}`,
             padding: '2px 10px',
             cursor: 'pointer',
           }}

@@ -14,9 +14,7 @@ export function psxify<M extends THREE.Material>(material: M, affine = false): M
         `#include <project_vertex>
        gl_Position.xy = floor(gl_Position.xy / gl_Position.w * uSnap) / uSnap * gl_Position.w;
        vAffine = 1.0 + length(mvPosition.xyz) * 0.05;
-       #ifdef USE_MAP
-       vMapUv *= vAffine;
-       #endif`,
+       ${affine ? '#ifdef USE_MAP\n vMapUv *= vAffine;\n #endif' : ''}`,
       )
     if (affine) {
       shader.fragmentShader =

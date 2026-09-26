@@ -1,15 +1,18 @@
 'use client'
 
 // Stack to the Top: the Stacker rules plus Minor and Major prize lines, in a cabinet
-// modelled on the real machine. Rules live in ../stacker/logic (pure); this file drives
-// them from useFrame and input, paints the grid (one instancedMesh), shows the face
-// (one CanvasTexture drawn on mount) and reports to its HUD store and onRoundEnd.
+// modelled on the real machine and wearing the Livery (issue 12). Rules live in
+// ../stacker/logic (pure); this file drives them from useFrame and input, paints the
+// grid (one instancedMesh), shows the face (one CanvasTexture), carries the row, the
+// prize lines and the Take/Risk decision on the Display, and reports to onRoundEnd.
 import { useEffect, useMemo, useRef } from 'react'
 import { useFrame, type ThreeEvent } from '@react-three/fiber'
 import { MeshBasicMaterial, type InstancedMesh } from 'three'
 import type { MachineProps } from '@/machines/types'
 import { sfx } from '@/arcade/sfx'
+import { usePrompt } from '@/machines/prompt'
 import { PAYOUT } from '@/arcade/economy'
+import { Display, useDisplay } from '@/world/Display'
 import {
   H,
   W,
@@ -21,13 +24,15 @@ import {
   step,
   toAttract,
   type Choice,
+  type Phase,
   type Prizes,
   type StackerState,
-} from '@/machines/stacker/logic'
-import { paintGrid, type GridLayout } from '@/machines/stacker/grid'
+} from './logic'
+import { paintGrid, type GridLayout } from './grid'
+import type { StackerHud } from './stackerHud'
 import { useStackTopHud } from './hud'
 import { cellColors, materials } from './materials'
-import { BODY_D, BODY_H, BODY_W, BOX, CELL, FACE_Y0, FACE_Z, MINOR_ROW, createFaceTexture, rowY } from './face'
+import { BODY_D, BODY_H, BODY_W, BOX, CELL, FACE_Y0, FACE_Z, MARQUEE_Y, MINOR_ROW, rowY, useFaceTexture } from './face'
 
 export const DECIDE_MS = 8000
 export const PRIZES: Prizes = { minorRow: MINOR_ROW, payout: PAYOUT.stacktop, decideMs: DECIDE_MS }
@@ -41,7 +46,48 @@ const LAYOUT: GridLayout = { cell: CELL, z: CELL_Z, rowY }
 const DECK_Y = 0.5
 const DECK_D = 0.5
 const BUTTON_Z = FACE_Z + DECK_D * 0.6
-const TENTH = 100 // the HUD countdown updates at this granularity, never per frame
+const TENTH = 100 // the decide countdown updates at this granularity, never per frame
+
+// The Display is a header over the marquee band: its frame starts at the band's foot (above
+// the MAJOR PRIZE band, which stays visible) and stands proud of the roof, tilted down to
+// face the camera at DOCK, which sits about 16 degrees below it.
+const DISPLAY_W = 1.7
+const DISPLAY_FRAME_H = DISPLAY_W * (384 / 1024) + DISPLAY_W * 0.12
+const DISPLAY_Y = MARQUEE_Y[0] + DISPLAY_FRAME_H / 2
+const DISPLAY_TILT = 0.22
+
+const PRIZE_LINE = `MINOR ${MINOR_ROW} · +${PRIZES.payout.minor}   MAJOR ${H} · +${PRIZES.payout.major}`
+
+// One prompt string per phase for the Shell: the real key and the verb. The result stays
+// up on its own and ignores input, so there and away from the Machine there is no prompt.
+function promptFor(active: boolean, phase: Phase): string {
+  if (!active) return ''
+  if (phase === 'idle') return 'Space: start'
+  if (phase === 'playing') return 'Space: stop'
+  if (phase === 'decide') return 'Left: take · Right: risk'
+  return ''
+}
+
+// What the Display carries: the row, the prize lines, the Take/Risk decision, the result.
+function linesFor(active: boolean, hud: StackerHud): string[] {
+  if (!active) return [PRIZE_LINE, 'STEP RIGHT UP!']
+  const { phase, row, decideLeftMs, lastResult } = hud
+  if (phase === 'idle') return [`ROW 0 / ${H}`, PRIZE_LINE, 'SPACE TO START']
+  if (phase === 'playing') return [`ROW ${Math.min(row + 1, H)} / ${H}`, PRIZE_LINE, 'SPACE TO STOP']
+  if (phase === 'decide') {
+    const secs = Math.ceil(decideLeftMs / 1000)
+    return [`ROW ${row} / ${H}`, `MINOR LINE!  TAKE +${PRIZES.payout.minor} OR RISK IT`, `LEFT: TAKE   RIGHT: RISK   (${secs}s)`]
+  }
+  const result = lastResult
+  const headline = !result
+    ? ''
+    : result.kind === 'lose'
+      ? `MISSED · +${result.tickets} TICKETS`
+      : result.kind === 'minor'
+        ? `MINOR PRIZE +${result.tickets}`
+        : `MAJOR PRIZE +${result.tickets}`
+  return [`ROW ${row} / ${H}`, headline, PRIZE_LINE]
+}
 
 function publish(s: StackerState) {
   useStackTopHud.setState({
@@ -52,23 +98,20 @@ function publish(s: StackerState) {
   })
 }
 
-export function StackTop({ position, rotation, active, onRoundEnd }: MachineProps) {
+export function StackTop({ position, rotation, active, onRoundEnd, onPrompt }: MachineProps) {
   const grid = useRef<InstancedMesh>(null)
   const state = useRef<StackerState>(null)
   if (!state.current) state.current = createState(PRIZES)
   const painted = useRef(-1)
   const lastTenth = useRef(-1)
+  const sendPrompt = usePrompt(onPrompt)
   const onRoundEndRef = useRef(onRoundEnd)
   onRoundEndRef.current = onRoundEnd
+  const display = useDisplay({ accent: 'stacktop', title: 'STACK TO THE TOP' })
 
-  const faceMaterial = useMemo(() => new MeshBasicMaterial({ map: createFaceTexture() }), [])
-  useEffect(
-    () => () => {
-      faceMaterial.map?.dispose()
-      faceMaterial.dispose()
-    },
-    [faceMaterial],
-  )
+  const faceTexture = useFaceTexture()
+  const faceMaterial = useMemo(() => new MeshBasicMaterial({ map: faceTexture }), [faceTexture])
+  useEffect(() => () => faceMaterial.dispose(), [faceMaterial])
 
   // Every way a Round ends goes through here, so onRoundEnd fires exactly once per Round.
   const report = useRef((s: StackerState) => {
@@ -98,12 +141,6 @@ export function StackTop({ position, rotation, active, onRoundEnd }: MachineProp
     else publish(s)
   }).current
 
-  // Let the HUD's buttons pick too.
-  useEffect(() => {
-    useStackTopHud.setState({ choose: doChoose })
-    return () => useStackTopHud.setState({ choose: () => {} })
-  }, [doChoose])
-
   // Leaving the Machine mid-Round forfeits (pays rows placed; in the pause, takes Minor).
   useEffect(() => {
     const s = state.current!
@@ -113,6 +150,7 @@ export function StackTop({ position, rotation, active, onRoundEnd }: MachineProp
     publish(s)
   }, [active, report])
 
+  // Space (or Enter) starts and stops; Left takes Minor, Right risks it for Major.
   useEffect(() => {
     if (!active) return
     const onKey = (e: KeyboardEvent) => {
@@ -148,6 +186,9 @@ export function StackTop({ position, rotation, active, onRoundEnd }: MachineProp
       paintGrid(mesh, s, LAYOUT, cellColors)
       painted.current = s.version
     }
+    // The store is the source of truth for the Display; show() skips unchanged content.
+    display.show({ lines: linesFor(active, useStackTopHud.getState()) })
+    sendPrompt(promptFor(active, s.phase))
   })
 
   const stop = (fn: () => void) => (e: ThreeEvent<PointerEvent>) => {
@@ -158,7 +199,7 @@ export function StackTop({ position, rotation, active, onRoundEnd }: MachineProp
 
   return (
     <group position={position} rotation={rotation} onPointerDown={stop(doPress)}>
-      {/* Plinth, body, yellow edge strips. */}
+      {/* Plinth, body in the Accent, Accent edge strip along the roof. */}
       <mesh position={[0, 0.1, 0.05]} material={materials.plinth}>
         <boxGeometry args={[BODY_W + 0.2, 0.2, BODY_D + 0.1]} />
       </mesh>
@@ -174,10 +215,13 @@ export function StackTop({ position, rotation, active, onRoundEnd }: MachineProp
         <boxGeometry args={[BODY_W + 0.1, 0.06, BODY_D + 0.05]} />
       </mesh>
 
-      {/* The face: marquee, banners, side columns and glass in one texture. */}
+      {/* The face: marquee, bands, side columns and glass in one texture. */}
       <mesh position={[0, (FACE_Y0 + BODY_H) / 2, FACE_Z + 0.005]} material={faceMaterial}>
         <planeGeometry args={[BODY_W, BODY_H - FACE_Y0]} />
       </mesh>
+
+      {/* The Display header over the marquee band. */}
+      <Display handle={display} position={[0, DISPLAY_Y, FACE_Z + 0.1]} rotation={[DISPLAY_TILT, 0, 0]} width={DISPLAY_W} />
 
       {/* Control deck: the big red stop button between the white TAKE and gold GO buttons. */}
       <mesh position={[0, DECK_Y, FACE_Z + DECK_D / 2]} material={materials.deck}>

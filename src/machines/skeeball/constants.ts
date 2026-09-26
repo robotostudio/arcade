@@ -144,7 +144,7 @@ export const HOLES: Hole[] = [
   { value: 100, x: 0.33, s: 1.0, r: 0.056, mat: 'ring100' },
 ]
 
-export const CABINET = { width: 1.7, backZ: -2.75, towerH: 3.2, marqueeH: 0.5 } as const
+export const CABINET = { width: 1.7, backZ: -2.75, towerH: 3.5, marqueeH: 0.46 } as const
 
 // Player's eye behind the foul line, looking down the alley at the rings.
 export const DOCK = {

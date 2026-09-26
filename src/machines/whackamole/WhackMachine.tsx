@@ -1,10 +1,13 @@
 'use client'
 
-import { useEffect, useMemo, useRef } from 'react'
+import { useMemo, useRef } from 'react'
 import { useFrame, type ThreeEvent } from '@react-three/fiber'
-import { CanvasTexture, Group, LinearMipmapLinearFilter, MathUtils, NearestFilter, Vector3 } from 'three'
+import { Group, Material, MathUtils, Vector3 } from 'three'
 import { sfx } from '@/arcade/sfx'
+import { Display, useDisplay } from '@/world/Display'
+import { bodyMaterial, litMaterial, unlitMaterial } from '@/world/livery'
 import type { MachineProps } from '../types'
+import { usePrompt } from '../prompt'
 import { WHACK, holePosition } from './constants'
 import { stillMole, stepMole, type MoleMotion } from './moleMotion'
 import { initialState, step, type State } from './whackLogic'
@@ -14,8 +17,35 @@ import { useWhackInput } from './useWhackInput'
 // body stops short of that row and the deck overhangs it.
 const DECK_TILT = 0.2
 
-function Box({ at, size, color }: { at: [number, number, number]; size: [number, number, number]; color: string }) {
-  return <mesh position={at}><boxGeometry args={size} /><meshLambertMaterial color={color} /></mesh>
+// The reference cabinet for the Livery (issue 12): Plinth, trim and Display frame from the shared
+// table, cream panels, the body in the Whack-a-Mole Accent. Colours the Machine owns (the Moles, the
+// mallet, the hole rims, the hit ring) go through litMaterial / unlitMaterial so they take the snap.
+const MOLE = {
+  hole: litMaterial('#291f32'),
+  rim: litMaterial('#bd6b31'),
+  fur: litMaterial('#a97658', { flatShading: true }),
+  ear: litMaterial('#d5a17a', { flatShading: true }),
+  eye: litMaterial('#201b2b'),
+  nose: litMaterial('#ffc0a0', { flatShading: true }),
+  tooth: litMaterial('#fff4d7'),
+  ring: unlitMaterial('#fff0a3'),
+  handle: litMaterial('#6b3940'),
+  head: litMaterial('#ec627b', { flatShading: true }),
+}
+
+const FOOTER = '9 HOLES / 30 SECONDS / 5 TICKETS A HIT'
+
+// One prompt string per phase for the Shell: the real key and the verb. Space only starts a Round
+// from idle; the result phase ignores input and returns to idle by itself.
+function promptFor(active: boolean, phase: State['phase']): string {
+  if (!active) return ''
+  if (phase === 'idle') return 'Space: start'
+  if (phase === 'result') return '' // the Shell already offers Back
+  return 'Click or 1-9: whack'
+}
+
+function Box({ at, size, material }: { at: [number, number, number]; size: [number, number, number]; material: Material }) {
+  return <mesh position={at} material={material}><boxGeometry args={size} /></mesh>
 }
 
 // Sounds come from diffing one step: countdown beeps, GO, Pops, Whacks and escaped Moles.
@@ -31,7 +61,7 @@ function playCues(prev: State, next: State) {
   }
 }
 
-export function WhackMachine({ position, rotation, active, onRoundEnd }: MachineProps) {
+export function WhackMachine({ position, rotation, active, onRoundEnd, onPrompt }: MachineProps) {
   const state = useRef(initialState())
   const board = useRef<Group>(null)
   const moles = useRef<(Group | null)[]>([])
@@ -46,15 +76,8 @@ export function WhackMachine({ position, rotation, active, onRoundEnd }: Machine
   const attract = useRef({ next: 1, hole: -1, age: 0 })
   const input = useWhackInput(active)
   const localPoint = useMemo(() => new Vector3(), [])
-  const display = useMemo(() => {
-    const canvas = document.createElement('canvas')
-    canvas.width = 1024; canvas.height = 384
-    const texture = new CanvasTexture(canvas)
-    // Mipmapped when shrunk so the sign stays legible from the hub; still crisp pixels up close.
-    texture.minFilter = LinearMipmapLinearFilter; texture.magFilter = NearestFilter; texture.anisotropy = 8
-    return { canvas, texture, last: '' }
-  }, [])
-  useEffect(() => () => display.texture.dispose(), [display])
+  const display = useDisplay({ accent: 'whackamole', title: 'MOLE PATROL' })
+  const sendPrompt = usePrompt(onPrompt)
 
   useFrame((_, rawDt) => {
     const dt = Math.min(rawDt, .1)
@@ -120,18 +143,8 @@ export function WhackMachine({ position, rotation, active, onRoundEnd }: Machine
       mallet.current.rotation.x = hammer.ang
     }
     const headline = !active ? 'STEP RIGHT UP!' : s.phase === 'idle' ? 'SPACE / CLICK TO START' : s.phase === 'countdown' ? `READY... ${Math.ceil(WHACK.countdown - s.elapsed)}` : s.phase === 'result' ? `+${s.whacks * WHACK.perWhack} TICKETS!` : `${Math.ceil(WHACK.duration - s.elapsed).toString().padStart(2, '0')} SEC     ${s.whacks.toString().padStart(2, '0')} WHACKS`
-    if (display.last !== headline) {
-      display.last = headline
-      const ctx = display.canvas.getContext('2d')!
-      ctx.fillStyle = '#221c2d'; ctx.fillRect(0, 0, 1024, 384)
-      ctx.strokeStyle = '#ffb941'; ctx.lineWidth = 12; ctx.strokeRect(12, 12, 1000, 360)
-      ctx.textAlign = 'center'
-      // Chunky display face at sizes that survive the distance and the dither pass.
-      ctx.fillStyle = '#ffbd50'; ctx.font = '96px Impact, "Arial Black", sans-serif'; ctx.fillText('MOLE PATROL', 512, 112, 960)
-      ctx.fillStyle = '#fff4d7'; ctx.font = '72px Impact, "Arial Black", sans-serif'; ctx.fillText(headline, 512, 228, 960)
-      ctx.fillStyle = '#eaba80'; ctx.font = '56px Impact, "Arial Black", sans-serif'; ctx.fillText('30 SEC  ·  5 TICKETS A HIT', 512, 332, 960)
-      display.texture.needsUpdate = true
-    }
+    display.show({ headline, footer: FOOTER })
+    sendPrompt(promptFor(active, s.phase))
   })
 
   const pointToHole = (event: ThreeEvent<PointerEvent>) => {
@@ -144,35 +157,34 @@ export function WhackMachine({ position, rotation, active, onRoundEnd }: Machine
     return column >= 0 && column < 3 && row >= 0 && row < 3 ? (2 - row) * 3 + column : -1
   }
   return <group position={position} rotation={rotation}>
-    <Box at={[0, .12, .05]} size={[1.9, .24, 1.75]} color="#362940" />
+    <Box at={[0, .12, .05]} size={[1.9, .24, 1.75]} material={bodyMaterial('plinth')} />
     {/* Tall rear column meets the lifted back of the deck; the front box stays under the near row. */}
-    <Box at={[0, .7, -.32]} size={[1.74, 1.04, .86]} color="#d66b27" />
-    <Box at={[0, .48, .36]} size={[1.74, .72, .7]} color="#d66b27" />
-    <Box at={[0, .5, .73]} size={[1.36, .42, .05]} color="#f4aa3f" />
-    <Box at={[0, .42, .77]} size={[.38, .08, .04]} color="#312634" />
-    <Box at={[0, 2.32, -.9]} size={[1.92, .78, .14]} color="#f4aa3f" />
-    <mesh position={[0, 2.32, -.82]}><planeGeometry args={[1.8, .675]} /><meshBasicMaterial map={display.texture} /></mesh>
+    <Box at={[0, .7, -.32]} size={[1.74, 1.04, .86]} material={bodyMaterial('whackamole')} />
+    <Box at={[0, .48, .36]} size={[1.74, .72, .7]} material={bodyMaterial('whackamole')} />
+    <Box at={[0, .5, .73]} size={[1.36, .42, .05]} material={bodyMaterial('panel')} />
+    <Box at={[0, .42, .77]} size={[.38, .08, .04]} material={bodyMaterial('trim')} />
+    <Display handle={display} position={[0, 2.32, -.82]} width={1.8} />
     <group ref={board} position={[0, 1.36, .08]} rotation={[DECK_TILT, 0, 0]}>
-      <Box at={[0, -.065, 0]} size={[1.86, .13, 1.65]} color="#ffbb49" />
+      <Box at={[0, -.065, 0]} size={[1.86, .13, 1.65]} material={bodyMaterial('panel')} />
       {Array.from({ length: 9 }, (_, i) => <group key={i} position={holePosition(i)}>
-        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, .008, 0]}><circleGeometry args={[.215, 16]} /><meshLambertMaterial color="#291f32" /></mesh>
-        <mesh rotation={[Math.PI / 2, 0, 0]} position={[0, .018, 0]}><torusGeometry args={[.217, .028, 5, 16]} /><meshLambertMaterial color="#bd6b31" /></mesh>
+        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, .008, 0]} material={MOLE.hole}><circleGeometry args={[.215, 16]} /></mesh>
+        <mesh rotation={[Math.PI / 2, 0, 0]} position={[0, .018, 0]} material={MOLE.rim}><torusGeometry args={[.217, .028, 5, 16]} /></mesh>
         <group ref={node => { moles.current[i] = node }} visible={false}>
-          <mesh position={[0, .18, 0]}><sphereGeometry args={[.175, 10, 8]} /><meshLambertMaterial color="#a97658" flatShading /></mesh>
+          <mesh position={[0, .18, 0]} material={MOLE.fur}><sphereGeometry args={[.175, 10, 8]} /></mesh>
           {[-1, 1].map(side => <group key={side}>
-            <mesh position={[side * .13, .31, -.005]}><sphereGeometry args={[.065, 6, 6]} /><meshLambertMaterial color="#d5a17a" flatShading /></mesh>
-            <mesh position={[side * .062, .24, .143]}><sphereGeometry args={[.03, 6, 6]} /><meshLambertMaterial color="#201b2b" /></mesh>
+            <mesh position={[side * .13, .31, -.005]} material={MOLE.ear}><sphereGeometry args={[.065, 6, 6]} /></mesh>
+            <mesh position={[side * .062, .24, .143]} material={MOLE.eye}><sphereGeometry args={[.03, 6, 6]} /></mesh>
           </group>)}
-          <mesh position={[0, .16, .162]}><sphereGeometry args={[.066, 8, 6]} /><meshLambertMaterial color="#ffc0a0" flatShading /></mesh>
-          <Box at={[0, .102, .158]} size={[.055, .05, .04]} color="#fff4d7" />
+          <mesh position={[0, .16, .162]} material={MOLE.nose}><sphereGeometry args={[.066, 8, 6]} /></mesh>
+          <Box at={[0, .102, .158]} size={[.055, .05, .04]} material={MOLE.tooth} />
         </group>
         <group ref={node => { rings.current[i] = node }} visible={false}>
-          <mesh rotation={[Math.PI / 2, 0, 0]}><torusGeometry args={[.2, .022, 4, 8]} /><meshBasicMaterial color="#fff0a3" /></mesh>
+          <mesh rotation={[Math.PI / 2, 0, 0]} material={MOLE.ring}><torusGeometry args={[.2, .022, 4, 8]} /></mesh>
         </group>
       </group>)}
       <group ref={mallet} visible={active}>
-        <mesh position={[0, .2, 0]} rotation={[0, 0, Math.PI / 2]}><cylinderGeometry args={[.1, .11, .34, 8]} /><meshLambertMaterial color="#ec627b" flatShading /></mesh>
-        <mesh position={[0, .34, .3]} rotation={[1.15, 0, 0]}><cylinderGeometry args={[.03, .04, .46, 8]} /><meshLambertMaterial color="#6b3940" /></mesh>
+        <mesh position={[0, .2, 0]} rotation={[0, 0, Math.PI / 2]} material={MOLE.head}><cylinderGeometry args={[.1, .11, .34, 8]} /></mesh>
+        <mesh position={[0, .34, .3]} rotation={[1.15, 0, 0]} material={MOLE.handle}><cylinderGeometry args={[.03, .04, .46, 8]} /></mesh>
       </group>
       {/* A single board-plane raycast keeps rising meshes out of hit resolution. */}
       <mesh position={[0, .025, 0]} rotation={[-Math.PI / 2, 0, 0]} onPointerMove={e => { const h = pointToHole(e); if (h >= 0) input.hovered.current = h }} onPointerDown={e => { const h = pointToHole(e); if (h >= 0) input.hit(h) }}>
