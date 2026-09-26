@@ -9,8 +9,13 @@ import { StoreCounter } from '@/store/StoreCounter'
 import { StoreHud } from '@/store/StoreHud'
 import { PrizeTextureWarmup } from '@/store/prizeTextures'
 import { ArcadeCanvas } from './ArcadeCanvas'
+import { LiveryPanel } from './LiveryPanel'
 import { RoomEnvironment } from './room-environment'
+<<<<<<< HEAD
 import { SoundtrackToggle } from './Soundtrack'
+=======
+import { SHELL, Shell } from './Shell'
+>>>>>>> 39bfdcd (Room: drop the debug handle left in the shader warm-up)
 
 import { WhackMachine, DOCK as WHACK_DOCK } from '@/machines/whackamole'
 import { ClawMachine, DOCK as CLAW_DOCK } from '@/machines/claw'
@@ -18,11 +23,8 @@ import { SkeeballMachine, DOCK as SKEE_DOCK } from '@/machines/skeeball'
 import { StackTop, DOCK as TOP_DOCK } from '@/machines/stacktop/StackTop'
 import { StackTopHud } from '@/machines/stacktop/StackTopHud'
 
-// Stack to the Top replaced the old Stacker in the hub; the harness at /dev/stacker still runs it.
 const MACHINES = { whackamole: WhackMachine, claw: ClawMachine, skeeball: SkeeballMachine, stacktop: StackTop }
 type HubId = keyof typeof MACHINES
-const LABELS = { whackamole: 'Mole Patrol', claw: 'Claw', stacker: 'Stacker', skeeball: 'Skeeball', stacktop: 'Stack to the Top' }
-const HELP = { whackamole: 'Space starts · Click moles or keys 7 8 9 / 4 5 6 / 1 2 3', claw: 'Arrow keys move · Space drops', stacker: 'Space or click to start / stop', skeeball: 'Space or click: start, lock aim, lock power', stacktop: 'Space or click to start / stop' }
 const DOCKS = { whackamole: WHACK_DOCK, claw: CLAW_DOCK, skeeball: SKEE_DOCK, stacktop: TOP_DOCK }
 const IDS = Object.keys(MACHINES) as HubId[]
 const Y_AXIS = new Vector3(0, 1, 0)
@@ -65,7 +67,6 @@ function HubView() {
   // by output colour space, which depends on whether a render target is bound (the EffectComposer
   // binds one; ?clean=1 draws straight to the canvas), so compile both variants.
   useEffect(() => {
-    ;(window as any).__dbg = { gl, scene, camera } // TEMP DEBUG
     const offscreen = new WebGLRenderTarget(1, 1)
     gl.setRenderTarget(offscreen)
     const viaComposer = gl.compileAsync(scene, camera)
@@ -148,7 +149,7 @@ export function Room() {
   const mode = useArcade((s) => s.mode)
   const inStore = mode.kind === 'store'
   const enter = useArcade((s) => s.enter)
-  const lastRound = useArcade((s) => s.lastRound)
+  const prompts = useArcade((s) => s.prompts)
   const select = (id: HubId) => { useArcade.getState().clearLastRound(); enter(id); if (document.activeElement instanceof HTMLElement) document.activeElement.blur() }
   const tickets = useArcade((s) => s.tickets)
   const openStore = useArcade((s) => s.openStore)
@@ -179,7 +180,7 @@ export function Room() {
       {IDS.map((id) => {
         const Machine = MACHINES[id]
         return <group key={id}>
-          <Machine position={[...STATIONS[id]]} rotation={[0, STATION_ROTATIONS[id], 0]} active={mode.kind === 'play' && mode.machine === id} onRoundEnd={(amount) => useArcade.getState().awardTickets(id, amount)} />
+          <Machine position={[...STATIONS[id]]} rotation={[0, STATION_ROTATIONS[id], 0]} active={mode.kind === 'play' && mode.machine === id} onRoundEnd={(amount) => useArcade.getState().awardTickets(id, amount)} onPrompt={(prompt) => useArcade.getState().setPrompt(id, prompt)} />
           {mode.kind === 'room' && <mesh position={[STATIONS[id][0], 2, STATIONS[id][2]]} rotation={[0, STATION_ROTATIONS[id], 0]} onClick={(event) => { event.stopPropagation(); select(id) }}>
             <boxGeometry args={[id === 'claw' ? 3 : 2.3, 4.5, id === 'skeeball' ? 4.5 : 2.8]} />
             <meshBasicMaterial transparent opacity={0} depthWrite={false} />
@@ -197,10 +198,11 @@ export function Room() {
       <ReadySignal />
     </ArcadeCanvas>
     {mode.kind === 'play' && mode.machine === 'stacktop' && <StackTopHud />}
-    {mode.kind === 'play' && <div className="absolute bottom-3 left-3 right-3 z-20 flex flex-wrap items-center justify-between gap-2 bg-[#242044]/95 p-3 font-mono text-xs text-white"><span>{LABELS[mode.machine]} · {HELP[mode.machine]}{lastRound?.machine === mode.machine && ` · Round complete: +${lastRound.tickets} Tickets`}</span><button onClick={exit} className="border border-white/40 px-4 py-2">Back to hub · Esc</button></div>}
-    {!inStore && mode.kind === 'room' && <button ref={storeButton} type="button" inert={!introDone} onClick={openStore} className={`${hud} absolute bottom-6 left-1/2 z-10 -translate-x-1/2 border border-[#ffe099]/60 bg-[#242044]/95 px-4 py-3 font-mono text-xs uppercase tracking-widest text-[#ffe099] hover:bg-[#393366] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#ffe099]`}>
+    {mode.kind === 'play' && mode.machine in MACHINES && <Shell accent={mode.machine as HubId} prompt={prompts[mode.machine] ?? ''} />}
+    {!inStore && mode.kind === 'room' && <button ref={storeButton} type="button" inert={!introDone} onClick={openStore} style={{ background: SHELL.surface, color: SHELL.text, borderColor: SHELL.edge }} className={`${hud} vt absolute bottom-6 left-1/2 z-10 -translate-x-1/2 border px-5 py-2 text-[28px] leading-none hover:brightness-125 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#fff4d7]`}>
       Store · {tickets} Tickets
     </button>}
+<<<<<<< HEAD
     <div className={`${hud} absolute right-4 top-4 z-40 flex items-center gap-2`}>
       {inStore && (
         <button type="button" onClick={closeStore} className="border border-[#ffe099]/60 bg-[#242044]/95 px-4 py-3 font-mono text-xs uppercase tracking-widest text-[#ffe099] hover:bg-[#393366] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#ffe099]">
@@ -210,6 +212,10 @@ export function Room() {
       <SoundtrackToggle />
     </div>
     {inStore && <StoreHud />}
+=======
+    {inStore && <StoreHud onClose={closeStore} />}
+    <LiveryPanel />
+>>>>>>> 39bfdcd (Room: drop the debug handle left in the shader warm-up)
     </>
   )
 }
