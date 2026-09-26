@@ -6,13 +6,14 @@
 //
 // Sanity (checked against SKEE):
 //   lane top     y = laneY = 0.75, z from 2.0 (player end) to -0.4 (ramp foot)
-//   ramp top     runs (z -0.4, y 0.75) -> (z -1.0, y 1.15); lip = laneY + ramp.rise = 1.15
-//   row 10       shelf floor 0.95, z -1.04..-1.26, lip top 1.01      (0.2 below the ramp lip)
+//   ramp top     runs (z -0.4, y 0.75) -> (z -1.0, y 1.45); crest = laneY + ramp.rise = 1.45, with
+//                a backing plate from the well floor to the crest on its back face (z -1.0..-1.05)
+//   row 10       shelf floor 0.95, z -1.04..-1.26, lip top 1.01      (0.5 below the crest)
 //   row 20       shelf floor 1.15, z -1.26..-1.48, lip top 1.21
 //   row 30       shelf floor 1.35, z -1.48..-1.70, lip top 1.41
 //   row 40       shelf floor 1.55, z -1.70..-1.92, lip top 1.61
 //   top row      shelf floor 1.75, z -1.92..-2.14, lip top 1.81; 50 |x|<0.26, 100s 0.30<|x|<0.58
-//   back wall    z -2.16 (0.08 thick, inside cabinet back -2.2), y 0.70..2.15
+//   back wall    z -2.16 (0.04 thick, inner face -2.14 = top row back edge), y 0.70..2.15
 //   each row is troughDepth (0.22) deep in z and rises 0.2 on the previous, so a shelf's back edge
 //   is exactly the next shelf's front edge; risers sit on those boundaries.
 import { SKEE } from './constants'
@@ -39,16 +40,20 @@ export type SolidKind =
   | 'endStop'
 
 const SLAB_T = 0.1 // lane, ramp, shelf, floor thickness
-const LIP_T = 0.06 // front lip / riser thickness in z
+// Lip/riser and back-wall thickness in z. A row is troughDepth (0.22) deep and its own lip sits
+// inside that span, so the clear floor is troughDepth - LIP_T; the back wall's inner face must not
+// intrude on the top row either. Both were thicker (0.06 / 0.08): the top row then had 0.14 of
+// floor for a 0.16 ball, which wedged on the lip edge above its sensor and never scored.
+export const LIP_T = 0.05 // exported so Lane.tsx can tell which riser faces the crest backing buries
+const BACK_T = 0.04 // inner face exactly on the top row's back boundary (backWall.z + BACK_T/2 = -2.14)
 const DIVIDER_T = 0.04 // top-row pocket divider thickness in x
 const DIVIDER_H = 0.3 // divider height above the top shelf
-const BACK_T = 0.08 // back wall thickness in z
 const LANE_OVERLAP = 0.02 // flat lane runs this far under the ramp foot so the join has no step
-// Hood interior (must match Cabinet.tsx: hoodFront = ramp.zStart - 0.4, roof 0.14 thick). The
-// colliders sit just inside those panels so nothing z-fights.
-const HOOD_SETBACK = 0.4
-const HOOD_ROOF_T = 0.14
-const HOOD_LINTEL_T = 0.08
+// Hood interior from SKEE.hood (the Cabinet draws the same panels); the colliders sit just inside
+// those panels so nothing z-fights.
+const HOOD_SETBACK = SKEE.hood.setback
+const HOOD_ROOF_T = SKEE.hood.roofT
+const HOOD_LINTEL_T = SKEE.hood.lintelT
 
 const halfLaneW = SKEE.lane.w / 2
 const laneBottom = SKEE.laneY - SLAB_T // 0.70: underside of every slab, top of the cabinet plinth
@@ -176,7 +181,7 @@ export function laneSolids(): Box[] {
   // throw that ricochets off the top riser stays in the well instead of flying out through the
   // visual roof or back over the player's head. Sized to sit inside the Cabinet's own panels.
   {
-    const hoodFront = ramp.zStart - HOOD_SETBACK // Cabinet: hoodFront = ramp.zStart - 0.4
+    const hoodFront = ramp.zStart - HOOD_SETBACK
     const roofUnder = SKEE.cabinet.h - HOOD_ROOF_T
     const z0 = hoodFront - HOOD_LINTEL_T
     const z1 = backWall.z

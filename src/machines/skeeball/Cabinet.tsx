@@ -8,18 +8,16 @@ import { SKEE_MATS } from './materials'
 // control ledge with the press button. No physics here; the Lane owns every collider.
 export function Cabinet() {
   const { w, h, d } = SKEE.cabinet
-  const { laneY, lane, wallT, ramp, backWall } = SKEE
+  const { laneY, lane, wallT, ramp, backWall, hood } = SKEE
+  const { cheekT, roofT, railH, lintelT, marqueeY, marqueeH, stripZ } = hood
   const front = d / 2
   const back = -d / 2
   const plinthH = laneY - 0.1 // the lane slab (0.1 thick) sits on the plinth
   const wallOuterX = lane.w / 2 + wallT // outer face of the Lane's side walls
-  const cheekT = 0.12
   const cheekX = wallOuterX + cheekT / 2
-  const hoodFront = ramp.zStart - 0.4 // hood starts over the upper ramp
-  const roofT = 0.14
+  const hoodFront = ramp.zStart - hood.setback // hood starts over the upper ramp
   const roofY = h - roofT / 2
   const wellWallTop = laneY + backWall.h
-  const railH = 0.25
   const ledgeD = front - lane.zStart // 0.2: between the lane end and the cabinet front
 
   return (
@@ -61,14 +59,14 @@ export function Cabinet() {
       <mesh position={[0, roofY, (hoodFront + back) / 2]} material={MATERIALS.oxblood}>
         <boxGeometry args={[wallOuterX * 2 + cheekT * 2, roofT, hoodFront - back]} />
       </mesh>
-      {/* hood front lintel, with the marquee on its face */}
-      <mesh position={[0, h - 0.45, hoodFront + 0.04]} material={MATERIALS.floor}>
-        <boxGeometry args={[wallOuterX * 2 + cheekT * 2, 0.9 - roofT, 0.08]} />
+      {/* hood front lintel: the marquee band up top, the value board (Indicators) in the band below */}
+      <mesh position={[0, h - 0.45, hoodFront + lintelT / 2]} material={MATERIALS.floor}>
+        <boxGeometry args={[wallOuterX * 2 + cheekT * 2, 0.9 - roofT, lintelT]} />
       </mesh>
-      <mesh position={[0, h - 0.45, hoodFront + 0.1]} material={SKEE_MATS.marquee}>
-        <boxGeometry args={[wallOuterX * 2, 0.5, 0.06]} />
+      <mesh position={[0, marqueeY, hoodFront + lintelT + 0.02]} material={SKEE_MATS.marquee}>
+        <boxGeometry args={[wallOuterX * 2, marqueeH, 0.06]} />
       </mesh>
-      <mesh position={[0, h - 0.45, hoodFront + 0.135]} material={MATERIALS.void}>
+      <mesh position={[0, marqueeY, hoodFront + stripZ]} material={MATERIALS.void}>
         <boxGeometry args={[wallOuterX * 2 - 0.3, 0.16, 0.01]} />
       </mesh>
       {/* bone edge strips on the hood front so the opening reads */}

@@ -19,31 +19,43 @@ import {
 import { useSkeeballInput } from './useSkeeballInput'
 import { Cabinet } from './Cabinet'
 import { Lane } from './Lane'
-import { Ball } from './Ball'
+import { Ball, BALL_NAME } from './Ball'
 import { Indicators, type SkeePose } from './Indicators'
 
 // Skeeball Machine (issue 05). Structure mirrors ClawMachine: a root group at `position`, its own
 // <Physics> paused when inactive, static parts memoised, and a controller that steps the pure
 // state machine in useFrame, drives the one ball body, and writes a pose ref for the Indicators.
 //
-// Sense plumbing: the Lane's sensors call onLand/onGutter (physics callbacks, any time), which only
-// stash into `senseRef`. The controller consumes and clears the stash once per frame and feeds it
-// to stepSkee, which ignores it outside 'rolling', so a resting or parked ball can never rescore.
+// Sense plumbing: the Lane's sensors call onTrough/onGutter (physics callbacks, any time), which
+// only book-keep in `senseRef`: how many trough sensors of each value the ball overlaps right now
+// (a bounce can clip two rows; the two 100 pockets share a value) and a gutter flag. The controller
+// reads that once per frame into a SkeeSense for stepSkee, which ignores it outside 'rolling', so a
+// resting or parked ball can never rescore.
 
 const ZERO = { x: 0, y: 0, z: 0 }
-const NO_SENSE: SkeeSense = { landed: null, gutter: false }
+const NO_SENSE: SkeeSense = { inside: null, gutter: false }
+
+type SkeeSensors = { overlaps: Map<number, number>; gutter: boolean }
+
+/** Lowest trough value the ball currently overlaps: a ball bouncing on a shelf may also clip the
+ *  next row's sensor, and the lower one is the shelf it is over. */
+function insideValue(overlaps: Map<number, number>): number | null {
+  let best: number | null = null
+  for (const [value, n] of overlaps) if (n > 0 && (best === null || value < best)) best = value
+  return best
+}
 
 const StaticParts = memo(function StaticParts({
-  onLand,
+  onTrough,
   onGutter,
 }: {
-  onLand: (value: number) => void
+  onTrough: (value: number, inside: boolean) => void
   onGutter: () => void
 }) {
   return (
     <>
       <Cabinet />
-      <Lane onLand={onLand} onGutter={onGutter} />
+      <Lane onTrough={onTrough} onGutter={onGutter} />
     </>
   )
 })
@@ -59,7 +71,7 @@ function SkeeController({
   onRoundEnd: (t: number) => void
   originRef: React.RefObject<Group | null>
   bodyRef: React.RefObject<RapierRigidBody | null>
-  senseRef: React.RefObject<SkeeSense>
+  senseRef: React.RefObject<SkeeSensors>
 }) {
   const readInput = useSkeeballInput(active)
   const state = useRef<SkeeState>(initialSkeeState())
@@ -68,10 +80,13 @@ function SkeeController({
   const onRoundEndRef = useRef(onRoundEnd)
   onRoundEndRef.current = onRoundEnd
   const v = useMemo(() => new Vector3(), [])
+  const lv = useMemo(() => new Vector3(), [])
   const dir = useMemo(() => new Vector3(), [])
   const q = useMemo(() => new Quaternion(), [])
 
-  // Teleport the ball to the spawn (world space) and stop it dead.
+  // Teleport the ball to the spawn (world space) and stop it dead. The body's Object3D is snapped
+  // too: rapier writes body -> mesh inside step(), which a paused <Physics> never runs, so without
+  // this a ball parked as the player leaves stays drawn wherever it was (mid-air over the well).
   const park = () => {
     const b = bodyRef.current
     const origin = originRef.current
@@ -81,6 +96,12 @@ function SkeeController({
     b.setTranslation(v, true)
     b.setLinvel(ZERO, true)
     b.setAngvel(ZERO, true)
+    senseRef.current.overlaps.clear()
+    const o = origin.getObjectByName(BALL_NAME)
+    if (o) {
+      o.position.set(SKEE.ball.spawn[0], SKEE.ball.spawn[1], SKEE.ball.spawn[2])
+      o.quaternion.identity()
+    }
   }
 
   // Launch: park first so every throw starts from the same spot, then one impulse down the lane.
@@ -112,7 +133,6 @@ function SkeeController({
       onRoundEndRef.current(ticketsFor(s.score))
     }
     state.current = { ...initialSkeeState(), round: lastRound.current, result: s.result }
-    senseRef.current.landed = null
     senseRef.current.gutter = false
     park()
     Object.assign(pose.current, { phase: 'idle', aim: 0, power: 0, ballsLeft: 0 })
@@ -125,7 +145,8 @@ function SkeeController({
     const prev = state.current
     const input = readInput()
 
-    // consume this frame's sense once; only meaningful while rolling
+    // read this frame's sense; only meaningful while rolling. Out of play = below the gutter, or
+    // back on the flat lane moving toward the player (failed to crest the hump and rolled back).
     const stash = senseRef.current
     let sense: SkeeSense = NO_SENSE
     if (prev.phase === 'rolling') {
@@ -136,10 +157,13 @@ function SkeeController({
         const p = b.translation()
         origin.worldToLocal(v.set(p.x, p.y, p.z))
         if (v.y < SKEE.gutterY) gutter = true
+        const w = b.linvel()
+        origin.getWorldQuaternion(q)
+        lv.set(w.x, w.y, w.z).applyQuaternion(q.invert())
+        if (v.z > SKEE.ramp.zStart && lv.z > 0) gutter = true
       }
-      sense = { landed: stash.landed, gutter }
+      sense = { inside: insideValue(stash.overlaps), gutter }
     }
-    stash.landed = null
     stash.gutter = false
 
     const next = stepSkee(prev, { ...input, ...sense }, dt)
@@ -175,11 +199,11 @@ function SkeeController({
 export function SkeeballMachine({ position, rotation, active, onRoundEnd }: MachineProps) {
   const originRef = useRef<Group>(null)
   const bodyRef = useRef<RapierRigidBody>(null)
-  const senseRef = useRef<SkeeSense>({ landed: null, gutter: false })
-  // Sensors may fire more than once in a frame (a bounce clips two troughs); keep the best value.
-  const onLand = useCallback((value: number) => {
-    const s = senseRef.current
-    s.landed = s.landed === null ? value : Math.max(s.landed, value)
+  const senseRef = useRef<SkeeSensors>({ overlaps: new Map(), gutter: false })
+  // Count overlapping sensors per value; a stray exit after a park must not go negative.
+  const onTrough = useCallback((value: number, inside: boolean) => {
+    const m = senseRef.current.overlaps
+    m.set(value, Math.max(0, (m.get(value) ?? 0) + (inside ? 1 : -1)))
   }, [])
   const onGutter = useCallback(() => {
     senseRef.current.gutter = true
@@ -188,7 +212,7 @@ export function SkeeballMachine({ position, rotation, active, onRoundEnd }: Mach
   return (
     <group ref={originRef} position={position} rotation={rotation}>
       <Physics timeStep={1 / 60} paused={!active}>
-        <StaticParts onLand={onLand} onGutter={onGutter} />
+        <StaticParts onTrough={onTrough} onGutter={onGutter} />
         <Ball bodyRef={bodyRef} />
         <SkeeController active={active} onRoundEnd={onRoundEnd} originRef={originRef} bodyRef={bodyRef} senseRef={senseRef} />
       </Physics>

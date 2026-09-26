@@ -3,14 +3,17 @@
 //   idle --(press)--> aiming                    (startRound: round += 1, score 0, ballsLeft = SKEE.balls)
 //   aiming --(press)--> powering                (aim locked from aimAngle)
 //   powering --(press)--> rolling               (power locked, launch = true for that one returned state)
-//   rolling --(landed)--> hit                   (score += value, lastHit = value)
-//   rolling --(gutter | t >= rollTimeout)--> hit (lastHit = 0)
+//   rolling --(settled)--> hit                  (score += value, lastHit = value; see `pending`)
+//   rolling --(gutter | t >= rollTimeout)--> hit (lastHit = 0, or the pending trough on a timeout)
 //   hit --(t >= hitTime)--> aiming              (next ball, while ballsLeft > 0)
 //   hit --(t >= hitTime)--> result              (last ball: result = {round, score, tickets})
 //   result --(t >= resultTime)--> idle          (result stays set so the controller pays exactly once)
 //
 // `launch` is set only on the state returned by the powering -> rolling step; the next step clears it.
 // `ballsLeft` counts balls not yet launched; `ballIndex` is the 0-based ball currently on the lane.
+// Settling: while rolling, `pending` mirrors the trough the ball is inside and `pendingT` how long
+// that has been so; the ball scores `pending` once pendingT reaches SKEE.settle.grace, so a ball
+// that clips the 30 row and drops into the 20 scores 20, not the first sensor it touched.
 import { SKEE } from './constants'
 
 export type SkeePhase = 'idle' | 'aiming' | 'powering' | 'rolling' | 'hit' | 'result'
@@ -18,8 +21,9 @@ export type SkeePhase = 'idle' | 'aiming' | 'powering' | 'rolling' | 'hit' | 're
 /** One edge-triggered press since the last read. */
 export type SkeeControls = { press: boolean }
 
-/** What the physics sensed this frame: the trough value the ball settled in, or that it fell out. */
-export type SkeeSense = { landed: number | null; gutter: boolean }
+/** What the physics sensed this frame: the trough value the ball is inside (the lowest if a bounce
+ *  overlaps two sensors), and whether it is out of play (fell below gutterY or rolled back off the hump). */
+export type SkeeSense = { inside: number | null; gutter: boolean }
 
 export type SkeeInput = SkeeControls & SkeeSense
 
@@ -31,6 +35,8 @@ export type SkeeState = {
   power: number // 0..1, locked at rolling
   ballsLeft: number // balls not yet launched this Round
   ballIndex: number // 0-based, which ball is on the lane
+  pending: number | null // trough the rolling ball is inside, null while airborne or on the lane
+  pendingT: number // seconds `pending` has been unchanged
   score: number
   lastHit: number | null
   round: number
@@ -49,6 +55,8 @@ export function initialSkeeState(): SkeeState {
     power: 0,
     ballsLeft: 0,
     ballIndex: 0,
+    pending: null,
+    pendingT: 0,
     score: 0,
     lastHit: null,
     round: 0,
@@ -89,6 +97,8 @@ export function startRound(s: SkeeState): SkeeState {
     power: 0,
     ballsLeft: SKEE.balls,
     ballIndex: 0,
+    pending: null,
+    pendingT: 0,
     score: 0,
     lastHit: null,
     round: s.round + 1,
@@ -127,14 +137,19 @@ export function stepSkee(prev: SkeeState, input: SkeeInput, dt: number): SkeeSta
       if (input.press) {
         n.power = powerLevel(n)
         n.ballsLeft = prev.ballsLeft - 1
+        n.pending = null
+        n.pendingT = 0
         n.launch = true
         go('rolling')
       }
       break
     }
     case 'rolling': {
-      if (input.landed !== null) settle(input.landed)
-      else if (input.gutter || n.t >= SKEE.rollTimeout) settle(0)
+      n.pending = input.inside
+      n.pendingT = input.inside === prev.pending ? prev.pendingT + dt : 0
+      if (input.gutter) settle(0)
+      else if (n.pending !== null && n.pendingT >= SKEE.settle.grace) settle(n.pending)
+      else if (n.t >= SKEE.rollTimeout) settle(n.pending ?? 0)
       break
     }
     case 'hit': {

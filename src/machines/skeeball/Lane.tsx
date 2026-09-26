@@ -1,10 +1,16 @@
 'use client'
 
 import { useMemo } from 'react'
-import { CoefficientCombineRule, CuboidCollider, RigidBody, type IntersectionEnterPayload } from '@react-three/rapier'
+import {
+  CoefficientCombineRule,
+  CuboidCollider,
+  RigidBody,
+  type IntersectionEnterPayload,
+  type IntersectionExitPayload,
+} from '@react-three/rapier'
 import type { MeshLambertMaterial } from 'three'
 import { SKEE } from './constants'
-import { laneSolids, laneSensors, type Box, type SolidKind } from './geometry'
+import { laneSolids, laneSensors, lipY, LIP_T, type Box, type SolidKind } from './geometry'
 import { SKEE_MATS } from './materials'
 
 // Lane, ramp and target well: one fixed body of cuboid colliders (from geometry.ts) plus a visible
@@ -88,6 +94,9 @@ function NumberPlate({ value, position }: { value: number; position: [number, nu
   )
 }
 
+const isBall = (e: IntersectionEnterPayload | IntersectionExitPayload) =>
+  (e.other.rigidBodyObject?.userData as { ball?: boolean } | undefined)?.ball === true
+
 function SolidMesh({ b }: { b: Box }) {
   return (
     <mesh position={b.center} rotation={[b.rotX ?? 0, 0, 0]} material={MAT_FOR[b.kind ?? 'wall']}>
@@ -96,23 +105,34 @@ function SolidMesh({ b }: { b: Box }) {
   )
 }
 
-export function Lane({ onLand, onGutter }: { onLand: (value: number) => void; onGutter: () => void }) {
+type LaneProps = {
+  /** The ball's collider started (`inside` true) or stopped overlapping the sensor for this trough value. */
+  onTrough: (value: number, inside: boolean) => void
+  onGutter: () => void
+}
+
+export function Lane({ onTrough, onGutter }: LaneProps) {
   const solids = useMemo(() => laneSolids(), [])
   const sensors = useMemo(() => laneSensors(), [])
-  const { lane, laneY, troughs, troughDepth, troughLip } = SKEE
+  const { lane, laneY, troughs, troughDepth, troughLip, ball, aim } = SKEE
 
   const handlers = useMemo(
     () =>
-      sensors.map((s) => (e: IntersectionEnterPayload) => {
-        const ud = e.other.rigidBodyObject?.userData as { ball?: boolean } | undefined
-        if (ud?.ball !== true) return
-        if (s.value === 0) onGutter()
-        else onLand(s.value)
-      }),
-    [sensors, onLand, onGutter],
+      sensors.map((s) => ({
+        enter: (e: IntersectionEnterPayload) => {
+          if (!isBall(e)) return
+          if (s.value === 0) onGutter()
+          else onTrough(s.value, true)
+        },
+        exit: (e: IntersectionExitPayload) => {
+          if (isBall(e) && s.value > 0) onTrough(s.value, false)
+        },
+      })),
+    [sensors, onTrough, onGutter],
   )
 
-  // One plate per distinct row, on the riser's front face; the top row gets one per pocket.
+  // One plate per distinct row, on the riser's front face; the top row gets one per pocket. A row
+  // whose riser face sits inside the crest backing (the front row) gets none: it could never be seen.
   const plates = useMemo(() => {
     const rowZs = [...new Set(troughs.map((t) => t.z))]
     return rowZs.flatMap((z) => {
@@ -120,9 +140,14 @@ export function Lane({ onLand, onGutter }: { onLand: (value: number) => void; on
       const prevY = Math.max(laneY, ...troughs.filter((t) => t.z > z).map((t) => t.y))
       const faceZ = z + troughDepth / 2 + 0.001
       const y = (prevY + inRow[0]!.y) / 2
+      const buried = faceZ <= SKEE.ramp.zEnd && faceZ >= SKEE.ramp.zEnd - LIP_T && y < lipY()
+      if (buried) return []
       return inRow.map((t) => ({ value: t.value, position: [t.x, y, faceZ] as [number, number, number] }))
     })
   }, [troughs, troughDepth, laneY])
+
+  // The bone centre stripe stops short of the aim arrow so the amber arrow reads on dark wood.
+  const stripeEnd = ball.spawn[2] - aim.arrowReach
 
   return (
     <group>
@@ -133,7 +158,7 @@ export function Lane({ onLand, onGutter }: { onLand: (value: number) => void; on
             args={b.half}
             position={b.center}
             rotation={[b.rotX ?? 0, 0, 0]}
-            friction={0.3}
+            friction={SKEE.laneFriction}
             frictionCombineRule={CoefficientCombineRule.Min}
           />
         ))}
@@ -143,7 +168,8 @@ export function Lane({ onLand, onGutter }: { onLand: (value: number) => void; on
             args={s.half}
             position={s.center}
             sensor
-            onIntersectionEnter={handlers[i]}
+            onIntersectionEnter={handlers[i]!.enter}
+            onIntersectionExit={handlers[i]!.exit}
           />
         ))}
       </RigidBody>
@@ -152,9 +178,9 @@ export function Lane({ onLand, onGutter }: { onLand: (value: number) => void; on
         <SolidMesh key={i} b={b} />
       ))}
 
-      {/* bone centre stripe down the flat lane */}
-      <mesh position={[0, laneY + 0.005, (lane.zStart + lane.zEnd) / 2]} material={SKEE_MATS.laneStripe}>
-        <boxGeometry args={[0.06, 0.01, lane.zStart - lane.zEnd]} />
+      {/* bone centre stripe down the flat lane, ending ahead of the arrow */}
+      <mesh position={[0, laneY + 0.005, (stripeEnd + lane.zEnd) / 2]} material={SKEE_MATS.laneStripe}>
+        <boxGeometry args={[0.06, 0.01, stripeEnd - lane.zEnd]} />
       </mesh>
 
       {plates.map((p, i) => (

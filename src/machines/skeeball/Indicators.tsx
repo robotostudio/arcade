@@ -9,7 +9,7 @@ import { SKEE_MATS } from './materials'
 import type { SkeePhase } from './skeeballLogic'
 
 /** Written by the controller every frame, read here in useFrame (no React state at 60 Hz).
- *  hitT: clock time (s) the last ball settled; drives the trough-lamp flash. */
+ *  hitT: clock time (s) the last ball settled; drives the trough-lamp and value-board flash. */
 export type SkeePose = {
   phase: SkeePhase
   aim: number // radians, + is toward +x
@@ -29,20 +29,22 @@ type Props = {
 const AIM_PHASES = new Set<SkeePhase>(['aiming', 'powering'])
 const METER_PHASES = new Set<SkeePhase>(['powering', 'rolling'])
 
-// Arrow on the lane at the spawn point: a shaft and two chevron blades, all flat boxes.
+// Arrow on the lane at the spawn point: a shaft and two chevron blades, all flat boxes. Drawn at
+// aim * SKEE.aim.visualGain: the physical +-4 deg is a few pixels under the dither.
 const ARROW_Y = SKEE.laneY + 0.014
 const ARROW_LEN = 0.5
 const ARROW_W = 0.05
 const ARROW_HEAD = 0.18
 const ARROW_GAP = SKEE.ball.r + 0.06 // shaft starts this far ahead of the ball centre (arrow-local -z)
 
-// Power meters: a post on each cabinet cheek rail beside the lane, filling upward.
-const CHEEK_T = 0.12 // matches Cabinet
-const METER_X = SKEE.lane.w / 2 + SKEE.wallT + CHEEK_T / 2
+// Power meters: a post on each cabinet cheek rail beside the lane, filling upward. The fill stands
+// proud of a thin backing slab behind it (a box around it hid the fill completely).
+const METER_X = SKEE.lane.w / 2 + SKEE.wallT + SKEE.hood.cheekT / 2
 const METER_Z = 1.45
-const METER_BASE = SKEE.laneY - 0.1 + 0.25 // top of the Cabinet's low side rail
+const METER_BASE = SKEE.laneY - 0.1 + SKEE.hood.railH // top of the Cabinet's low side rail
 const METER_H = 0.7
 const METER_W = 0.1
+const METER_BACK_T = 0.02
 
 // Ball lamps on the player face of the lane's end stop, above the control ledge.
 const LAMP_Z = SKEE.lane.zStart + 0.06 + 0.012
@@ -50,9 +52,15 @@ const LAMP_Y = SKEE.laneY + 0.2
 const LAMP_STEP = 0.11
 const LAMP_SIZE = 0.07
 
-// Score digits in the marquee's dark strip on the hood lintel (Cabinet: y h-0.45, z hoodFront+0.135).
-const SCORE_Y = SKEE.cabinet.h - 0.45
-const SCORE_Z = SKEE.ramp.zStart - 0.4 + 0.135 + 0.008
+// Score digits in the marquee's dark strip on the hood lintel, and the value board (one numeral per
+// trough value, lit on a hit) on the lintel face below the marquee. The 10/20 rows are hidden behind
+// the crest from the dock, so the board is how every result reads.
+const HOOD_FRONT = SKEE.ramp.zStart - SKEE.hood.setback
+const SCORE_Y = SKEE.hood.marqueeY
+const SCORE_Z = HOOD_FRONT + SKEE.hood.stripZ + 0.008
+const BOARD_Y = SKEE.hood.boardY
+const BOARD_Z = HOOD_FRONT + SKEE.hood.lintelT + 0.002
+const BOARD_GAP = 0.1 // between numerals
 const DIGITS = 3
 const DIGIT_H = 0.12
 const DIGIT_W = DIGIT_H / 2
@@ -71,6 +79,20 @@ const SEGS: [number, number, number, number][] = [
 ]
 const DIGIT_MASK = [0b1111110, 0b0110000, 0b1101101, 0b1111001, 0b0110011, 0b1011011, 0b1011111, 0b1110000, 0b1111111, 0b1111011]
 const segOn = (digit: number, seg: number) => (DIGIT_MASK[digit]! >> (6 - seg)) & 1
+const numeralW = (text: string) => text.length * DIGIT_W + (text.length - 1) * DIGIT_GAP
+
+/** Distinct trough values, low to high, each with its x on the board. */
+const BOARD = (() => {
+  const values = [...new Set(SKEE.troughs.map((t) => t.value))].sort((a, b) => a - b)
+  const widths = values.map((v) => numeralW(String(v)))
+  const total = widths.reduce((a, w) => a + w, 0) + (values.length - 1) * BOARD_GAP
+  let x = -total / 2
+  return values.map((value, i) => {
+    const cx = x + widths[i]! / 2
+    x += widths[i]! + BOARD_GAP
+    return { value, x: cx }
+  })
+})()
 
 export function Indicators({ pose, lampRoot }: Props) {
   const arrow = useRef<Group>(null!)
@@ -79,6 +101,7 @@ export function Indicators({ pose, lampRoot }: Props) {
   const meters = useRef<(Group | null)[]>([])
   const ballLamps = useRef<(Mesh | null)[]>([])
   const segs = useRef<(Mesh | null)[]>([]) // DIGITS * 7, index d * 7 + s
+  const board = useRef<(Group | null)[]>([]) // one group of segment meshes per BOARD entry
   const troughLamps = useRef<(Mesh | null)[]>([])
   const lampsFound = useRef(false)
   const values = useMemo(() => SKEE.troughs.map((t) => t.value), [])
@@ -88,9 +111,9 @@ export function Indicators({ pose, lampRoot }: Props) {
     if (!p) return
     const now = three.clock.elapsedTime
 
-    // aim arrow: local -z rotated about y so it points along (sin aim, 0, -cos aim)
+    // aim arrow: local -z rotated about y so it points along (sin aim, 0, -cos aim), exaggerated
     arrow.current.visible = AIM_PHASES.has(p.phase)
-    arrow.current.rotation.y = -p.aim
+    arrow.current.rotation.y = -p.aim * SKEE.aim.visualGain
 
     // power meters
     const showMeter = METER_PHASES.has(p.phase)
@@ -112,9 +135,11 @@ export function Indicators({ pose, lampRoot }: Props) {
       if (l) l.material = i < p.ballsLeft ? SKEE_MATS.ringGlow : SKEE_MATS.lip
     }
 
-    // score digits; blink while the Round result shows
-    const blink = p.phase === 'result' ? Math.floor(now * 4) % 2 === 0 : true
-    let n = Math.min(Math.max(0, Math.round(p.score)), 10 ** DIGITS - 1)
+    // score digits: the ball's value blinks there for the hit display (a miss shows 0), the running
+    // score otherwise; the Round result blinks too
+    const hit = p.phase === 'hit' ? p.lastHit : null
+    const blink = p.phase === 'result' || hit !== null ? Math.floor(now * 4) % 2 === 0 : true
+    let n = Math.min(Math.max(0, Math.round(hit ?? p.score)), 10 ** DIGITS - 1)
     for (let d = DIGITS - 1; d >= 0; d--) {
       const digit = n % 10
       n = Math.floor(n / 10)
@@ -125,7 +150,7 @@ export function Indicators({ pose, lampRoot }: Props) {
       }
     }
 
-    // trough lamp flash on the row just hit (both 100 pockets share a value; both flash)
+    // trough lamp and value-board flash on the value just hit (both 100 pockets share a value)
     if (!lampsFound.current && lampRoot.current) {
       let all = true
       for (let i = 0; i < values.length; i++) {
@@ -141,9 +166,15 @@ export function Indicators({ pose, lampRoot }: Props) {
       const l = troughLamps.current[i]
       if (l) l.material = on && values[i] === p.lastHit ? SKEE_MATS.ringGlow : SKEE_MATS.ringDim
     }
+    for (let i = 0; i < BOARD.length; i++) {
+      const g = board.current[i]
+      if (!g) continue
+      const mat = on && BOARD[i]!.value === p.lastHit ? SKEE_MATS.ringGlow : SKEE_MATS.ringDim
+      for (const c of g.children) (c as Mesh).material = mat
+    }
   })
 
-  const scoreW = DIGITS * DIGIT_W + (DIGITS - 1) * DIGIT_GAP
+  const scoreW = numeralW('0'.repeat(DIGITS))
 
   return (
     <group>
@@ -164,7 +195,7 @@ export function Indicators({ pose, lampRoot }: Props) {
         ))}
       </group>
 
-      {/* power meters on both cheek rails */}
+      {/* power meters on both cheek rails: backing slab behind, fill and tip proud of it */}
       {[-1, 1].map((s, i) => (
         <group
           key={s}
@@ -173,8 +204,8 @@ export function Indicators({ pose, lampRoot }: Props) {
           }}
           visible={false}
         >
-          <mesh position={[s * METER_X, METER_BASE + METER_H / 2, METER_Z]} material={MATERIALS.void}>
-            <boxGeometry args={[METER_W + 0.04, METER_H + 0.04, METER_W + 0.04]} />
+          <mesh position={[s * METER_X, METER_BASE + METER_H / 2, METER_Z - METER_W / 2 - METER_BACK_T / 2]} material={MATERIALS.void}>
+            <boxGeometry args={[METER_W + 0.08, METER_H + 0.06, METER_BACK_T]} />
           </mesh>
           <mesh
             ref={(m) => {
@@ -230,6 +261,37 @@ export function Indicators({ pose, lampRoot }: Props) {
           ))
         })}
       </group>
+
+      {/* value board on the lintel: every trough value, dim until that value is hit */}
+      {BOARD.map(({ value, x }, i) => {
+        const text = String(value)
+        const w = numeralW(text)
+        return (
+          <group
+            key={value}
+            ref={(g) => {
+              board.current[i] = g
+            }}
+            position={[x, BOARD_Y, BOARD_Z]}
+          >
+            {text.split('').flatMap((ch, d) => {
+              const dx = -w / 2 + DIGIT_W / 2 + d * (DIGIT_W + DIGIT_GAP)
+              const digit = Number(ch)
+              return SEGS.map(([sx, sy, sw, sh], s) =>
+                segOn(digit, s) === 1 ? (
+                  <mesh
+                    key={`${d}-${s}`}
+                    position={[dx + sx * DIGIT_W, (sy * DIGIT_H) / 2, DIGIT_T / 2]}
+                    material={SKEE_MATS.ringDim}
+                  >
+                    <boxGeometry args={[sw * DIGIT_W, (sh * DIGIT_H) / 2, DIGIT_T]} />
+                  </mesh>
+                ) : null,
+              )
+            })}
+          </group>
+        )
+      })}
     </group>
   )
 }
