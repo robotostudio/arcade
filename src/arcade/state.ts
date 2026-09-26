@@ -2,6 +2,8 @@
 // Change only by PR with the other two tagged. See PLAN.md.
 // Tickets persist to localStorage (`arcade:tickets`); mode and lastRound do not.
 // On the server there is no localStorage: persist no-ops and tickets start at 0.
+// The client hydrates synchronously on store creation, so any UI reading tickets
+// must be client-only (next/dynamic ssr: false) or it will hit a hydration mismatch.
 import { create } from 'zustand'
 import { createJSONStorage, persist } from 'zustand/middleware'
 
