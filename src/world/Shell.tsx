@@ -4,9 +4,9 @@
 // Room-level things only: the Ticket balance, one prompt line naming the real key and verb for the
 // current phase ("Space: drop"), and Back. The active Machine's Accent colours the prompt keyword.
 import { useArcade } from '@/arcade/state'
-import { type AccentKey, useLivery } from './livery'
+import { type AccentKey, LIVERY, useLivery } from './livery'
 
-export const SHELL = { surface: 'rgba(36, 32, 68, 0.95)', text: '#fff4d7', edge: 'rgba(255, 244, 215, 0.35)' }
+export const SHELL = { surface: 'rgba(36, 32, 68, 0.95)', text: LIVERY.text, edge: 'rgba(255, 244, 215, 0.35)' }
 
 const panel: React.CSSProperties = {
   position: 'absolute',

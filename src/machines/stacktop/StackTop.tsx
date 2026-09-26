@@ -9,6 +9,7 @@ import { useEffect, useMemo, useRef } from 'react'
 import { useFrame, type ThreeEvent } from '@react-three/fiber'
 import { MeshBasicMaterial, type InstancedMesh } from 'three'
 import type { MachineProps } from '@/machines/types'
+import { usePrompt } from '@/machines/prompt'
 import { PAYOUT } from '@/arcade/economy'
 import { Display, useDisplay } from '@/world/Display'
 import {
@@ -25,9 +26,9 @@ import {
   type Phase,
   type Prizes,
   type StackerState,
-} from '@/machines/stacker/logic'
-import { paintGrid, type GridLayout } from '@/machines/stacker/grid'
-import type { StackerHud } from '@/machines/stacker/hud'
+} from './logic'
+import { paintGrid, type GridLayout } from './grid'
+import type { StackerHud } from './stackerHud'
 import { useStackTopHud } from './hud'
 import { cellColors, materials } from './materials'
 import { BODY_D, BODY_H, BODY_W, BOX, CELL, FACE_Y0, FACE_Z, MARQUEE_Y, MINOR_ROW, createFaceTexture, rowY } from './face'
@@ -102,7 +103,7 @@ export function StackTop({ position, rotation, active, onRoundEnd, onPrompt }: M
   if (!state.current) state.current = createState(PRIZES)
   const painted = useRef(-1)
   const lastTenth = useRef(-1)
-  const lastPrompt = useRef<string | null>(null)
+  const sendPrompt = usePrompt(onPrompt)
   const onRoundEndRef = useRef(onRoundEnd)
   onRoundEndRef.current = onRoundEnd
   const display = useDisplay({ accent: 'stacktop', title: 'STACK TO THE TOP' })
@@ -187,11 +188,7 @@ export function StackTop({ position, rotation, active, onRoundEnd, onPrompt }: M
     }
     // The store is the source of truth for the Display; show() skips unchanged content.
     display.show({ lines: linesFor(active, useStackTopHud.getState()) })
-    const prompt = promptFor(active, s.phase)
-    if (prompt !== lastPrompt.current) {
-      lastPrompt.current = prompt
-      onPrompt?.(prompt)
-    }
+    sendPrompt(promptFor(active, s.phase))
   })
 
   const stop = (fn: () => void) => (e: ThreeEvent<PointerEvent>) => {

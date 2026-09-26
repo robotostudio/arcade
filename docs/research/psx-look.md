@@ -89,7 +89,7 @@ export function psxify<M extends THREE.Material>(material: M, affine = false): M
 ```
 
 - `customProgramCacheKey` is required: three caches compiled programs per material class, and without a distinct key a patched Lambert would share a program with an unpatched one.
-- `vMapUv *= vAffine` runs only when `affine` is true for that material's use (it is guarded by `USE_MAP`, and `psxify(m, false)` on a plain-colour material leaves the fragment sampling alone, so the scaled uv is harmless there). In r186 the map chunk reads `vMapUv` and the sample line is `vec4 sampledDiffuseColor = texture2D( map, vMapUv );` (`three/src/renderers/shaders/ShaderChunk/map_fragment.glsl.js`); the affine replace targets that exact line. If a future three changes it the replace is a silent no-op, not a crash. Affine only matters on textured meshes; skip it on plain-colour ones.
+- The `vMapUv *= vAffine` scale is emitted only when `psxify(m, true)` asked for the affine swim (issue 12 found the unconditional version shrank any snapped textured material's map, since nothing divided it back out). In r186 the map chunk reads `vMapUv` and the sample line is `vec4 sampledDiffuseColor = texture2D( map, vMapUv );` (`three/src/renderers/shaders/ShaderChunk/map_fragment.glsl.js`); the affine replace targets that exact line. If a future three changes it the replace is a silent no-op, not a crash. Affine only matters on textured meshes; skip it on plain-colour ones.
 - Wire it into the palette module: `palette.ts` exports one `psxify(new MeshLambertMaterial({ color }))` per colour, shared by every mesh (same rule as the physics recipe: one material instance per colour).
 - Tune `SNAP`: 160×120 is a strong wobble; 320×240 is subtle. Bloodborne PSX is on the strong side.
 
@@ -213,7 +213,7 @@ The section 1 and 3 numbers above (dpr 0.35, black void, fog 6-18, scanlines 0.3
 
 ## What this changes in the physics recipe
 
-Section 4 of [r3f-physics-recipe.md](./r3f-physics-recipe.md) still holds for materials-per-colour, primitive segments, `dpr` as a constant, `Preload all` and the drei verdicts. Overridden by this file: `flatShading` on Standard becomes plain `meshLambertMaterial` (Gouraud); `shadows="percentage"` and the shadow directional go away; `dpr [1, 1.5]` becomes `0.35` unless `?clean=1`; `flat` on the Canvas is now mandatory, not optional; `ContactShadows` stays optional.
+Section 4 of [r3f-physics-recipe.md](./r3f-physics-recipe.md) still holds for materials-per-colour, primitive segments, `dpr` as a constant, `Preload all` and the drei verdicts. Overridden by this file: `flatShading` on Standard becomes plain `meshLambertMaterial` (Gouraud); `shadows="percentage"` and the shadow directional go away; `dpr [1, 1.5]` becomes a plain number (0.7 live, see Live values) unless `?clean=1`; `flat` on the Canvas is now mandatory, not optional; `ContactShadows` stays optional.
 
 ## Cut order for the look
 

@@ -77,33 +77,44 @@ function draw(ctx: CanvasRenderingContext2D, accent: AccentKey, title: string, c
   ctx.globalAlpha = 1
 }
 
-export function createDisplay(accent: AccentKey, title: string): DisplayHandle {
+export type CanvasDraw = (ctx: CanvasRenderingContext2D, w: number, h: number) => void
+export type LiveryCanvas = { canvas: HTMLCanvasElement; texture: CanvasTexture; redraw: () => void; dispose: () => void }
+
+// Any canvas texture drawn in the Livery: NearestFilter, sRGB, drawn now, again once VT323 has loaded,
+// and (unless `repaint` is off) whenever the ?livery=1 panel changes a colour. Dispose stops all of that.
+export function liveryCanvas(width: number, height: number, draw: CanvasDraw, repaint = true): LiveryCanvas {
   const canvas = document.createElement('canvas')
-  canvas.width = W
-  canvas.height = H
+  canvas.width = width
+  canvas.height = height
   const ctx = canvas.getContext('2d')!
   const texture = new CanvasTexture(canvas)
   texture.minFilter = NearestFilter
   texture.magFilter = NearestFilter
   texture.generateMipmaps = false
   texture.colorSpace = SRGBColorSpace
-  let content: DisplayContent = {}
-  let key = ''
-  const redraw = () => { draw(ctx, accent, title, content); texture.needsUpdate = true }
+  let alive = true
+  const redraw = () => { if (!alive) return; draw(ctx, width, height); texture.needsUpdate = true }
   redraw()
   loadDisplayFont().then(redraw)
-  const unsubscribe = useLivery.subscribe(redraw)
+  const unsubscribe = repaint ? useLivery.subscribe(redraw) : () => {}
+  return { canvas, texture, redraw, dispose: () => { alive = false; unsubscribe(); texture.dispose() } }
+}
+
+export function createDisplay(accent: AccentKey, title: string): DisplayHandle {
+  let content: DisplayContent = {}
+  let key = ''
+  const screen = liveryCanvas(W, H, (ctx) => draw(ctx, accent, title, content))
   return {
-    texture,
-    redraw,
+    texture: screen.texture,
+    redraw: screen.redraw,
     show: (next) => {
       const nextKey = JSON.stringify(next)
       if (nextKey === key) return
       key = nextKey
       content = next
-      redraw()
+      screen.redraw()
     },
-    dispose: () => { unsubscribe(); texture.dispose() },
+    dispose: screen.dispose,
   }
 }
 

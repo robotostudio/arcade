@@ -4,10 +4,10 @@
 // row 10. One plane, one draw call. Text is VT323 at integer px, drawn again once the
 // font has loaded and whenever the Livery table changes. World layout constants live
 // here too so the texture and the 3D grid agree.
-import { CanvasTexture, LinearFilter, NearestFilter, SRGBColorSpace } from 'three'
-import { H, W } from '@/machines/stacker/logic'
-import { displayFont, loadDisplayFont } from '@/world/Display'
-import { livery, useLivery } from '@/world/livery'
+import type { CanvasTexture } from 'three'
+import { H, W } from './logic'
+import { displayFont, liveryCanvas } from '@/world/Display'
+import { livery } from '@/world/livery'
 
 export const BODY_W = 2.0
 export const BODY_D = 1.0
@@ -109,28 +109,5 @@ export type FaceHandle = { texture: CanvasTexture; dispose: () => void }
 // The face texture, repainted when VT323 arrives and whenever the Livery table changes.
 export function createFaceTexture(): FaceHandle | null {
   if (typeof document === 'undefined') return null
-  const canvas = document.createElement('canvas')
-  canvas.width = CW
-  canvas.height = CH
-  const ctx = canvas.getContext('2d')
-  if (!ctx) return null
-  const texture = new CanvasTexture(canvas)
-  texture.colorSpace = SRGBColorSpace
-  texture.magFilter = NearestFilter
-  texture.minFilter = LinearFilter
-  texture.generateMipmaps = false
-  const redraw = () => {
-    drawFace(ctx)
-    texture.needsUpdate = true
-  }
-  redraw()
-  loadDisplayFont().then(redraw)
-  const unsubscribe = useLivery.subscribe(redraw)
-  return {
-    texture,
-    dispose: () => {
-      unsubscribe()
-      texture.dispose()
-    },
-  }
+  return liveryCanvas(CW, CH, (ctx) => drawFace(ctx))
 }

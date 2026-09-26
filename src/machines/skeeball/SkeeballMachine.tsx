@@ -12,6 +12,7 @@ import {
 import { MathUtils, Vector3, type Group } from 'three'
 import { PAYOUT } from '@/arcade/economy'
 import type { MachineProps } from '@/machines/types'
+import { usePrompt } from '@/machines/prompt'
 import { useDisplay } from '@/world/Display'
 import { Board } from './Board'
 import { Cabinet } from './Cabinet'
@@ -250,15 +251,10 @@ export function SkeeballMachine({ position, rotation, active, onRoundEnd, onProm
   onRoundEndRef.current = onRoundEnd
   const readPress = useSkeeballPress(active)
   const display = useDisplay({ accent: 'skeeball', title: 'SKEEBALL' })
-  const lastPrompt = useRef<string | null>(null)
   // React-driven parts only: the lit ring on the Board and the power LEDs. Numbers go to the Display.
   const [hud, setHud] = useState({ phase: 'idle' as Phase, lit: 0, power: 0 })
 
-  const sendPrompt = (prompt: string) => {
-    if (prompt === lastPrompt.current) return
-    lastPrompt.current = prompt
-    onPrompt?.(prompt)
-  }
+  const sendPrompt = usePrompt(onPrompt)
 
   const onHole = useCallback((value: number, inside: boolean) => {
     const g = game.current

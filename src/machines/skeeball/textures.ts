@@ -1,52 +1,20 @@
 'use client'
 
 import { useEffect, useMemo } from 'react'
-import { CanvasTexture, LinearFilter, MeshBasicMaterial, NearestFilter, SRGBColorSpace } from 'three'
-import { displayFont, loadDisplayFont } from '@/world/Display'
-import { livery, useLivery } from '@/world/livery'
+import { MeshBasicMaterial } from 'three'
+import { type CanvasDraw, displayFont, liveryCanvas } from '@/world/Display'
+import { livery } from '@/world/livery'
 
 // Canvas textures drawn in the Livery (issue 12): VT323 at integer px, colours from the table.
 // Each redraws once the font resolves and whenever the ?livery=1 panel repaints.
-type Draw = (ctx: CanvasRenderingContext2D, w: number, h: number) => void
+type Draw = CanvasDraw
 
 function useLiveryCanvasMat(draw: Draw, w: number, h: number, transparent = false) {
-  const { canvas, map, mat } = useMemo(() => {
-    const canvas = document.createElement('canvas')
-    canvas.width = w
-    canvas.height = h
-    const map = new CanvasTexture(canvas)
-    map.colorSpace = SRGBColorSpace
-    map.magFilter = NearestFilter
-    map.minFilter = LinearFilter
-    map.generateMipmaps = false
-    const mat = new MeshBasicMaterial({ map, transparent })
-    return { canvas, map, mat }
-  }, [w, h, transparent])
-
-  useEffect(() => {
-    const ctx = canvas.getContext('2d')!
-    let live = true
-    const redraw = () => {
-      if (!live) return
-      draw(ctx, w, h)
-      map.needsUpdate = true
-    }
-    redraw()
-    loadDisplayFont().then(redraw)
-    const unsubscribe = useLivery.subscribe(redraw)
-    return () => {
-      live = false
-      unsubscribe()
-    }
-  }, [canvas, map, draw, w, h])
-
-  useEffect(
-    () => () => {
-      map.dispose()
-      mat.dispose()
-    },
-    [map, mat],
-  )
+  const { sign, mat } = useMemo(() => {
+    const sign = liveryCanvas(w, h, draw)
+    return { sign, mat: new MeshBasicMaterial({ map: sign.texture, transparent }) }
+  }, [w, h, transparent, draw])
+  useEffect(() => () => { sign.dispose(); mat.dispose() }, [sign, mat])
   return mat
 }
 

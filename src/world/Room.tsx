@@ -194,13 +194,14 @@ export function Room() {
       <ReadySignal />
     </ArcadeCanvas>
     {mode.kind === 'play' && mode.machine in MACHINES && <Shell accent={mode.machine as HubId} prompt={prompts[mode.machine] ?? ''} />}
-    {!inStore && mode.kind === 'room' && <button ref={storeButton} type="button" inert={!introDone} onClick={openStore} style={{ background: SHELL.surface, color: SHELL.text, borderColor: SHELL.edge }} className={`${hud} vt absolute bottom-6 left-1/2 z-10 -translate-x-1/2 border px-5 py-2 text-[28px] leading-none hover:brightness-125 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#fff4d7]`}>
+    {!inStore && mode.kind === 'room' && <button ref={storeButton} type="button" inert={!introDone} onClick={openStore} style={{ background: SHELL.surface, color: SHELL.text, borderColor: SHELL.edge }} className={`${hud} vt absolute bottom-6 left-1/2 z-10 -translate-x-1/2 border px-5 py-2 text-[40px] leading-none hover:brightness-125 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#fff4d7]`}>
       Store · {tickets} Tickets
     </button>}
-    <div className={`${hud} absolute right-4 top-4 z-40 flex items-center gap-2`}>
+    {/* In Play mode the Shell owns the top-right corner (Tickets), so the toggle drops to the bottom. */}
+    <div className={`${hud} absolute right-4 z-40 flex items-center gap-2 ${mode.kind === 'play' ? 'bottom-4' : 'top-4'}`}>
       {inStore && (
-        <button type="button" onClick={closeStore} className="border border-[#ffe099]/60 bg-[#242044]/95 px-4 py-3 font-mono text-xs uppercase tracking-widest text-[#ffe099] hover:bg-[#393366] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#ffe099]">
-          Back · Esc
+        <button type="button" onClick={closeStore} style={{ background: SHELL.surface, color: SHELL.text, borderColor: SHELL.edge }} className="vt border px-4 py-2 text-[20px] leading-none hover:brightness-125 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#fff4d7]">
+          Esc: back
         </button>
       )}
       <SoundtrackToggle />

@@ -6,6 +6,7 @@ import { Group, Material, Vector3 } from 'three'
 import { Display, useDisplay } from '@/world/Display'
 import { bodyMaterial, litMaterial, unlitMaterial } from '@/world/livery'
 import type { MachineProps } from '../types'
+import { usePrompt } from '../prompt'
 import { WHACK, holePosition } from './constants'
 import { initialState, step, type State } from './whackLogic'
 import { useWhackInput } from './useWhackInput'
@@ -34,7 +35,7 @@ const FOOTER = '9 HOLES / 30 SECONDS / 5 TICKETS A HIT'
 function promptFor(active: boolean, phase: State['phase']): string {
   if (!active) return ''
   if (phase === 'idle') return 'Space: start'
-  if (phase === 'result') return 'Esc: back'
+  if (phase === 'result') return '' // the Shell already offers Back
   return 'Click or 1-9: whack'
 }
 
@@ -51,7 +52,7 @@ export function WhackMachine({ position, rotation, active, onRoundEnd, onPrompt 
   const swing = useRef(0)
   const wasActive = useRef(active)
   const attract = useRef({ next: 1, hole: -1, age: 0 })
-  const lastPrompt = useRef<string | null>(null)
+  const sendPrompt = usePrompt(onPrompt)
   const input = useWhackInput(active)
   const localPoint = useMemo(() => new Vector3(), [])
   const display = useDisplay({ accent: 'whackamole', title: 'MOLE PATROL' })
@@ -103,8 +104,7 @@ export function WhackMachine({ position, rotation, active, onRoundEnd, onPrompt 
     }
     const headline = !active ? 'STEP RIGHT UP!' : s.phase === 'idle' ? 'SPACE / CLICK TO START' : s.phase === 'countdown' ? `READY... ${Math.ceil(WHACK.countdown - s.elapsed)}` : s.phase === 'result' ? `+${s.whacks * WHACK.perWhack} TICKETS!` : `${Math.ceil(WHACK.duration - s.elapsed).toString().padStart(2, '0')} SEC     ${s.whacks.toString().padStart(2, '0')} WHACKS`
     display.show({ headline, footer: FOOTER })
-    const prompt = promptFor(active, s.phase)
-    if (prompt !== lastPrompt.current) { lastPrompt.current = prompt; onPrompt?.(prompt) }
+    sendPrompt(promptFor(active, s.phase))
   })
 
   const pointToHole = (event: ThreeEvent<PointerEvent>) => {

@@ -2,8 +2,8 @@
 
 import { useEffect, useMemo } from 'react'
 import { CanvasTexture, type Material, RepeatWrapping, SRGBColorSpace } from 'three'
-import { displayFont, loadDisplayFont } from './Display'
-import { type AccentKey, accentMaterial, bodyMaterial, livery, mutedMaterial, unlitMaterial, useLivery } from './livery'
+import { displayFont, liveryCanvas } from './Display'
+import { type AccentKey, accentMaterial, bodyMaterial, livery, mutedMaterial, unlitMaterial } from './livery'
 import { Atmosphere, Glow } from './look/Atmosphere'
 
 function carpetTexture() {
@@ -41,23 +41,14 @@ function carpetTexture() {
 // A sign's canvas: the room marquee keeps its neon colours; a cabinet sign (with an Accent) takes the
 // Livery's screen, Accent title and cream subtitle. Both set in VT323 at integer px, redrawn once it loads.
 function signTexture(title: string, subtitle: string, accent?: AccentKey) {
-  const canvas = document.createElement('canvas')
-  canvas.width = 1024
-  canvas.height = 256
-  const ctx = canvas.getContext('2d')!
-  const texture = new CanvasTexture(canvas)
-  texture.colorSpace = SRGBColorSpace
-  const redraw = () => {
+  return liveryCanvas(1024, 256, (ctx, w, h) => {
     const t = livery()
     ctx.fillStyle = accent ? t.screen : '#242044'
-    ctx.fillRect(0, 0, canvas.width, canvas.height)
-    ctx.strokeStyle = accent ? t[accent] : '#6ee9db'; ctx.lineWidth = 8; ctx.strokeRect(10, 10, 1004, 236)
-    ctx.textAlign = 'center'; ctx.fillStyle = accent ? t[accent] : '#fff0c9'; ctx.font = displayFont(100); ctx.fillText(title, 512, 133)
-    ctx.fillStyle = accent ? t.text : '#ff8dbd'; ctx.font = displayFont(28); ctx.fillText(subtitle, 512, 201)
-    texture.needsUpdate = true
-  }
-  redraw()
-  return { texture, redraw }
+    ctx.fillRect(0, 0, w, h)
+    ctx.strokeStyle = accent ? t[accent] : '#6ee9db'; ctx.lineWidth = 8; ctx.strokeRect(10, 10, w - 20, h - 20)
+    ctx.textAlign = 'center'; ctx.fillStyle = accent ? t[accent] : '#fff0c9'; ctx.font = displayFont(100); ctx.fillText(title, w / 2, 133)
+    ctx.fillStyle = accent ? t.text : '#ff8dbd'; ctx.font = displayFont(28); ctx.fillText(subtitle, w / 2, 201)
+  }, !!accent)
 }
 
 export function Block({ at, size, color = '#ffffff', glow = false, material }: {
@@ -69,12 +60,7 @@ export function Block({ at, size, color = '#ffffff', glow = false, material }: {
 
 export function Sign({ at, title, subtitle, width = 5, accent }: { at: [number, number, number]; title: string; subtitle: string; width?: number; accent?: AccentKey }) {
   const sign = useMemo(() => signTexture(title, subtitle, accent), [title, subtitle, accent])
-  useEffect(() => {
-    let live = true
-    loadDisplayFont().then(() => { if (live) sign.redraw() })
-    const unsubscribe = accent ? useLivery.subscribe(sign.redraw) : undefined
-    return () => { live = false; unsubscribe?.(); sign.texture.dispose() }
-  }, [sign, accent])
+  useEffect(() => () => sign.dispose(), [sign])
   return <mesh position={at}><boxGeometry args={[width, width / 4, .12]} /><meshBasicMaterial map={sign.texture} /></mesh>
 }
 

@@ -6,6 +6,7 @@ import { Physics } from '@react-three/rapier'
 import { Group, Vector3 } from 'three'
 import { Display, useDisplay } from '@/world/Display'
 import type { MachineProps } from '@/machines/types'
+import { usePrompt } from '@/machines/prompt'
 import { CLAW } from './constants'
 import { initialClawState, stepClaw, type ClawGrabSense, type ClawPhase, type ClawState } from './clawLogic'
 import { useClawInput } from './useClawInput'
@@ -101,22 +102,14 @@ function ClawController({
   const scoreSeen = useRef(0)
   const scoredAtDock = useRef(0) // prizes won since docking = scoredRef - this
   const result = useRef({ text: '', until: 0 })
-  const lastPrompt = useRef<string | null>(null)
   const onRoundEndRef = useRef(onRoundEnd)
   onRoundEndRef.current = onRoundEnd
-  const onPromptRef = useRef(onPrompt)
-  onPromptRef.current = onPrompt
   const v = useMemo(() => new Vector3(), [])
   const holdOffset = useMemo(() => new Vector3(), []) // machine-local prize offset from the head, eased toward hang
   const hang = useMemo(() => new Vector3(0, HOLD_OFFSET, 0), []) // where the held prize settles under the head
   const display = useDisplay({ accent: 'claw', title: 'CLAW' })
 
-  // Once per phase change (and on leaving), never per frame.
-  const prompt = (next: string) => {
-    if (next === lastPrompt.current) return
-    lastPrompt.current = next
-    onPromptRef.current?.(next)
-  }
+  const prompt = usePrompt(onPrompt)
 
   // Nearest registered prize centre to a mouth at head (x, y, z), within reach. Returns the prize
   // and its distance, or null when a drop here would close on nothing.
