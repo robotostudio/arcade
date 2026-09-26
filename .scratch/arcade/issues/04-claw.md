@@ -3,7 +3,7 @@
 Type: prototype
 Status: open
 Role: Jono
-Slot: T+0:25 to 2:15
+Slot: T+0:25 to 1:45
 Blocked by: none
 
 ## Question
@@ -12,6 +12,6 @@ Is the Claw fun, and does the grab feel honest? Build: move the claw on the X/Z 
 
 Jono starts after the scaffold lands, on branch `jono`, harness page `src/app/dev/claw/page.tsx`. Cut to snap-on-contact with a 60% fail roll if rapier fights you.
 
-Feedback from the other roles at checkpoint 1. Answer records: the grab approach, tuned odds and timings. Merged to `main`.
+Feedback from the others at checkpoint 1 (T+1:00). Answer records: the grab approach, tuned odds and timings. Merged to `main`.
 
 ## Comments

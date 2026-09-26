@@ -3,8 +3,8 @@
 Type: task
 Status: open
 Role: Jono
-Slot: T+2:15 to 2:55
-Blocked by: 03, 04, 05, 06, 07
+Slot: T+2:35 to 2:55
+Blocked by: 03
 
 ## Question
 

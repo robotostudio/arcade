@@ -3,7 +3,7 @@
 Type: prototype
 Status: open
 Role: Sne
-Slot: T+0:45 to 2:15
+Slot: T+1:00 to 1:45
 Blocked by: none
 
 ## Question
@@ -14,7 +14,7 @@ Sne also owns the real `src/arcade/state.ts` (the contract in PLAN.md) and the T
 
 Placeholder Items. White: sticker pack, enamel pin, tote. Blue: hoodie, cap, mug set. Gold: "Free site audit", "A day of Roboto".
 
-Sne starts once the Stacker is playable, on branch `sne`, harness page `src/app/dev/store/page.tsx`.
+Sne starts once the Stacker is playable (about T+1:00), on branch `sne`, harness page `src/app/dev/store/page.tsx`.
 
 Feedback from the other roles at each checkpoint. Answer records: payout table, discount rate and caps, Tier prices, ring recipe. Merged to `main`.
 

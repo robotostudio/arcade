@@ -10,13 +10,14 @@ A public Vercel URL. One low-poly Room. Click a Machine to fly the camera in and
 
 ## Who does what
 
-Machines are assigned by complexity. Each dev also carries one non-machine area. One branch per dev, named after you. Stay in your folders.
+Two phases. **Phase 1**: each dev builds their Machine in isolation on a harness page, assigned by complexity. **Phase 2 (from T+1:45)**: everyone on the World build together, in the Room, integrating the Machines and the Store. One branch per dev, named after you.
 
-| Dev | Machine | Also owns | Folders | Branch | Issues |
-|---|---|---|---|---|---|
-| **Sne** | **Stacker** (simplest: timing, no physics) | **Store**: shared state, 3D counter, ring Tiers, Store HUD, Ticket economy | `src/machines/stacker/`, `src/arcade/`, `src/store/` | `sne` | [06](./.scratch/arcade/issues/06-stacker.md), [07](./.scratch/arcade/issues/07-store-counter-tiers-tickets.md) |
-| **Daniel** | **Skeeball** (mid: ball physics, two-stage input, scoring rings) | **Room**: art direction, lighting, camera fly-to, HUD shell | `src/machines/skeeball/`, `src/world/`, `src/hud/` | `daniel` | [03](./.scratch/arcade/issues/03-art-direction-room-camera-hud.md), [05](./.scratch/arcade/issues/05-skeeball.md) |
-| **Jono** | **Claw** (high: 3-axis movement, grab, chute, prizes) | **Scaffold + launch**: repo setup, Vercel, integration, final deploy | `src/machines/claw/`, `src/app/` | `jono` | [01](./.scratch/arcade/issues/01-scaffold-and-hello-room.md), [04](./.scratch/arcade/issues/04-claw.md), [08](./.scratch/arcade/issues/08-launch-polish-and-deploy.md) |
+| Dev | Phase 1: Machine | Phase 1: also | Phase 2: World build slice | Folders | Branch | Issues |
+|---|---|---|---|---|---|---|
+| **Sne** | **Stacker** (simplest: timing, no physics) | **Store**: shared state, 3D counter, ring Tiers, Store HUD, Ticket economy | Palette, lighting, props, signage | `src/machines/stacker/`, `src/arcade/`, `src/store/` | `sne` | [06](./.scratch/arcade/issues/06-stacker.md), [07](./.scratch/arcade/issues/07-store-counter-tiers-tickets.md) |
+| **Daniel** | **Skeeball** (mid: ball physics, two-stage input, scoring rings) | | Camera fly-to, Room/Play mode, HUD shell | `src/machines/skeeball/`, `src/world/camera*`, `src/hud/` | `daniel` | [05](./.scratch/arcade/issues/05-skeeball.md) |
+| **Jono** | **Claw** (high: 3-axis movement, grab, chute, prizes) | **Scaffold** (T+0 to 0:25) | Integration of Machines + Store into the Room, deploys | `src/machines/claw/`, `src/app/`, `src/world/room*` | `jono` | [01](./.scratch/arcade/issues/01-scaffold-and-hello-room.md), [04](./.scratch/arcade/issues/04-claw.md), [08](./.scratch/arcade/issues/08-launch-polish-and-deploy.md) |
+| **Everyone** | | | [03 World build](./.scratch/arcade/issues/03-art-direction-room-camera-hud.md) | `src/world/` | | [03](./.scratch/arcade/issues/03-art-direction-room-camera-hud.md) |
 
 Research issue [02](./.scratch/arcade/issues/02-research-physics-and-rendering.md) is being answered by an agent; everyone reads its `## Answer` before touching physics.
 
@@ -53,7 +54,7 @@ export type MachineProps = {
 ```
 
 Rules:
-- A Machine renders its own cabinet and game; it never touches the camera. Daniel owns the camera and reads `mode`.
+- A Machine renders its own cabinet and game; it never touches the camera. The camera lives in the World and reads `mode`.
 - A Machine calls `onRoundEnd` exactly once per Round. The Room wires it to `awardTickets`.
 - Input: keyboard (Space / arrows) and pointer. Touch is nice-to-have.
 - Payouts (first guess, Sne tunes): Stacker 10 per row reached (win 150), Claw 100 on a grab, Skeeball score / 5.
@@ -62,13 +63,15 @@ Rules:
 
 | T+ | Sne | Daniel | Jono |
 |---|---|---|---|
-| 0:00 | `src/arcade/state.ts` for real, then Stacker on a harness page `src/app/dev/stacker/page.tsx`. | Palette + lighting + Room geometry on a harness page `src/app/dev/room/page.tsx`. | Scaffold on `main`: Next + R3F + rapier + zustand + Tailwind, state stub, placeholder Room with three boxes + counter, Vercel deploy. **Target 0:25.** |
+| 0:00 | `src/arcade/state.ts` for real, then Stacker on `src/app/dev/stacker/page.tsx`. | Skeeball on `src/app/dev/skeeball/page.tsx`: ramp, ball, rings; read issue 02 first. | Scaffold on `main`: Next + R3F + rapier + zustand + Tailwind, state stub, placeholder Room with three boxes + counter, Vercel deploy. **Target 0:25.** |
 | 0:25 | Rebase onto `main`, everyone. | | |
-| 0:25 to 1:15 | Stacker playable, then start the Store counter + ring materials. | Room in the real app: camera fly-to per station, Escape out, HUD shell (station name, prompt, Ticket balance). | Claw on `src/app/dev/claw/page.tsx`: movement, drop, grab, chute. |
-| 1:15 | **Checkpoint 1: merge to `main`, deploy, 5-minute feedback round.** | | |
-| 1:15 to 2:15 | Store HUD: pick Item, apply Tickets, Discount, claim. Gold shine. Tune payouts against real Rounds. | Skeeball: sweeping arrow, power meter, ball, scoring rings. | Claw finished and wired into the Room. Integrate anything the others need. |
-| 2:15 | **Checkpoint 2: merge, deploy, feedback round. Cut anything not fun.** | | |
-| 2:15 to 2:50 | Bugfix only. | Bugfix only. Round-end feedback in the HUD. | Polish: OG image, title, loading state. |
+| 0:25 to 1:00 | Stacker playable. | Skeeball: sweeping arrow + power meter, scoring, nine balls. | Claw on `src/app/dev/claw/page.tsx`: movement, drop, grab, chute. |
+| 1:00 | **Checkpoint 1: merge to `main`, deploy, 5-minute feedback round on each other's harness pages.** | | |
+| 1:00 to 1:45 | Store counter + ring Tiers + Store HUD on `src/app/dev/store/page.tsx`. | Skeeball fun pass: feel, payout. Cut to scripted arc if needed. | Claw fun pass: odds, timings, prizes. Cut to snap-on-contact if needed. |
+| 1:45 | **Phase 2: World build, everyone.** Merge to `main`. | | |
+| 1:45 to 2:35 | Palette, lighting, floor/walls/sign, props. | Camera fly-to per station, Escape out, HUD shell (station name, prompt, Ticket balance, Round-end). | Place the three Machines and the Store counter in the Room, wire `onRoundEnd` to `awardTickets`, keep `main` deploying. |
+| 2:35 | **Checkpoint 2: play the whole thing on the deployed URL. Cut anything not fun.** | | |
+| 2:35 to 2:50 | Bugfix only. | Bugfix only. | Polish: OG image, title, loading state. |
 | 2:50 | | | **Final merge + production deploy. Stop coding at 2:55.** |
 
 Cut order if behind: Skeeball physics becomes a scripted arc; Claw becomes snap-on-contact with a 60% fail roll; Gold shine becomes a flat yellow; touch input; sound.
@@ -83,7 +86,7 @@ Prices are fake but plausible. Discount = Tickets applied × a rate Sne picks (s
 
 ## Working agreement (async)
 
-- Branches: `main` plus `sne`, `daniel`, `jono`. Rebase onto `main` at every checkpoint. Merge your own branch; no review gate.
+- Branches: `main` plus `sne`, `daniel`, `jono`. Rebase onto `main` at every checkpoint. Merge your own branch; no review gate. In Phase 2 commit small and pull often; `src/world/` is shared.
 - Vercel builds every push; put your preview URL in your issue file's `## Comments` when it's worth looking at.
 - **Feedback**: play the other two roles' previews at each checkpoint and append one comment under `## Comments` in their issue file, three lines max: **Keep / Change / Cut**. Owner decides; no debate threads.
 - Stuck for more than 15 minutes: note it in your issue file and move to the next thing.

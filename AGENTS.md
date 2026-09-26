@@ -6,11 +6,13 @@ Low-poly 3D arcade, hackathon build, three devs, three hours. Read [PLAN.md](./P
 
 If `.whoami` does not exist at the repo root, before anything else ask: **"Who are you: sne, daniel or jono?"** Accept only those three. Write the name to `.whoami` (gitignored), then tell them their assignment from the table in PLAN.md and start on their first issue:
 
-- **sne**: Stacker + Store. Branch `sne`. Issues 06, 07.
-- **daniel**: Skeeball + Room. Branch `daniel`. Issues 03, 05.
-- **jono**: Claw + scaffold + launch. Branch `jono`. Issues 01, 04, 08.
+- **sne**: Stacker, then Store. Branch `sne`. Issues 06, 07.
+- **daniel**: Skeeball. Branch `daniel`. Issue 05.
+- **jono**: scaffold, then Claw, then launch. Branch `jono`. Issues 01, 04, 08.
 
-Every later session: read `.whoami`, work only your folders and issues, rebase onto `main` at each PLAN.md checkpoint.
+From T+1:45 everyone works issue 03 (the World build) together; PLAN.md says who takes which slice.
+
+Every later session: read `.whoami`, work only your folders and issues, rebase onto `main` at each PLAN.md checkpoint. In Phase 2 `src/world/` is shared: pull before every commit.
 
 ## Rules
 

@@ -12,11 +12,13 @@ A low-poly 3D arcade running in the browser at a public Vercel URL: one diorama 
 - **Execution override**: sessions build as tickets resolve, not plan-only.
 - Three devs async, one branch each, machines assigned by complexity. Each issue file carries a `Role:` line naming the dev. Folder ownership, timeline and the shared state contract are in PLAN.md.
 
-| Dev | Machine | Also owns | Branch |
-|---|---|---|---|
-| Sne | Stacker (simplest) | Store: state, counter, Tiers, Store HUD, economy | `sne` |
-| Daniel | Skeeball (mid) | Room: art direction, camera, HUD shell | `daniel` |
-| Jono | Claw (high) | Scaffold, integration, launch | `jono` |
+| Dev | Phase 1 machine | Phase 1 also | Phase 2 World slice | Branch |
+|---|---|---|---|---|
+| Sne | Stacker (simplest) | Store: state, counter, Tiers, Store HUD, economy | Palette, lighting, props | `sne` |
+| Daniel | Skeeball (mid) | | Camera fly-to, modes, HUD shell | `daniel` |
+| Jono | Claw (high) | Scaffold | Integration, deploys, launch | `jono` |
+
+  Phase 2 (the World build, issue 03) starts at T+1:45 with all three on it.
 - Decided by Jono at charting (2026-09-26): browser 3D web app (React Three Fiber on Next.js, Vercel); Roboto Studio brand and R&D piece; Machines are playable; diorama navigation; Skeeball is a two-stage input (sweeping aim arrow, then power); the Store is a 3D counter in the Room, not a 2D route; Items are Roboto merch and services; no external reference art.
 - Standing stack (revocable if a ticket proves it wrong): Next.js App Router, TypeScript, pnpm, `@react-three/fiber`, `@react-three/drei`, `@react-three/rapier`, zustand, Tailwind for the HUD; Vercel project `arcade` on the roboto team. Procedural primitive geometry with flat shading. Tickets in `localStorage`.
 - Glossary lives in [CONTEXT.md](../../CONTEXT.md).
