@@ -1,7 +1,8 @@
 'use client'
 
-import { Canvas } from '@react-three/fiber'
 import { CameraControls } from '@react-three/drei'
+import { ArcadeCanvas } from './ArcadeCanvas'
+import { MATERIALS, type PaletteColor } from './palette'
 
 // Placeholder Room (issue 01): floor, three Machine boxes, a Store counter box.
 // Real cabinets replace these boxes in Phase 2. Positions are the station slots.
@@ -19,52 +20,30 @@ function Box({
 }: {
   position: readonly [number, number, number]
   size: [number, number, number]
-  color: string
+  color: PaletteColor
 }) {
   const [w, h, d] = size
   return (
-    <mesh position={[position[0], position[1] + h / 2, position[2]]} castShadow receiveShadow>
+    <mesh position={[position[0], position[1] + h / 2, position[2]]} material={MATERIALS[color]}>
       <boxGeometry args={[w, h, d]} />
-      <meshStandardMaterial color={color} flatShading />
     </mesh>
   )
 }
 
 export function Room() {
   return (
-    <Canvas
-      shadows="percentage"
-      dpr={[1, 1.5]}
-      camera={{ position: [0, 7, 12], fov: 45 }}
-      style={{ position: 'absolute', inset: 0 }}
-    >
-      <color attach="background" args={['#14141c']} />
-      <hemisphereLight args={['#dfe8ff', '#3a2e2a', 1.5]} />
-      <directionalLight
-        position={[6, 10, 6]}
-        intensity={3}
-        castShadow
-        shadow-mapSize={[1024, 1024]}
-        shadow-bias={-0.0005}
-        shadow-normalBias={0.02}
-        shadow-camera-left={-12}
-        shadow-camera-right={12}
-        shadow-camera-top={12}
-        shadow-camera-bottom={-12}
-      />
-
+    <ArcadeCanvas camera={{ position: [0, 3.6, 8.5], fov: 45 }}>
       {/* floor */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+      <mesh rotation={[-Math.PI / 2, 0, 0]} material={MATERIALS.floor}>
         <planeGeometry args={[24, 20]} />
-        <meshStandardMaterial color="#2b2b3a" flatShading />
       </mesh>
 
-      <Box position={STATIONS.claw} size={[2, 3, 2]} color="#4f8bff" />
-      <Box position={STATIONS.stacker} size={[2, 3, 2]} color="#e6473a" />
-      <Box position={STATIONS.skeeball} size={[2, 3, 2]} color="#3fc47a" />
-      <Box position={STATIONS.store} size={[6, 1.2, 1.5]} color="#f2c14e" />
+      <Box position={STATIONS.claw} size={[2, 3, 2]} color="oxblood" />
+      <Box position={STATIONS.stacker} size={[2, 3, 2]} color="slate" />
+      <Box position={STATIONS.skeeball} size={[2, 3, 2]} color="steel" />
+      <Box position={STATIONS.store} size={[6, 1.2, 1.5]} color="amber" />
 
       <CameraControls makeDefault smoothTime={0.6} />
-    </Canvas>
+    </ArcadeCanvas>
   )
 }

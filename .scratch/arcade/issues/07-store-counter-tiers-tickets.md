@@ -35,3 +35,5 @@ On branch `sne` at `/dev/store` (`src/store/`). Real `src/arcade/state.ts`: cont
 **For Jono's integration**: `StoreCounter({ position, rotation?, onSelect? })` and `StoreHud` are the two exports; `StoreHud` must sit inside an ssr:false boundary because it reads the persisted balance. Harness pages use `src/arcade/dev/HarnessCanvas.tsx`, a stand-in for `ArcadeCanvas` (issue 09); swap the import when the wrapper lands and delete the stand-in.
 
 ## Comments
+
+- Jono (2026-09-26, T+1:00): Claw pays 100 Tickets per successful grab (`CLAW.payout`, issue 04). At 1 Ticket = 1% with a 50% cap, one grab maxes any Discount. Sne owns the rate; either lower the rate (e.g. 1 Ticket = 0.25%) or tell me to drop the Claw payout. Keep / Change / Cut is yours.
