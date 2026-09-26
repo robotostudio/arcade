@@ -1,7 +1,8 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef } from 'react'
 import { useIntro } from '@/intro/store'
+import { sfx, useSound } from '@/arcade/sfx'
 
 // Looping cabinet music for the main Room. Web Audio only: no asset file.
 // It stays quiet through the intro, then starts once the hub is up. Browsers
@@ -292,9 +293,10 @@ function SpeakerIcon({ muted }: { muted: boolean }) {
 }
 
 export function SoundtrackToggle() {
-  const [muted, setMuted] = useState(false)
+  // One mute for the music and the sound effects, remembered across visits.
+  const muted = useSound((s) => s.muted)
   const introDone = useIntro((s) => s.phase === 'done')
-  const mutedRef = useRef(false)
+  const mutedRef = useRef(muted)
   const introDoneRef = useRef(introDone)
   const engineRef = useRef<Engine | null>(null)
   introDoneRef.current = introDone
@@ -326,7 +328,8 @@ export function SoundtrackToggle() {
   const toggle = () => {
     const next = !mutedRef.current
     mutedRef.current = next
-    setMuted(next)
+    useSound.getState().toggle()
+    if (!next) sfx.click()
     const engine = engineRef.current
     if (!engine) return
     if (next) engine.setLevel(0)
@@ -338,7 +341,7 @@ export function SoundtrackToggle() {
       type="button"
       data-soundtrack-toggle
       aria-pressed={muted}
-      aria-label={muted ? 'Unmute soundtrack' : 'Mute soundtrack'}
+      aria-label={muted ? 'Unmute sound' : 'Mute sound'}
       onClick={toggle}
       className="flex h-11 w-11 shrink-0 items-center justify-center border border-[#ffe099]/60 bg-[#242044]/95 text-[#ffe099] hover:bg-[#393366] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#ffe099]"
     >

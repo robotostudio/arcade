@@ -8,7 +8,7 @@
 //   useFrame(() => display.show({ headline: `BALL ${n} / 9`, footer: `SCORE ${score}` }))
 //   <Display handle={display} position={[0, 1.8, -.8]} width={1.8} />
 import { useCallback, useEffect, useMemo, useRef } from 'react'
-import { CanvasTexture, NearestFilter, SRGBColorSpace } from 'three'
+import { CanvasTexture, LinearMipmapLinearFilter, NearestFilter, SRGBColorSpace } from 'three'
 import { type AccentKey, bodyMaterial, livery, useLivery } from './livery'
 
 const W = 1024
@@ -90,9 +90,10 @@ export function liveryCanvas(width: number, height: number, draw: CanvasDraw, re
   canvas.height = height
   const ctx = canvas.getContext('2d')!
   const texture = new CanvasTexture(canvas)
-  texture.minFilter = NearestFilter
+  // Mipmapped when shrunk so a Display still reads from the hub; crisp pixels up close.
+  texture.minFilter = LinearMipmapLinearFilter
   texture.magFilter = NearestFilter
-  texture.generateMipmaps = false
+  texture.anisotropy = 8
   texture.colorSpace = SRGBColorSpace
   const redraw = () => { draw(ctx, width, height); texture.needsUpdate = true }
   redraw()

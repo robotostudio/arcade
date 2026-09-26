@@ -2,14 +2,20 @@
 
 import { useMemo, useRef } from 'react'
 import { useFrame, type ThreeEvent } from '@react-three/fiber'
-import { Group, Material, Vector3 } from 'three'
+import { Group, Material, MathUtils, Vector3 } from 'three'
+import { sfx } from '@/arcade/sfx'
 import { Display, useDisplay } from '@/world/Display'
 import { bodyMaterial, litMaterial, unlitMaterial } from '@/world/livery'
 import type { MachineProps } from '../types'
 import { usePrompt } from '../prompt'
 import { WHACK, holePosition } from './constants'
+import { stillMole, stepMole, type MoleMotion } from './moleMotion'
 import { initialState, step, type State } from './whackLogic'
 import { useWhackInput } from './useWhackInput'
+
+// The deck tips toward the player. The near row used to sink into the cabinet, so the
+// body stops short of that row and the deck overhangs it.
+const DECK_TILT = 0.2
 
 // The reference cabinet for the Livery (issue 12): Plinth, trim and Display frame from the shared
 // table, cream panels, the body in the Whack-a-Mole Accent. Colours the Machine owns (the Moles, the
@@ -30,8 +36,7 @@ const MOLE = {
 const FOOTER = '9 HOLES / 30 SECONDS / 5 TICKETS A HIT'
 
 // One prompt string per phase for the Shell: the real key and the verb. Space only starts a Round
-// from idle; the result phase ignores input and returns to idle by itself, so there Back is the
-// only thing the player can do.
+// from idle; the result phase ignores input and returns to idle by itself.
 function promptFor(active: boolean, phase: State['phase']): string {
   if (!active) return ''
   if (phase === 'idle') return 'Space: start'
@@ -43,19 +48,36 @@ function Box({ at, size, material }: { at: [number, number, number]; size: [numb
   return <mesh position={at} material={material}><boxGeometry args={size} /></mesh>
 }
 
+// Sounds come from diffing one step: countdown beeps, GO, Pops, Whacks and escaped Moles.
+const count = (s: State) => Math.ceil(WHACK.countdown - s.elapsed)
+function playCues(prev: State, next: State) {
+  if (next.phase === 'countdown' && (prev.phase !== 'countdown' || count(prev) !== count(next))) sfx.count()
+  if (prev.phase === 'countdown' && next.phase === 'playing') sfx.go()
+  if (next.phase !== 'playing') return
+  if (next.whacks > prev.whacks) sfx.hit(((next.whacks - 1) % 8) + 1)
+  for (let i = 0; i < 9; i++) {
+    if (!prev.moles[i] && next.moles[i]) sfx.pop()
+    else if (prev.moles[i] && !next.moles[i] && next.flashes[i] < .3) sfx.miss()
+  }
+}
+
 export function WhackMachine({ position, rotation, active, onRoundEnd, onPrompt }: MachineProps) {
   const state = useRef(initialState())
   const board = useRef<Group>(null)
   const moles = useRef<(Group | null)[]>([])
   const rings = useRef<(Group | null)[]>([])
   const mallet = useRef<Group>(null)
-  const swing = useRef(0)
+  const malletBody = useRef({ x: 0, z: 0, vx: 0, vz: 0, ang: 0.15, av: 0 })
+  const motions = useRef<MoleMotion[]>(Array.from({ length: 9 }, stillMole))
+  const wasUp = useRef(Array<boolean>(9).fill(false))
+  const shake = useRef(0)
+  const shakeV = useRef(0)
   const wasActive = useRef(active)
   const attract = useRef({ next: 1, hole: -1, age: 0 })
-  const sendPrompt = usePrompt(onPrompt)
   const input = useWhackInput(active)
   const localPoint = useMemo(() => new Vector3(), [])
   const display = useDisplay({ accent: 'whackamole', title: 'MOLE PATROL' })
+  const sendPrompt = usePrompt(onPrompt)
 
   useFrame((_, rawDt) => {
     const dt = Math.min(rawDt, .1)
@@ -64,13 +86,16 @@ export function WhackMachine({ position, rotation, active, onRoundEnd, onPrompt 
       state.current = initialState()
       wasActive.current = active
       attract.current = { next: 2, hole: -1, age: 0 }
-      swing.current = 0
+      malletBody.current.av = 0
+      motions.current.forEach((m, i) => { motions.current[i] = stillMole(); wasUp.current[i] = false })
       if (!active && (previous.phase === 'playing' || previous.phase === 'countdown')) onRoundEnd(previous.whacks * WHACK.perWhack)
     }
     if (active) {
       const controls = input.read()
-      if (controls.hits.length) swing.current = WHACK.swing
-      state.current = step(state.current, controls, rawDt, Math.random)
+      if (controls.hits.length) malletBody.current.av -= 14
+      const prev = state.current
+      state.current = step(prev, controls, rawDt, Math.random)
+      playCues(prev, state.current)
       if (state.current.payout !== null) onRoundEnd(state.current.payout)
     } else {
       const a = attract.current
@@ -81,26 +106,41 @@ export function WhackMachine({ position, rotation, active, onRoundEnd, onPrompt 
       }
     }
     const s = state.current
+    let struck = false
     for (let i = 0; i < 9; i++) {
       const mole = active ? s.moles[i] : attract.current.hole === i && attract.current.age < 1 ? { age: attract.current.age, window: 1 } : null
+      const up = !!mole
+      const whacked = wasUp.current[i] && !up && s.flashes[i] > 0.15
+      if (whacked) struck = true
+      wasUp.current[i] = up
+      const motion = motions.current[i]
+      stepMole(motion, up, whacked, dt)
       const mesh = moles.current[i]
       if (mesh) {
-        mesh.visible = !!mole
-        if (mole) {
-          const height = Math.max(.02, Math.min(1, mole.age / .1, (mole.window - mole.age) / .12))
-          mesh.scale.y = height
-          mesh.position.y = .02
-          mesh.rotation.z = Math.sin(mole.age * 10) * .07
-        }
+        const stretch = 1 + MathUtils.clamp(motion.v * 0.035, -0.18, 0.22)
+        mesh.visible = motion.y > 0.16
+        mesh.scale.set(1 / Math.sqrt(stretch), stretch, 1 / Math.sqrt(stretch))
+        mesh.position.set(motion.x, -0.38 + motion.y * 0.4, 0)
+        mesh.rotation.set(motion.falling ? motion.roll * 0.4 : 0, motion.x * 0.6, motion.falling ? motion.roll : motion.roll * 0.35)
       }
       const ring = rings.current[i]
       if (ring) { ring.visible = s.flashes[i] > 0; ring.scale.setScalar(1 + (.3 - s.flashes[i]) * 2); ring.position.y = .15 + (.3 - s.flashes[i]) }
     }
-    swing.current = Math.max(0, swing.current - dt)
+    if (struck) shakeV.current -= 1.6
+    shakeV.current += (-shake.current * 90 - shakeV.current * 11) * dt
+    shake.current += shakeV.current * dt
+    if (board.current) board.current.rotation.x = DECK_TILT + shake.current
+    const hammer = malletBody.current
+    const [hx, , hz] = holePosition(input.hovered.current)
+    hammer.vx += ((hx - hammer.x) * 68 - hammer.vx * 12) * dt
+    hammer.vz += ((hz - hammer.z) * 68 - hammer.vz * 12) * dt
+    hammer.x += hammer.vx * dt
+    hammer.z += hammer.vz * dt
+    hammer.av += ((0.15 - hammer.ang) * 62 - hammer.av * 8) * dt
+    hammer.ang += hammer.av * dt
     if (mallet.current) {
-      const [x, , z] = holePosition(input.hovered.current)
-      mallet.current.position.set(x, .52, z - .18)
-      mallet.current.rotation.x = -.65 + Math.sin(swing.current / WHACK.swing * Math.PI) * 1.7
+      mallet.current.position.set(hammer.x, 0.22, hammer.z)
+      mallet.current.rotation.x = hammer.ang
     }
     const headline = !active ? 'STEP RIGHT UP!' : s.phase === 'idle' ? 'SPACE / CLICK TO START' : s.phase === 'countdown' ? `READY... ${Math.ceil(WHACK.countdown - s.elapsed)}` : s.phase === 'result' ? `+${s.whacks * WHACK.perWhack} TICKETS!` : `${Math.ceil(WHACK.duration - s.elapsed).toString().padStart(2, '0')} SEC     ${s.whacks.toString().padStart(2, '0')} WHACKS`
     display.show({ headline, footer: FOOTER })
@@ -117,12 +157,14 @@ export function WhackMachine({ position, rotation, active, onRoundEnd, onPrompt 
     return column >= 0 && column < 3 && row >= 0 && row < 3 ? (2 - row) * 3 + column : -1
   }
   return <group position={position} rotation={rotation}>
-    <Box at={[0, .55, 0]} size={[1.76, 1.1, 1.55]} material={bodyMaterial('whackamole')} />
-    <Box at={[0, .12, 0]} size={[1.85, .2, 1.63]} material={bodyMaterial('plinth')} />
-    <Box at={[0, .68, .789]} size={[1.4, .5, .04]} material={bodyMaterial('panel')} />
-    <Box at={[0, .7, .82]} size={[.4, .08, .05]} material={bodyMaterial('trim')} />
-    <Display handle={display} position={[0, 1.83, -.785]} width={1.8} />
-    <group ref={board} position={[0, 1.17, 0]} rotation={[Math.PI / 12, 0, 0]}>
+    <Box at={[0, .12, .05]} size={[1.9, .24, 1.75]} material={bodyMaterial('plinth')} />
+    {/* Tall rear column meets the lifted back of the deck; the front box stays under the near row. */}
+    <Box at={[0, .7, -.32]} size={[1.74, 1.04, .86]} material={bodyMaterial('whackamole')} />
+    <Box at={[0, .48, .36]} size={[1.74, .72, .7]} material={bodyMaterial('whackamole')} />
+    <Box at={[0, .5, .73]} size={[1.36, .42, .05]} material={bodyMaterial('panel')} />
+    <Box at={[0, .42, .77]} size={[.38, .08, .04]} material={bodyMaterial('trim')} />
+    <Display handle={display} position={[0, 2.32, -.82]} width={1.8} />
+    <group ref={board} position={[0, 1.36, .08]} rotation={[DECK_TILT, 0, 0]}>
       <Box at={[0, -.065, 0]} size={[1.86, .13, 1.65]} material={bodyMaterial('panel')} />
       {Array.from({ length: 9 }, (_, i) => <group key={i} position={holePosition(i)}>
         <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, .008, 0]} material={MOLE.hole}><circleGeometry args={[.215, 16]} /></mesh>
@@ -141,8 +183,8 @@ export function WhackMachine({ position, rotation, active, onRoundEnd, onPrompt 
         </group>
       </group>)}
       <group ref={mallet} visible={active}>
-        <mesh position={[0, .15, 0]} material={MOLE.handle}><cylinderGeometry args={[.027, .035, .4, 8]} /></mesh>
-        <mesh position={[0, .37, 0]} rotation={[0, 0, Math.PI / 2]} material={MOLE.head}><cylinderGeometry args={[.11, .11, .36, 10]} /></mesh>
+        <mesh position={[0, .2, 0]} rotation={[0, 0, Math.PI / 2]} material={MOLE.head}><cylinderGeometry args={[.1, .11, .34, 8]} /></mesh>
+        <mesh position={[0, .34, .3]} rotation={[1.15, 0, 0]} material={MOLE.handle}><cylinderGeometry args={[.03, .04, .46, 8]} /></mesh>
       </group>
       {/* A single board-plane raycast keeps rising meshes out of hit resolution. */}
       <mesh position={[0, .025, 0]} rotation={[-Math.PI / 2, 0, 0]} onPointerMove={e => { const h = pointToHole(e); if (h >= 0) input.hovered.current = h }} onPointerDown={e => { const h = pointToHole(e); if (h >= 0) input.hit(h) }}>
