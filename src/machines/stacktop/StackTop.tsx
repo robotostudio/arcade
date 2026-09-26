@@ -8,6 +8,7 @@ import { useEffect, useMemo, useRef } from 'react'
 import { useFrame, type ThreeEvent } from '@react-three/fiber'
 import { MeshBasicMaterial, type InstancedMesh } from 'three'
 import type { MachineProps } from '@/machines/types'
+import { sfx } from '@/arcade/sfx'
 import { PAYOUT } from '@/arcade/economy'
 import {
   H,
@@ -80,6 +81,10 @@ export function StackTop({ position, rotation, active, onRoundEnd }: MachineProp
     const s = state.current!
     const ev = press(s)
     if (ev === 'ignored') return
+    if (ev === 'started') sfx.start()
+    // Each placed row rings a step higher up the scale, all the way to the top.
+    else if (ev === 'placed') sfx.hit(1 + (s.placed.length - 1) * 10 / (H - 1))
+    else if (ev === 'decide') sfx.go()
     if (ev === 'won' || ev === 'lost') report(s)
     else publish(s)
   }).current
@@ -88,6 +93,7 @@ export function StackTop({ position, rotation, active, onRoundEnd }: MachineProp
     const s = state.current!
     const ev = choose(s, c)
     if (ev === 'ignored') return
+    sfx.toggle(ev === 'risked')
     if (ev === 'took') report(s)
     else publish(s)
   }).current
