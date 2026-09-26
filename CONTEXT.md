@@ -3,8 +3,8 @@
 Use these words in code, commits and Linear. Nothing else here: no implementation.
 
 - **Room**: the single diorama scene that holds everything. The Store counter and the Machines live in it.
-- **Machine**: a playable cabinet: **Claw**, **Skeeball**, **Stack to the Top** or **Whack-a-Mole**. **Stacker** is retired: Stack to the Top replaced it. A Machine's signage may carry a cabinet name (Whack-a-Mole's cabinet reads "Mole Patrol"); the glossary name is the one used in code and issues.
-- **Stack to the Top**: the second stacking Machine. Stacker rules plus two prize lines: the **Minor Prize** line (10 rows stacked pauses the game: Take Minor or Go for Major) and the **Major Prize** line (the top row).
+- **Machine**: a playable cabinet: **Claw**, **Skeeball**, **Stack to the Top** or **Whack-a-Mole**. A Machine's signage may carry a cabinet name (Whack-a-Mole's cabinet reads "Mole Patrol"); the glossary name is the one used in code and issues.
+- **Stack to the Top**: the stacking Machine. A moving row stops on Space and trims to what overlaps the row below; plus two prize lines: the **Minor Prize** line (10 rows stacked pauses the game: Take Minor or Go for Major) and the **Major Prize** line (the top row).
 - **Room mode**: camera framing the whole Room; Machines and the Store are selectable.
 - **Play mode**: camera docked at one Machine; only that Machine's controls are live.
 - **Round**: one play of a Machine from start to its end (win, lose, balls spent, or time up).
